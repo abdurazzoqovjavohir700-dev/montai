@@ -1,25 +1,19 @@
 import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
-import EmailProvider from 'next-auth/providers/email';
 import { createServerSupabase } from './supabase';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+    ...(process.env.GOOGLE_CLIENT_ID ? [GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-    }),
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID ?? '',
+    })] : []),
+    ...(process.env.GITHUB_CLIENT_ID ? [GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
-    }),
-    EmailProvider({
-      server: process.env.EMAIL_SERVER ?? '',
-      from: process.env.EMAIL_FROM ?? 'noreply@montai.app',
-      maxAge: 10 * 60,
-    }),
+    })] : []),
   ],
   pages: {
     signIn: '/',

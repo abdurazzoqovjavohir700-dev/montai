@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, X, ArrowRight } from 'lucide-react';
+import { X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
 
 const GoogleIcon = () => (
@@ -29,9 +28,6 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [email, setEmail] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const [socialLoading, setSocialLoading] = useState<'google' | 'github' | null>(null);
 
   const handleGoogleSignIn = async () => {
@@ -51,33 +47,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     } catch {
       toast.error('GitHub sign-in failed. Please try again.');
       setSocialLoading(null);
-    }
-  };
-
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-    setEmailLoading(true);
-    try {
-      const result = await signIn('email', {
-        email: email.trim(),
-        redirect: false,
-        callbackUrl: '/chat',
-      });
-      if (result?.error) {
-        toast.error('Failed to send magic link. Please try again.');
-      } else {
-        setEmailSent(true);
-      }
-    } catch {
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setEmailLoading(false);
     }
   };
 
@@ -128,36 +97,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
             <div className="p-8">
               <AnimatePresence mode="wait">
-                {emailSent ? (
-                  <motion.div
-                    key="sent"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="text-center py-6 space-y-4"
-                  >
-                    <div className="text-5xl">📧</div>
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'Sora, sans-serif' }}>
-                        Check your inbox!
-                      </h2>
-                      <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        Magic link sent to{' '}
-                        <strong style={{ color: 'var(--accent-primary)' }}>{email}</strong>.
-                        <br />It expires in 10 minutes.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => { setEmailSent(false); setEmail(''); }}
-                      className="text-xs underline underline-offset-2 transition-colors"
-                      style={{ color: 'var(--text-tertiary)' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-tertiary)')}
-                    >
-                      Try a different email
-                    </button>
-                  </motion.div>
-                ) : (
                   <motion.div
                     key="form"
                     initial={{ opacity: 0 }}
@@ -206,58 +145,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       />
                     </div>
 
-                    {/* Divider */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-px" style={{ background: 'var(--border-subtle)' }} />
-                      <span className="text-xs px-1" style={{ color: 'var(--text-tertiary)' }}>or continue with email</span>
-                      <div className="flex-1 h-px" style={{ background: 'var(--border-subtle)' }} />
-                    </div>
-
-                    {/* Email magic link */}
-                    <form onSubmit={handleMagicLink} className="space-y-3">
-                      <Input
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        icon={<Mail size={16} />}
-                        aria-label="Email address"
-                        autoComplete="email"
-                        required
-                      />
-                      <button
-                        type="submit"
-                        disabled={emailLoading || !email.trim()}
-                        className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                          background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-                          color: '#0A0A0B',
-                        }}
-                        onMouseEnter={e => {
-                          if (!emailLoading) {
-                            (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 20px rgba(245,158,11,0.4)';
-                            (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
-                          (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-                        }}
-                      >
-                        {emailLoading ? (
-                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                          </svg>
-                        ) : (
-                          <>
-                            Send Magic Link
-                            <ArrowRight size={15} />
-                          </>
-                        )}
-                      </button>
-                    </form>
-
                     {/* Legal */}
                     <p className="text-center text-[10px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
                       By continuing, you agree to our{' '}
@@ -270,7 +157,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       </Link>
                     </p>
                   </motion.div>
-                )}
               </AnimatePresence>
             </div>
           </motion.div>
