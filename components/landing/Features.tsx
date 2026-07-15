@@ -58,16 +58,16 @@ export default function Features() {
         transition={{ duration: 0.5 }}
         className="text-center mb-12 space-y-3"
       >
-        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent-primary)]">
+        <p className="text-sm font-bold uppercase tracking-widest text-[var(--accent-primary)]">
           What Montai Teaches
         </p>
         <h2
-          className="text-3xl sm:text-4xl font-bold text-[var(--text-primary)]"
+          className="text-4xl sm:text-5xl font-bold text-[var(--text-primary)]"
           style={{ fontFamily: 'Sora, sans-serif' }}
         >
           Everything a Professional Editor Needs
         </h2>
-        <p className="text-[var(--text-secondary)] max-w-xl mx-auto">
+        <p className="text-lg text-[var(--text-secondary)] max-w-xl mx-auto">
           From beginner cuts to advanced color science — Montai adapts to your level and teaches in your language.
         </p>
       </motion.div>
@@ -83,18 +83,18 @@ export default function Features() {
             transition={{ duration: 0.4, delay: i * 0.08 }}
             className="feature-card p-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)]"
           >
-            <div className="text-3xl mb-4">{feature.icon}</div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-2">
+            <div className="text-4xl mb-4">{feature.icon}</div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-3">
               {feature.title}
             </h3>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">
+            <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed mb-4">
               {feature.description}
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {feature.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                  className="text-xs px-2.5 py-1 rounded-full font-semibold"
                   style={{
                     background: 'rgba(245,158,11,0.1)',
                     border: '1px solid rgba(245,158,11,0.2)',
