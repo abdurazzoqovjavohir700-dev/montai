@@ -1,7 +1,11 @@
 import Groq from 'groq-sdk';
 import { MONTAI_SYSTEM_PROMPT } from './constants';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+let _groq: Groq | null = null;
+function getGroq(): Groq {
+  if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
+  return _groq;
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -40,7 +44,7 @@ export async function streamChatResponse(
     })),
   ];
 
-  const stream = await groq.chat.completions.create({
+  const stream = await getGroq().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: groqMessages,
     max_tokens: 4096,
@@ -67,7 +71,7 @@ export async function streamChatResponse(
 }
 
 export async function generateChatTitle(userMessage: string): Promise<string> {
-  const response = await groq.chat.completions.create({
+  const response = await getGroq().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     max_tokens: 30,
     messages: [
