@@ -175,7 +175,7 @@ export default function SettingsPage() {
       >
         <div className="flex items-center gap-3">
           <Link href="/chat" className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors">
-            <ArrowLeft size={18} />
+            <ArrowLeft size={18} strokeWidth={1.5} />
           </Link>
           <Logo size="sm" />
         </div>

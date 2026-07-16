@@ -7,7 +7,6 @@ import { ArrowRight, Check } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import Logo from '@/components/shared/Logo';
 import { LANGUAGES, SOFTWARE_OPTIONS, EXPERIENCE_LEVELS } from '@/lib/constants';
 import type { Language } from '@/lib/types';
 
@@ -71,9 +70,9 @@ export default function OnboardingPage() {
   const steps = [
     {
       title: "What should we call you?",
-      subtitle: "Your nickname for personalized greetings",
+      subtitle: "Your nickname for a personalized experience",
       content: (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Input
             placeholder="e.g. Alex, Editor, Filmmaker..."
             value={data.nickname}
@@ -83,7 +82,7 @@ export default function OnboardingPage() {
             onKeyDown={(e) => e.key === 'Enter' && data.nickname.trim() && setStep(1)}
           />
           <p className="text-xs text-[var(--text-tertiary)]">
-            {data.nickname.length}/30 characters
+            {data.nickname.length}/30
           </p>
         </div>
       ),
@@ -91,17 +90,17 @@ export default function OnboardingPage() {
     },
     {
       title: "Your editing experience?",
-      subtitle: "Montai will adapt its teaching to your level",
+      subtitle: "Montai adapts its teaching to your skill level",
       content: (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {EXPERIENCE_LEVELS.map((level) => (
             <button
               key={level.value}
               onClick={() => setData((p) => ({ ...p, experienceLevel: level.value as typeof data.experienceLevel }))}
-              className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all duration-200 ${
+              className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-150 ${
                 data.experienceLevel === level.value
-                  ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.08)]'
-                  : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] hover:border-[var(--border-subtle)] hover:bg-[var(--bg-secondary)]'
+                  ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.06)]'
+                  : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] hover:border-[rgba(245,158,11,0.3)]'
               }`}
             >
               <div
@@ -114,8 +113,8 @@ export default function OnboardingPage() {
                 {data.experienceLevel === level.value && <Check size={10} className="text-black" />}
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--text-primary)]">{level.label}</p>
-                <p className="text-xs text-[var(--text-tertiary)]">{level.description}</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">{level.label}</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{level.description}</p>
               </div>
             </button>
           ))}
@@ -125,22 +124,22 @@ export default function OnboardingPage() {
     },
     {
       title: "Primary editing software?",
-      subtitle: "Montai will provide software-specific shortcuts and tips",
+      subtitle: "Get software-specific shortcuts and tips",
       content: (
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2">
           {SOFTWARE_OPTIONS.map((sw) => {
             const selected = data.primarySoftware.includes(sw);
             return (
               <button
                 key={sw}
                 onClick={() => toggleSoftware(sw)}
-                className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-all duration-200 ${
+                className={`px-3 py-3 rounded-xl border text-sm font-medium text-left transition-all duration-150 ${
                   selected
-                    ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.1)] text-[var(--accent-primary)]'
-                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[var(--text-tertiary)]'
+                    ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.08)] text-[var(--accent-primary)]'
+                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[rgba(245,158,11,0.3)]'
                 }`}
               >
-                {selected && <Check size={12} className="inline mr-1.5" />}
+                {selected && <Check size={12} className="inline mr-1.5 mb-0.5" />}
                 {sw}
               </button>
             );
@@ -151,7 +150,7 @@ export default function OnboardingPage() {
     },
     {
       title: "Preferred language?",
-      subtitle: "Montai will greet and teach you in this language",
+      subtitle: "Montai will teach you in your language",
       content: (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {LANGUAGES.map((lang) => {
@@ -160,14 +159,14 @@ export default function OnboardingPage() {
               <button
                 key={lang.value}
                 onClick={() => setData((p) => ({ ...p, language: lang.value }))}
-                className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-all duration-200 ${
+                className={`px-3 py-3 rounded-xl border text-sm text-left transition-all duration-150 ${
                   selected
-                    ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.1)] text-[var(--accent-primary)] font-medium'
-                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[var(--text-tertiary)]'
+                    ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.08)] text-[var(--accent-primary)] font-semibold'
+                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[rgba(245,158,11,0.3)]'
                 }`}
               >
-                <span className="block font-medium">{lang.nativeLabel}</span>
-                <span className="block text-xs opacity-60">{lang.label}</span>
+                <span className="block font-semibold">{lang.nativeLabel}</span>
+                <span className="block text-[11px] opacity-60 mt-0.5">{lang.label}</span>
               </button>
             );
           })}
@@ -184,15 +183,26 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-primary)] px-4 py-12">
       {/* Logo */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-10"
+        transition={{ duration: 0.3 }}
+        className="mb-10 flex flex-col items-center gap-2"
       >
-        <Logo size="md" showTagline href={undefined} />
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold text-[#0A0A0B]"
+          style={{
+            background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+            boxShadow: '0 8px 24px rgba(245,158,11,0.2)',
+            fontFamily: 'Sora, sans-serif',
+          }}
+        >
+          M
+        </div>
+        <span className="text-sm font-semibold text-[var(--text-tertiary)] tracking-wide">MONTAI</span>
       </motion.div>
 
       {/* Progress bar */}
-      <div className="w-full max-w-md mb-6">
+      <div className="w-full max-w-lg mb-6 px-2">
         <div className="flex gap-1.5">
           {steps.map((_, i) => (
             <div
@@ -210,20 +220,29 @@ export default function OnboardingPage() {
       </div>
 
       {/* Card */}
-      <div
-        className="w-full max-w-md rounded-2xl p-6 sm:p-8 space-y-6 orange-border-glow"
-        style={{ background: 'var(--bg-secondary)' }}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="w-full max-w-lg rounded-2xl p-7 sm:p-9 space-y-6"
+        style={{
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-subtle)',
+        }}
       >
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.25 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className="mb-5">
-              <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-1">
+            <div className="mb-6">
+              <h1
+                className="text-xl font-bold text-[var(--text-primary)] mb-1.5"
+                style={{ fontFamily: 'Sora, sans-serif' }}
+              >
                 {currentStep.title}
               </h1>
               <p className="text-sm text-[var(--text-tertiary)]">{currentStep.subtitle}</p>
@@ -237,7 +256,7 @@ export default function OnboardingPage() {
           <button
             onClick={() => setStep((s) => s - 1)}
             disabled={step === 0}
-            className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] disabled:opacity-0 disabled:pointer-events-none transition-colors"
           >
             ← Back
           </button>
@@ -265,9 +284,9 @@ export default function OnboardingPage() {
             </Button>
           )}
         </div>
-      </div>
+      </motion.div>
 
-      <p className="mt-6 text-xs text-[var(--text-tertiary)] text-center">
+      <p className="mt-5 text-xs text-[var(--text-tertiary)] text-center">
         You can change these settings anytime in Settings
       </p>
     </div>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Sora, Inter, JetBrains_Mono } from 'next/font/google';
+import { Sora, Inter, JetBrains_Mono, Outfit, Space_Grotesk } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import './globals.css';
 
@@ -21,6 +21,20 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-mono',
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-space',
   display: 'swap',
 });
 
@@ -51,7 +65,10 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' },
+    ],
     apple: '/icons/apple-touch-icon.png',
   },
 };
@@ -71,7 +88,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sora.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      className={`${sora.variable} ${inter.variable} ${jetbrainsMono.variable} ${outfit.variable} ${spaceGrotesk.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen antialiased">

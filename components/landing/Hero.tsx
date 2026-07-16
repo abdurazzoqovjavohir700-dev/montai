@@ -1,185 +1,186 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import MontaiLogo from '@/components/shared/MontaiLogo';
 
 interface HeroProps {
   onGetStarted: () => void;
 }
 
 export default function Hero({ onGetStarted }: HeroProps) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { setTimeout(() => setVisible(true), 50); }, []);
+
+  const fadeUp = (delay: number): React.CSSProperties => ({
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(24px)',
+    transition: `opacity 0.7s ease ${delay}s, transform 0.7s ease ${delay}s`,
+  });
+
   return (
-    <section className="relative flex flex-col items-center justify-center min-h-screen px-4 pt-20 pb-20 overflow-hidden">
-
-      {/* Background radial glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse, rgba(245,158,11,0.07) 0%, transparent 65%)',
-          filter: 'blur(40px)',
-        }}
-      />
-
+    <section style={{
+      minHeight: '90vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      padding: '100px 48px 60px',
+    }}>
       {/* Animated film strip bottom */}
-      <div className="absolute bottom-0 left-0 right-0 overflow-hidden opacity-[0.06] pointer-events-none">
-        <div className="flex animate-filmstrip" style={{ width: '200%' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', opacity: 0.05, pointerEvents: 'none' }}>
+        <div className="animate-filmstrip" style={{ display: 'flex', width: '200%' }}>
           {Array.from({ length: 28 }).map((_, i) => (
-            <div key={i} className="flex flex-col flex-shrink-0 mx-1">
-              <div className="h-2 w-16 rounded-sm mb-0.5" style={{ background: 'var(--accent-primary)' }} />
-              <div className="h-10 w-16 rounded-sm" style={{ border: '1px solid var(--border-subtle)' }} />
-              <div className="h-2 w-16 rounded-sm mt-0.5" style={{ background: 'var(--accent-primary)' }} />
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, margin: '0 4px' }}>
+              <div style={{ height: 8, width: 64, borderRadius: 4, background: '#F59E0B', marginBottom: 2 }} />
+              <div style={{ height: 40, width: 64, borderRadius: 4, border: '1px solid #27272A' }} />
+              <div style={{ height: 8, width: 64, borderRadius: 4, background: '#F59E0B', marginTop: 2 }} />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Content — all centered */}
-      <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto w-full space-y-8">
+      {/* Gradient orbs */}
+      <div style={{
+        position: 'absolute', top: '15%', left: '25%',
+        width: 500, height: 500,
+        background: 'radial-gradient(circle, rgba(245,158,11,0.07) 0%, transparent 70%)',
+        borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute', bottom: '5%', right: '15%',
+        width: 350, height: 350,
+        background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 70%)',
+        borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none',
+      }} />
+
+      {/* Content */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: 1100, width: '100%' }}>
 
         {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
-          style={{
-            border: '1px solid rgba(245,158,11,0.3)',
-            background: 'rgba(245,158,11,0.07)',
-            color: 'var(--accent-primary)',
-          }}
-        >
-          <Sparkles size={11} />
-          AI-Powered Video Editing Mentorship
-          <span
-            className="w-1.5 h-1.5 rounded-full animate-pulse"
-            style={{ background: 'var(--accent-primary)' }}
-          />
-        </motion.div>
+        <div style={{ ...fadeUp(0.1), display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, border: '1px solid rgba(245,158,11,0.2)', background: 'rgba(245,158,11,0.05)', marginBottom: 32 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
+          <span style={{ fontSize: 13, color: '#F59E0B', fontFamily: 'var(--font-space), Space Grotesk, sans-serif', fontWeight: 500 }}>
+            <Sparkles size={11} style={{ display: 'inline', marginRight: 4 }} />
+            AI-Powered Video Editing Mentorship
+          </span>
+        </div>
+
+        {/* Logo */}
+        <div style={{ ...fadeUp(0.2), marginBottom: 36, filter: 'drop-shadow(0 12px 32px rgba(245,158,11,0.4))' }}>
+          <MontaiLogo size={96} />
+        </div>
 
         {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-5xl sm:text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight"
-          style={{ fontFamily: 'Sora, sans-serif' }}
-        >
+        <h1 style={{
+          ...fadeUp(0.3),
+          fontFamily: 'var(--font-outfit), Outfit, sans-serif',
+          fontWeight: 900,
+          fontSize: 'clamp(48px, 7vw, 76px)',
+          lineHeight: 1.02,
+          letterSpacing: '-3px',
+          color: '#FAFAFA',
+          marginBottom: 24,
+        }}>
           Master the Art of
           <br />
-          <span className="gradient-text">Video Montage</span>
-        </motion.h1>
+          <span style={{
+            background: 'linear-gradient(135deg, #F59E0B 0%, #F97316 60%, #EF4444 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
+            Video Montage
+          </span>
+        </h1>
 
-        {/* Subheadline */}
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg sm:text-xl max-w-2xl leading-relaxed"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+        {/* Subtitle */}
+        <p style={{
+          ...fadeUp(0.45),
+          fontFamily: 'var(--font-inter), Inter, sans-serif',
+          fontSize: 18,
+          color: '#71717A',
+          maxWidth: 520,
+          lineHeight: 1.7,
+          marginBottom: 40,
+        }}>
           Your personal AI mentor for professional video editing — color grading,
           sound design, storytelling, and every cut type from beginner to cinema level.
-        </motion.p>
+        </p>
 
         {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
+        <div style={{ ...fadeUp(0.6), display: 'flex', gap: 12, marginBottom: 56, flexWrap: 'wrap', justifyContent: 'center' }}>
           <button
             onClick={onGetStarted}
-            className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-base transition-all duration-200"
             style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '15px 36px', borderRadius: 14,
               background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-              color: '#0A0A0B',
-              boxShadow: '0 4px 30px rgba(245,158,11,0.3)',
+              color: '#0A0A0B', fontSize: 16, fontWeight: 700,
+              fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+              border: 'none', cursor: 'pointer',
+              boxShadow: '0 4px 24px rgba(245,158,11,0.35)',
+              transition: 'all 0.25s ease',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 40px rgba(245,158,11,0.45)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 36px rgba(245,158,11,0.5)';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 30px rgba(245,158,11,0.3)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(245,158,11,0.35)';
             }}
           >
-            Get Started — It&apos;s Free
+            Get Started Free
             <ArrowRight size={18} />
           </button>
 
-          <button
-            onClick={onGetStarted}
-            className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-medium text-sm transition-all duration-200"
+          <a
+            href="#features"
             style={{
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-secondary)',
-              background: 'transparent',
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '15px 32px', borderRadius: 14,
+              border: '1px solid #27272A',
+              color: '#A0A0A0', fontSize: 16, fontWeight: 500,
+              fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+              textDecoration: 'none', background: 'transparent',
+              transition: 'all 0.25s ease',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(245,158,11,0.4)';
-              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,158,11,0.4)';
+              (e.currentTarget as HTMLElement).style.color = '#FAFAFA';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-subtle)';
-              (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
+              (e.currentTarget as HTMLElement).style.borderColor = '#27272A';
+              (e.currentTarget as HTMLElement).style.color = '#A0A0A0';
             }}
           >
             See How It Works
-          </button>
-        </motion.div>
+          </a>
+        </div>
 
         {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.55 }}
-          className="flex items-center justify-center gap-10 pt-4"
-        >
+        <div style={{ ...fadeUp(0.75), display: 'flex', gap: 48, flexWrap: 'wrap', justifyContent: 'center' }}>
           {[
-            { value: '10+', label: 'Expert Topics' },
-            { value: '13', label: 'Languages' },
-            { value: '100%', label: 'Free Forever' },
-          ].map((stat, i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <span
-                className="text-2xl font-bold gradient-text"
-                style={{ fontFamily: 'Sora, sans-serif' }}
-              >
-                {stat.value}
-              </span>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {stat.label}
-              </span>
+            { num: '10+', label: 'Expert Topics' },
+            { num: '13', label: 'Languages' },
+            { num: '100%', label: 'Free Forever' },
+          ].map(stat => (
+            <div key={stat.label} style={{ textAlign: 'center' }}>
+              <div style={{
+                fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
+                fontWeight: 700, fontSize: 32,
+                background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>{stat.num}</div>
+              <div style={{
+                fontFamily: 'var(--font-inter), Inter, sans-serif',
+                fontSize: 13, color: '#52525B', marginTop: 4,
+              }}>{stat.label}</div>
             </div>
           ))}
-        </motion.div>
-
-        {/* Social proof strip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-          className="flex items-center justify-center gap-2 text-xs"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
-          <div className="flex -space-x-2">
-            {['🎬', '✂️', '🎨', '🔊', '🚀'].map((emoji, i) => (
-              <div
-                key={i}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs border"
-                style={{
-                  background: 'var(--bg-tertiary)',
-                  borderColor: 'var(--border-subtle)',
-                }}
-              >
-                {emoji}
-              </div>
-            ))}
-          </div>
-          <span>Trusted by editors worldwide</span>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

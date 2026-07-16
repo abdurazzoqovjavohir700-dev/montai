@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Menu, Film } from 'lucide-react';
+import { Menu, PanelLeftClose } from 'lucide-react';
+import MontaiLogo from '@/components/shared/MontaiLogo';
 import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/layout/Sidebar';
 import Logo from '@/components/shared/Logo';
@@ -17,6 +18,7 @@ export default function ChatByIdPage() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarVisible, setDesktopSidebarVisible] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,13 +61,8 @@ export default function ChatByIdPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
-        <div className="flex flex-col items-center gap-4">
-          <Film size={32} className="text-[var(--accent-primary)] animate-pulse-orange" />
-          <div className="flex gap-1.5">
-            <div className="typing-dot" />
-            <div className="typing-dot" />
-            <div className="typing-dot" />
-          </div>
+        <div style={{ animation: 'logoPulse 1.5s ease infinite' }}>
+          <MontaiLogo size={64} />
         </div>
       </div>
     );
@@ -75,28 +72,61 @@ export default function ChatByIdPage() {
 
   return (
     <div className="h-screen flex overflow-hidden bg-[var(--bg-primary)]">
-      <Sidebar
-        chats={chats}
-        activeChatId={chatId}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onNewChat={handleNewChat}
-        onChatsUpdate={setChats}
-        nickname={user.nickname}
-      />
+      {/* Desktop sidebar */}
+      <div
+        className="hidden md:block flex-shrink-0 h-full"
+        style={{
+          width: desktopSidebarVisible ? '260px' : '0px',
+          minWidth: desktopSidebarVisible ? '260px' : '0px',
+          overflow: 'hidden',
+          transition: 'all 0.3s ease',
+        }}
+      >
+        <Sidebar
+          chats={chats}
+          activeChatId={chatId}
+          isOpen={false}
+          onClose={() => {}}
+          onNewChat={handleNewChat}
+          onChatsUpdate={setChats}
+          nickname={user.nickname}
+        />
+      </div>
+
+      {/* Mobile sidebar */}
+      <div className="md:hidden">
+        <Sidebar
+          chats={chats}
+          activeChatId={chatId}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onNewChat={handleNewChat}
+          onChatsUpdate={setChats}
+          nickname={user.nickname}
+        />
+      </div>
 
       <div className="flex flex-col flex-1 min-w-0 h-full">
-        {/* Mobile header */}
-        <div className="flex md:hidden items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
-            aria-label="Open sidebar"
+            onClick={() => {
+              if (window.innerWidth < 768) setSidebarOpen(true);
+              else setDesktopSidebarVisible((v) => !v);
+            }}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--text-secondary)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-tertiary)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+            aria-label="Toggle sidebar"
           >
-            <Menu size={20} />
+            {desktopSidebarVisible ? <PanelLeftClose size={20} className="hidden md:block" /> : <Menu size={20} className="hidden md:block" />}
+            <Menu size={20} className="md:hidden" />
           </button>
-          <Logo size="sm" href={undefined} />
-          <div className="w-9" />
+          <div className="md:hidden">
+            <Logo size="sm" href={undefined} />
+          </div>
+          <div className="w-9 md:hidden" />
         </div>
 
         <div className="flex-1 min-h-0">

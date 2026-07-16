@@ -5,26 +5,29 @@ import { motion } from 'framer-motion';
 export default function TypingIndicator() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, x: -8 }}
+      initial={{ opacity: 0, y: 6, x: -8 }}
       animate={{ opacity: 1, y: 0, x: 0 }}
-      exit={{ opacity: 0, y: 8 }}
+      exit={{ opacity: 0, y: 6 }}
       transition={{ duration: 0.2 }}
-      className="flex items-start gap-3 px-4 py-2"
+      className="flex items-start gap-3 px-4 sm:px-8 py-2 w-full"
     >
-      {/* Montai Avatar */}
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold text-black"
-        style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}
+        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold"
+        style={{
+          background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+          color: '#0A0A0B',
+          boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
+          fontFamily: 'Sora, sans-serif',
+        }}
       >
         M
       </div>
 
-      {/* Bubble */}
       <div
-        className="rounded-2xl rounded-tl-sm px-4 py-3 border-l-[3px]"
+        className="rounded-[18px] rounded-tl-sm px-5 py-3.5"
         style={{
-          background: 'var(--bg-chat-ai)',
-          borderLeftColor: 'var(--accent-primary)',
+          background: 'var(--bg-tertiary)',
+          borderLeft: '3px solid var(--accent-primary)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
         }}
       >
