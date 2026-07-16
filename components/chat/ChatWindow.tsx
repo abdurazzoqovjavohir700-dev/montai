@@ -46,7 +46,8 @@ export default function ChatWindow({
   useEffect(() => {
     setMessages(initialMessages);
     setCurrentChatId(chatId);
-  }, [chatId, initialMessages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]); // initialMessages intentionally excluded — parent passes new [] on every render
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

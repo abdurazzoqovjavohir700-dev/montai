@@ -61,11 +61,14 @@ export default function Sidebar({
   }, []);
 
   const handleDelete = async (chatId: string) => {
+    // Optimistic — darhol UI dan o'chiramiz
+    onChatsUpdate(chats.filter(c => c.id !== chatId));
+    if (activeChatId === chatId) router.push('/chat');
     try {
       await fetch(`/api/chat/${chatId}`, { method: 'DELETE' });
-      onChatsUpdate(chats.filter(c => c.id !== chatId));
-      if (activeChatId === chatId) router.push('/chat');
     } catch {
+      // Xato bo'lsa qaytaramiz
+      onChatsUpdate(chats);
       toast.error('Chatni o\'chirib bo\'lmadi');
     }
   };
