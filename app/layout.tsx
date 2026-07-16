@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Sora, Inter, JetBrains_Mono, Outfit, Space_Grotesk } from 'next/font/google';
+import ThemeInit from '@/components/settings/ThemeInit';
 import './globals.css';
 
 const sora = Sora({
@@ -91,6 +92,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen antialiased">
+        <ThemeInit />
         {children}
       </body>
     </html>

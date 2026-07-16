@@ -5,9 +5,10 @@ import { signOut } from 'next-auth/react';
 import { toast } from '@/components/ui/Toast';
 import {
   Settings, User, Film, Palette, Shield, Download, LogOut, Trash2, Check, X,
-  Bell, BarChart2, Keyboard, Info, ChevronRight, Zap, Globe, Moon, ImageIcon,
+  Bell, BarChart2, Keyboard, Info, ChevronRight, Zap, Globe, ImageIcon,
 } from 'lucide-react';
 import ChatBgPicker from './ChatBgPicker';
+import ThemeSystem from './ThemeSystem';
 import { LANGUAGES, SOFTWARE_OPTIONS, FOCUS_AREAS, EXPERIENCE_LEVELS } from '@/lib/constants';
 import type { User as UserType, Language } from '@/lib/types';
 
@@ -17,7 +18,7 @@ const TABS = [
   { group: 'Asosiy',  items: [
     { id: 'general',    label: 'Umumiy',       icon: <Settings  size={15} strokeWidth={1.5} /> },
     { id: 'profile',    label: 'Profil',        icon: <User      size={15} strokeWidth={1.5} /> },
-    { id: 'appearance', label: "Ko'rinish",     icon: <Palette   size={15} strokeWidth={1.5} /> },
+    { id: 'themes',     label: 'Mavzular',      icon: <Palette   size={15} strokeWidth={1.5} /> },
     { id: 'language',   label: 'Til',           icon: <Globe     size={15} strokeWidth={1.5} /> },
   ]},
   { group: 'AI',      items: [
@@ -278,43 +279,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       </div>
     ),
 
-    appearance: (
+    themes: (
       <div>
-        <h2 style={titleStyle}>Ko&apos;rinish</h2>
-        <div style={{ marginBottom: 24 }}>
-          <Label>Shrift hajmi</Label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {([{ v: 'sm', l: 'Kichik', px: ['13px','16px'] }, { v: 'md', l: "O'rta", px: ['15px','18px'] }, { v: 'lg', l: 'Katta', px: ['17px','20px'] }] as const).map(s => (
-              <button key={s.v} onClick={() => {
-                setForm(p => ({ ...p, fontSize: s.v }));
-                document.documentElement.style.setProperty('--font-size-body', s.px[0]);
-                document.documentElement.style.setProperty('--font-size-heading', s.px[1]);
-              }} style={{
-                flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-                background: form.fontSize === s.v ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)',
-                outline: form.fontSize === s.v ? '1px solid #F59E0B' : '1px solid rgba(255,255,255,0.08)',
-                color: form.fontSize === s.v ? '#F59E0B' : '#A1A1AA',
-                fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-              }}>{s.l}</button>
-            ))}
-          </div>
-        </div>
-        <Row
-          label="Tema"
-          desc="Montai faqat qorong'u temada ishlaydi"
-          right={<div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Moon size={14} strokeWidth={1.5} style={{ color: '#F59E0B' }} /><span style={{ fontSize: 13, color: '#F59E0B', fontFamily: 'Inter, sans-serif' }}>Dark</span></div>}
-        />
-        <Row
-          label="Animatsiyalar"
-          desc="Framer Motion animatsiyalari"
-          right={<span style={{ fontSize: 12, color: '#F59E0B', fontFamily: 'Inter, sans-serif' }}>Yoqiq</span>}
-        />
-        <Row
-          label="Anti-aliasing"
-          desc="Silliq shrift ko'rinishi"
-          right={<span style={{ fontSize: 12, color: '#F59E0B', fontFamily: 'Inter, sans-serif' }}>Yoqiq</span>}
-        />
-        <SaveBtn />
+        <h2 style={titleStyle}>Mavzular va ko&apos;rinish</h2>
+        <ThemeSystem />
       </div>
     ),
 

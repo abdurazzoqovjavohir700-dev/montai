@@ -80,6 +80,8 @@ html { scroll-behavior: smooth; }
   --font-size-body: 16px;
   --font-size-heading: 20px;
   --font-size-sm: 14px;
+  --msg-padding: 8px 0;
+  --msg-line-height: 1.85;
 }
 
 body {
