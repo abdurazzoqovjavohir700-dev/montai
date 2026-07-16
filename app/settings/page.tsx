@@ -30,6 +30,17 @@ export default function SettingsPage() {
     skillGoal: '',
     fontSize: 'md' as 'sm' | 'md' | 'lg',
   });
+  const fontSizeMap = {
+    sm: { body: '13px', heading: '16px' },
+    md: { body: '15px', heading: '18px' },
+    lg: { body: '17px', heading: '20px' },
+  };
+
+  const applyFontSize = (size: 'sm' | 'md' | 'lg') => {
+    document.documentElement.style.setProperty('--font-size-body', fontSizeMap[size].body);
+    document.documentElement.style.setProperty('--font-size-heading', fontSizeMap[size].heading);
+  };
+
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -54,6 +65,7 @@ export default function SettingsPage() {
           skillGoal: data.skillGoal,
           fontSize: data.fontSize,
         });
+        applyFontSize(data.fontSize as 'sm' | 'md' | 'lg');
       })
       .catch(() => router.push('/'));
   }, [router]);
@@ -173,7 +185,7 @@ export default function SettingsPage() {
       </header>
 
       {/* Content */}
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <main className="w-full max-w-3xl mx-auto px-4 py-8 space-y-5" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
 
           {/* Profile Section */}
@@ -297,7 +309,7 @@ export default function SettingsPage() {
                 {(['sm', 'md', 'lg'] as const).map((size) => (
                   <button
                     key={size}
-                    onClick={() => setForm((p) => ({ ...p, fontSize: size }))}
+                    onClick={() => { setForm((p) => ({ ...p, fontSize: size })); applyFontSize(size); }}
                     className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${
                       form.fontSize === size
                         ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.08)] text-[var(--accent-primary)]'
