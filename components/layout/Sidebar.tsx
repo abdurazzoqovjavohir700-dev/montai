@@ -39,6 +39,7 @@ export default function Sidebar({
   const router = useRouter();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,13 +62,12 @@ export default function Sidebar({
   }, []);
 
   const handleDelete = async (chatId: string) => {
-    // Optimistic — darhol UI dan o'chiramiz
+    setConfirmDeleteId(null);
     onChatsUpdate(chats.filter(c => c.id !== chatId));
     if (activeChatId === chatId) router.push('/chat');
     try {
       await fetch(`/api/chat/${chatId}`, { method: 'DELETE' });
     } catch {
-      // Xato bo'lsa qaytaramiz
       onChatsUpdate(chats);
       toast.error('Chatni o\'chirib bo\'lmadi');
     }
@@ -91,6 +91,7 @@ export default function Sidebar({
   const ChatItem = ({ chat }: { chat: Chat }) => {
     const isActive = chat.id === activeChatId;
     const isRenaming = renamingId === chat.id;
+    const isConfirming = confirmDeleteId === chat.id;
     const [hovered, setHovered] = useState(false);
 
     if (isRenaming) {
@@ -111,6 +112,47 @@ export default function Sidebar({
               color: '#FAFAFA', outline: 'none', fontFamily: 'Inter, sans-serif',
             }}
           />
+        </div>
+      );
+    }
+
+    if (isConfirming) {
+      return (
+        <div style={{
+          padding: '8px 10px', borderRadius: 8,
+          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+        }}>
+          <p style={{ fontSize: 12, color: '#A1A1AA', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+            Bu chatni o&apos;chirasizmi?
+          </p>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => handleDelete(chat.id)}
+              style={{
+                flex: 1, padding: '5px 0', borderRadius: 6, border: 'none',
+                background: '#EF4444', color: '#fff',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#DC2626')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#EF4444')}
+            >
+              O&apos;chirish
+            </button>
+            <button
+              onClick={() => setConfirmDeleteId(null)}
+              style={{
+                flex: 1, padding: '5px 0', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)',
+                background: 'transparent', color: '#71717A',
+                fontSize: 12, cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.05)'); (e.currentTarget.style.color = '#A1A1AA'); }}
+              onMouseLeave={e => { (e.currentTarget.style.background = 'transparent'); (e.currentTarget.style.color = '#71717A'); }}
+            >
+              Bekor
+            </button>
+          </div>
         </div>
       );
     }
@@ -148,15 +190,15 @@ export default function Sidebar({
           }}>
             <button
               onClick={e => { e.preventDefault(); e.stopPropagation(); setRenamingId(chat.id); setRenameValue(chat.title); }}
-              style={{ padding: 3, borderRadius: 4, color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
+              style={{ padding: 4, borderRadius: 4, color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#A1A1AA')}
               onMouseLeave={e => (e.currentTarget.style.color = '#52525B')}
             >
               <Edit3 size={12} strokeWidth={1.5} />
             </button>
             <button
-              onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(chat.id); }}
-              style={{ padding: 3, borderRadius: 4, color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
+              onClick={e => { e.preventDefault(); e.stopPropagation(); setConfirmDeleteId(chat.id); }}
+              style={{ padding: 4, borderRadius: 4, color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
               onMouseLeave={e => (e.currentTarget.style.color = '#52525B')}
             >

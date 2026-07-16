@@ -108,37 +108,43 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
                   fontFamily: 'Inter, sans-serif',
                 }}
               />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
                 <button
                   onClick={cancelEdit}
                   style={{
-                    background: '#3F3F46',
-                    color: '#E4E4E7',
-                    border: 'none',
-                    borderRadius: '20px',
-                    padding: '7px 14px',
+                    background: 'transparent',
+                    color: '#71717A',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    padding: '7px 16px',
                     fontSize: '13px',
+                    fontWeight: 500,
                     cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif',
+                    transition: 'all 0.15s',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#52525B')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#3F3F46')}
+                  onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.06)'); (e.currentTarget.style.color = '#A1A1AA'); }}
+                  onMouseLeave={e => { (e.currentTarget.style.background = 'transparent'); (e.currentTarget.style.color = '#71717A'); }}
                 >
                   Bekor
                 </button>
                 <button
                   onClick={saveEdit}
                   style={{
-                    background: '#FAFAFA',
+                    background: 'linear-gradient(135deg, #F59E0B, #F97316)',
                     color: '#0A0A0B',
                     border: 'none',
-                    borderRadius: '20px',
-                    padding: '7px 14px',
+                    borderRadius: '10px',
+                    padding: '7px 16px',
                     fontSize: '13px',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif',
+                    transition: 'opacity 0.15s',
+                    boxShadow: '0 2px 12px rgba(245,158,11,0.3)',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#D4D4D8')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#FAFAFA')}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                 >
                   Saqlash
                 </button>
@@ -149,16 +155,19 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
             <div
               onClick={startEdit}
               style={{
-                background: 'rgba(255,255,255,0.08)',
-                color: '#FAFAFA',
+                background: 'rgba(255,255,255,0.09)',
+                color: '#F4F4F5',
                 borderRadius: '18px 18px 4px 18px',
-                padding: '12px 16px',
+                padding: '13px 18px',
                 fontSize: '15px',
-                lineHeight: '1.6',
+                lineHeight: '1.65',
+                letterSpacing: '-0.005em',
                 wordBreak: 'break-word',
                 overflowWrap: 'break-word',
                 whiteSpace: 'pre-wrap',
                 cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif',
+                border: '1px solid rgba(255,255,255,0.07)',
               }}
               title="Tahrirlash uchun bosing"
             >
@@ -229,7 +238,11 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
       </div>
 
       <div className="flex flex-col gap-2 min-w-0 flex-1">
-        <div style={{ color: '#E4E4E7', fontSize: '15px', lineHeight: '1.8' }}>
+        <div style={{
+          color: '#E4E4E7', fontSize: '15.5px', lineHeight: '1.85',
+          letterSpacing: '-0.01em',
+          fontFamily: "'Inter', sans-serif",
+        }}>
           <MarkdownRenderer content={message.content} />
         </div>
 
