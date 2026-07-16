@@ -443,23 +443,23 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <div style={{ fontSize: 12, color: '#52525B', fontFamily: 'Inter, sans-serif' }}>AI Video Editing Mentor · v1.0</div>
         </div>
         {[
-          { label: 'AI Engine', value: 'Groq · Llama 3.3 70B' },
-          { label: 'Framework', value: 'Next.js 15 · TypeScript' },
-          { label: 'Database', value: 'Supabase · PostgreSQL' },
-          { label: 'Hosting', value: 'Vercel Edge Network' },
-          { label: 'Auth', value: 'NextAuth.js' },
+          { label: 'Yaratuvchi', value: 'jvh' },
+          { label: 'Maqsad', value: 'Videomontaj o\'rgatish' },
+          { label: 'Tillar', value: '13 ta til' },
+          { label: 'Rejim', value: 'Bepul' },
+          { label: 'Versiya', value: 'v1.0' },
         ].map(({ label, value }) => (
           <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <span style={{ fontSize: 13, color: '#71717A', fontFamily: 'Inter, sans-serif' }}>{label}</span>
-            <span style={{ fontSize: 13, color: '#A1A1AA', fontFamily: 'JetBrains Mono, monospace' }}>{value}</span>
+            <span style={{ fontSize: 13, color: '#A1A1AA', fontFamily: 'Inter, sans-serif' }}>{value}</span>
           </div>
         ))}
         <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
           <a href="/privacy" style={{ flex: 1, padding: '9px 0', textAlign: 'center', borderRadius: 9, border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', textDecoration: 'none', fontSize: 13, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-            Privacy <ChevronRight size={12} />
+            Maxfiylik <ChevronRight size={12} />
           </a>
           <a href="/terms" style={{ flex: 1, padding: '9px 0', textAlign: 'center', borderRadius: 9, border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', textDecoration: 'none', fontSize: 13, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
-            Terms <ChevronRight size={12} />
+            Shartlar <ChevronRight size={12} />
           </a>
         </div>
       </div>
