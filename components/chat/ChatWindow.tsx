@@ -7,7 +7,7 @@ import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
 import MessageInput from './MessageInput';
-import { toast } from 'react-hot-toast';
+import { toast, ToastContainer } from '@/components/ui/Toast';
 import type { Message, Language } from '@/lib/types';
 import { generateChatTitle } from '@/lib/utils';
 
@@ -154,7 +154,7 @@ export default function ChatWindow({
           setStreamingContent(fullContent);
         }
 
-        if (!fullContent.trim()) throw new Error('Bo\'sh javob keldi');
+        if (!fullContent.trim()) throw new Error('AI bo\'sh javob qaytardi');
 
         const aiMessage: Message = {
           id: crypto.randomUUID(),
@@ -196,7 +196,18 @@ export default function ChatWindow({
       } catch (err: unknown) {
         if ((err as { name?: string }).name !== 'AbortError') {
           const msg = (err as Error).message ?? '';
-          toast.error(msg || 'Xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+          const is429 = msg.includes('429') || msg.toLowerCase().includes('rate limit');
+          const isNet = msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch');
+          toast.error(
+            is429 ? 'AI server cheklovi — 1 daqiqa kuting' :
+            isNet ? 'Tarmoq xatosi — internet ulanishini tekshiring' :
+            msg.includes('timeout') ? 'So\'rov vaqti tugadi — qaytadan urinib ko\'ring' :
+            msg || 'Xatolik yuz berdi',
+            {
+              description: is429 ? 'Groq free tier rate limit. Bir oz kutib qaytadan yuboring.' : undefined,
+              onRetry: is429 || isNet ? undefined : undefined,
+            }
+          );
           setStreamingContent('');
         }
       } finally {
@@ -268,7 +279,7 @@ export default function ChatWindow({
       }
     } catch (err) {
       if ((err as { name?: string }).name !== 'AbortError') {
-        toast.error('Qayta urinishda xatolik yuz berdi');
+        toast.error('Qayta generatsiyada xatolik yuz berdi', { description: (err as Error).message });
         setStreamingContent('');
       }
     } finally {
@@ -281,6 +292,7 @@ export default function ChatWindow({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+      <ToastContainer />
       {/* Messages scroll */}
       <div
         ref={scrollRef}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/components/ui/Toast';
 import { Settings, User, Film, Palette, Shield, Download, LogOut, Trash2, Check, X } from 'lucide-react';
 import { LANGUAGES, SOFTWARE_OPTIONS, FOCUS_AREAS, EXPERIENCE_LEVELS } from '@/lib/constants';
 import type { User as UserType, Language } from '@/lib/types';

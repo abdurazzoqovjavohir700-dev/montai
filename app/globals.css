@@ -402,6 +402,15 @@ textarea::placeholder, input::placeholder {
   background: var(--bg-elevated);
 }
 
+/* ─── Image hover overlay in message bubble ─── */
+.image-zoom-overlay:hover {
+  background: rgba(0,0,0,0.32) !important;
+}
+.image-zoom-overlay:hover .image-zoom-icon {
+  background: rgba(0,0,0,0.55) !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+
 /* ─── Logo animations ─── */
 @keyframes logoPulse {
   0%, 100% { transform: scale(1); opacity: 1; }

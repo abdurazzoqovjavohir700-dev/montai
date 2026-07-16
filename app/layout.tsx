@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Sora, Inter, JetBrains_Mono, Outfit, Space_Grotesk } from 'next/font/google';
-import { Toaster } from 'react-hot-toast';
 import './globals.css';
 
 const sora = Sora({
@@ -93,26 +92,6 @@ export default function RootLayout({
     >
       <body className="min-h-screen antialiased">
         {children}
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: '#1C1C1F',
-              color: '#FAFAFA',
-              border: '1px solid #27272A',
-              borderRadius: '8px',
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '14px',
-            },
-            success: {
-              iconTheme: { primary: '#F59E0B', secondary: '#0A0A0B' },
-            },
-            error: {
-              iconTheme: { primary: '#EF4444', secondary: '#FAFAFA' },
-            },
-          }}
-        />
       </body>
     </html>
   );

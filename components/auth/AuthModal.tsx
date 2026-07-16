@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import MontaiLogo from '@/components/shared/MontaiLogo';
 

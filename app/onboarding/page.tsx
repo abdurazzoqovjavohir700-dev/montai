@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { LANGUAGES, SOFTWARE_OPTIONS, EXPERIENCE_LEVELS } from '@/lib/constants';

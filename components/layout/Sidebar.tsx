@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import SettingsModal from '@/components/settings/SettingsModal';
 import MontaiLogo from '@/components/shared/MontaiLogo';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/components/ui/Toast';
 import { signOut } from 'next-auth/react';
 import { groupChatsByDate, truncateText } from '@/lib/utils';
 import type { Chat } from '@/lib/types';

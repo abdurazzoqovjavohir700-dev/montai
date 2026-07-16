@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { signOut } from 'next-auth/react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/components/ui/Toast';
 import {
   ArrowLeft, Download, Trash2, LogOut, Save, Check,
 } from 'lucide-react';
