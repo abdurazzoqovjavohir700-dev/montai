@@ -1,10 +1,8 @@
 import Groq from 'groq-sdk';
 import { MONTAI_SYSTEM_PROMPT } from './constants';
 
-let _groq: Groq | null = null;
 function getGroq(): Groq {
-  if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
-  return _groq;
+  return new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
 }
 
 export interface ChatMessage {
@@ -12,12 +10,24 @@ export interface ChatMessage {
   content: string | Array<{ type: string; [key: string]: unknown }>;
 }
 
-function messageToText(content: ChatMessage['content']): string {
+function hasImageContent(content: ChatMessage['content']): boolean {
+  if (typeof content === 'string') return false;
+  return content.some(b => b.type === 'image' || b.type === 'image_url');
+}
+
+function toGroqContent(content: ChatMessage['content']): Groq.Chat.ChatCompletionMessageParam['content'] {
   if (typeof content === 'string') return content;
-  return content
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as { type: string; text: string }).text)
-    .join('');
+  return content.map(block => {
+    if (block.type === 'image') {
+      const src = block.source as { type: string; media_type: string; data: string };
+      return {
+        type: 'image_url' as const,
+        image_url: { url: `data:${src.media_type};base64,${src.data}` },
+      };
+    }
+    if (block.type === 'image_url') return block as { type: 'image_url'; image_url: { url: string } };
+    return { type: 'text' as const, text: (block as { type: string; text: string }).text ?? '' };
+  });
 }
 
 export async function streamChatResponse(
@@ -30,26 +40,55 @@ export async function streamChatResponse(
     focusAreas?: string[];
   }
 ): Promise<ReadableStream<Uint8Array>> {
-  const contextAddition = userContext
-    ? `\n\n## USER CONTEXT\n- Nickname: ${userContext.nickname ?? 'Editor'}\n- Language: ${userContext.language ?? 'English'} — ALWAYS respond in this language\n- Experience Level: ${userContext.experienceLevel ?? 'beginner'}\n- Primary Software: ${userContext.primarySoftware?.join(', ') ?? 'Not specified'}\n- Focus Areas: ${userContext.focusAreas?.join(', ') ?? 'General'}\n\nAdapt your teaching style and language to match the user's level and preferred language.`
-    : '';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const timeStr = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+
+  const contextAddition = `\n\n=== CURRENT CONTEXT ===
+Current date: ${dateStr}
+Current time: ${timeStr}
+User nickname: ${userContext?.nickname ?? 'Editor'}
+User language: ${userContext?.language ?? 'en'} — ALWAYS respond in this language
+User experience: ${userContext?.experienceLevel ?? 'beginner'}
+User software: ${userContext?.primarySoftware?.join(', ') ?? 'not specified'}
+Use their nickname naturally (not every message). Respond in their language. Adapt to their experience level.`;
 
   const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition;
+
+  const hasImage = messages.some(m => hasImageContent(m.content));
+  const model = hasImage ? 'meta/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
 
   const groqMessages: Groq.Chat.ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt },
     ...messages.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
-      content: messageToText(msg.content),
-    })),
+      content: toGroqContent(msg.content),
+    } as Groq.Chat.ChatCompletionMessageParam)),
   ];
 
-  const stream = await getGroq().chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    messages: groqMessages,
-    max_tokens: 4096,
-    stream: true,
-  });
+  let stream;
+  try {
+    stream = await getGroq().chat.completions.create({
+      model,
+      messages: groqMessages,
+      max_tokens: 1024,
+      temperature: 0.7,
+      stream: true,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
+      stream = await getGroq().chat.completions.create({
+        model: 'llama-3.1-8b-instant',
+        messages: groqMessages,
+        max_tokens: 1024,
+        temperature: 0.7,
+        stream: true,
+      });
+    } else {
+      throw err;
+    }
+  }
 
   const encoder = new TextEncoder();
 
