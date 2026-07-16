@@ -223,7 +223,7 @@ export default function ChatWindow({
         {showWelcome ? (
           <WelcomeScreen nickname={nickname} language={language} onSelectSuggestion={handleSend} />
         ) : (
-          <div style={{ maxWidth: '768px', margin: '0 auto', padding: '24px' }}>
+          <div style={{ maxWidth: '780px', margin: '0 auto', padding: '48px 24px 24px' }}>
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
                 <MessageBubble
@@ -277,9 +277,9 @@ export default function ChatWindow({
         )}
       </AnimatePresence>
 
-      {/* Input — centered at 768px */}
-      <div style={{ width: '100%', padding: '16px 24px 24px', background: 'var(--bg-primary)' }}>
-        <div style={{ maxWidth: '768px', margin: '0 auto' }}>
+      {/* Input — centered at 780px */}
+      <div style={{ width: '100%', padding: '12px 24px 24px', background: '#0D0D0D' }}>
+        <div style={{ maxWidth: '780px', margin: '0 auto' }}>
           <MessageInput
             onSend={handleSend}
             onStop={() => { abortRef.current?.abort(); }}

@@ -92,7 +92,7 @@ export default function Sidebar({
 
     if (isRenaming) {
       return (
-        <div style={{ padding: '2px 8px' }}>
+        <div style={{ padding: '2px 4px' }}>
           <input
             autoFocus
             value={renameValue}
@@ -103,8 +103,8 @@ export default function Sidebar({
               if (e.key === 'Escape') setRenamingId(null);
             }}
             style={{
-              width: '100%', fontSize: 14, borderRadius: 6, padding: '6px 10px',
-              background: '#2F2F2F', border: '1px solid #52525B',
+              width: '100%', fontSize: 13, borderRadius: 6, padding: '5px 8px',
+              background: '#2F2F2F', border: '1px solid #3F3F46',
               color: '#FAFAFA', outline: 'none', fontFamily: 'Inter, sans-serif',
             }}
           />
@@ -123,38 +123,43 @@ export default function Sidebar({
           onClick={() => { if (window.innerWidth < 768) onClose(); }}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-            background: isActive ? '#2F2F2F' : hovered ? '#1F1F1F' : 'transparent',
+            height: 36, padding: '0 10px', borderRadius: 8, cursor: 'pointer',
+            background: isActive ? 'rgba(255,255,255,0.08)' : hovered ? 'rgba(255,255,255,0.05)' : 'transparent',
             transition: 'background 0.15s',
             textDecoration: 'none',
           }}
         >
           <span style={{
-            fontSize: 14, color: '#B4B4B4', overflow: 'hidden',
+            fontSize: 13,
+            color: isActive ? '#FAFAFA' : '#A1A1AA',
+            overflow: 'hidden',
             textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+            fontWeight: isActive ? 500 : 400,
           }}>
-            {truncateText(chat.title, 32)}
+            {truncateText(chat.title, 28)}
           </span>
-          {hovered && (
-            <div style={{ display: 'flex', gap: 2, flexShrink: 0, marginLeft: 4 }}>
-              <button
-                onClick={e => { e.preventDefault(); e.stopPropagation(); setRenamingId(chat.id); setRenameValue(chat.title); }}
-                style={{ padding: 4, borderRadius: 4, color: '#6B7280', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#D4D4D8')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}
-              >
-                <Edit3 size={13} strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(chat.id); }}
-                style={{ padding: 4, borderRadius: 4, color: '#6B7280', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}
-              >
-                <Trash2 size={13} strokeWidth={1.5} />
-              </button>
-            </div>
-          )}
+          <div style={{
+            display: 'flex', gap: 2, flexShrink: 0, marginLeft: 4,
+            opacity: hovered ? 1 : 0,
+            transition: 'opacity 0.15s',
+          }}>
+            <button
+              onClick={e => { e.preventDefault(); e.stopPropagation(); setRenamingId(chat.id); setRenameValue(chat.title); }}
+              style={{ padding: 3, borderRadius: 4, color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#A1A1AA')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#52525B')}
+            >
+              <Edit3 size={12} strokeWidth={1.5} />
+            </button>
+            <button
+              onClick={e => { e.preventDefault(); e.stopPropagation(); handleDelete(chat.id); }}
+              style={{ padding: 3, borderRadius: 4, color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer', transition: 'color 0.15s', display: 'flex', alignItems: 'center' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#EF4444')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#52525B')}
+            >
+              <Trash2 size={12} strokeWidth={1.5} />
+            </button>
+          </div>
         </Link>
       </div>
     );
@@ -162,59 +167,59 @@ export default function Sidebar({
 
   const sidebarContent = (
     <div style={{
-      width: 260, background: '#0D0D0D', borderRight: '1px solid #1A1A1A',
+      width: 240, background: '#0A0A0A', borderRight: '1px solid rgba(255,255,255,0.06)',
       display: 'flex', flexDirection: 'column', height: '100%', padding: 8,
     }}>
       {/* Logo header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px 12px' }}>
-        <MontaiLogo size={32} />
+        <MontaiLogo size={28} />
         <span style={{
-          fontFamily: 'Sora, sans-serif', fontSize: 18, fontWeight: 700,
+          fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 700,
           background: 'linear-gradient(135deg, #F59E0B, #F97316)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>Montai</span>
       </div>
 
       {/* Top actions */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
         <button
           onClick={() => { onNewChat(); onClose(); }}
           style={{
-            flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-            padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            height: 36, borderRadius: 8, border: 'none', cursor: 'pointer',
             background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-            color: '#0A0A0B', fontWeight: 600, fontSize: 14,
+            color: '#0A0A0B', fontWeight: 600, fontSize: 13,
             fontFamily: 'Inter, sans-serif', transition: 'opacity 0.15s',
           }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
           onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
         >
-          <Plus size={16} strokeWidth={1.5} />
+          <Plus size={15} strokeWidth={1.5} />
           New Chat
         </button>
         <button
           onClick={() => setSearchOpen(v => !v)}
           style={{
-            width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: searchOpen ? '#2F2F2F' : 'transparent',
-            color: '#6B7280', transition: 'background 0.15s, color 0.15s',
+            width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 8, border: 'none', cursor: 'pointer', flexShrink: 0,
+            background: searchOpen ? 'rgba(255,255,255,0.08)' : 'transparent',
+            color: '#52525B', transition: 'background 0.15s, color 0.15s',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1F1F1F'; (e.currentTarget as HTMLElement).style.color = '#D4D4D8'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = searchOpen ? '#2F2F2F' : 'transparent'; (e.currentTarget as HTMLElement).style.color = '#6B7280'; }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = searchOpen ? 'rgba(255,255,255,0.08)' : 'transparent'; (e.currentTarget as HTMLElement).style.color = '#52525B'; }}
           title="Qidirish"
         >
-          <Search size={16} strokeWidth={1.5} />
+          <Search size={15} strokeWidth={1.5} />
         </button>
         <button
           onClick={onClose}
           className="md:hidden"
           style={{
-            width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#6B7280',
+            width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#52525B', flexShrink: 0,
           }}
         >
-          <X size={16} strokeWidth={1.5} />
+          <X size={15} strokeWidth={1.5} />
         </button>
       </div>
 
@@ -225,7 +230,7 @@ export default function Sidebar({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            style={{ overflow: 'hidden', marginBottom: 4 }}
+            style={{ overflow: 'hidden', marginBottom: 6 }}
           >
             <input
               autoFocus
@@ -233,9 +238,9 @@ export default function Sidebar({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{
-                width: '100%', padding: '8px 12px', borderRadius: 8,
-                background: '#1F1F1F', border: '1px solid #2F2F2F',
-                color: '#FAFAFA', fontSize: 14, outline: 'none',
+                width: '100%', padding: '7px 10px', borderRadius: 8,
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                color: '#FAFAFA', fontSize: 13, outline: 'none',
                 fontFamily: 'Inter, sans-serif', boxSizing: 'border-box',
               }}
             />
@@ -246,12 +251,12 @@ export default function Sidebar({
       {/* Chat list */}
       <div style={{ flex: 1, overflowY: 'auto', marginBottom: 4 }}>
         {chats.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#52525B', fontSize: 13, padding: '40px 16px' }}>
+          <p style={{ textAlign: 'center', color: '#52525B', fontSize: 12, padding: '40px 16px' }}>
             Hali chat yo&apos;q
           </p>
         ) : filteredChats ? (
           filteredChats.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#52525B', fontSize: 13, padding: '20px 16px' }}>
+            <p style={{ textAlign: 'center', color: '#52525B', fontSize: 12, padding: '20px 16px' }}>
               Topilmadi
             </p>
           ) : (
@@ -259,10 +264,10 @@ export default function Sidebar({
           )
         ) : (
           grouped.map(group => (
-            <div key={group.label} style={{ marginBottom: 8 }}>
+            <div key={group.label} style={{ marginBottom: 4 }}>
               <p style={{
-                fontSize: 12, color: '#6B7280', fontWeight: 500,
-                padding: '12px 14px 6px', letterSpacing: '0.04em', textTransform: 'uppercase',
+                fontSize: 11, color: '#52525B', fontWeight: 500,
+                padding: '12px 10px 4px', letterSpacing: '0.06em', textTransform: 'uppercase',
               }}>
                 {group.label}
               </p>
@@ -273,35 +278,35 @@ export default function Sidebar({
       </div>
 
       {/* Profile section */}
-      <div ref={profileRef} style={{ position: 'relative' }}>
+      <div ref={profileRef} style={{ position: 'relative', borderTop: '1px solid rgba(255,255,255,0.06)', padding: '8px 0 0' }}>
         {/* Dropdown */}
         <AnimatePresence>
           {profileOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
+              exit={{ opacity: 0, y: 6 }}
               transition={{ duration: 0.12 }}
               style={{
                 position: 'absolute', bottom: '100%', left: 0, right: 0,
-                background: '#1A1A1A', border: '1px solid #2F2F2F',
+                background: '#141414', border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: 10, marginBottom: 4, overflow: 'hidden',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
               }}
             >
               <button
                 onClick={() => { setProfileOpen(false); setSettingsOpen(true); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                  padding: '10px 14px', color: '#B4B4B4', fontSize: 14,
+                  padding: '10px 14px', color: '#A1A1AA', fontSize: 13,
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   textAlign: 'left', fontFamily: 'Inter, sans-serif',
                   transition: 'background 0.15s, color 0.15s',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1F1F1F'; (e.currentTarget as HTMLElement).style.color = '#FAFAFA'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#B4B4B4'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#FAFAFA'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
               >
-                <Settings size={15} strokeWidth={1.5} />
+                <Settings size={14} strokeWidth={1.5} />
                 Sozlamalar
               </button>
               <Link
@@ -309,28 +314,28 @@ export default function Sidebar({
                 onClick={() => setProfileOpen(false)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 14px', color: '#B4B4B4', fontSize: 14,
+                  padding: '10px 14px', color: '#A1A1AA', fontSize: 13,
                   textDecoration: 'none', transition: 'background 0.15s, color 0.15s',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1F1F1F'; (e.currentTarget as HTMLElement).style.color = '#FAFAFA'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#B4B4B4'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#FAFAFA'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
               >
-                <Shield size={15} strokeWidth={1.5} />
+                <Shield size={14} strokeWidth={1.5} />
                 Maxfiylik
               </Link>
-              <div style={{ borderTop: '1px solid #2F2F2F', margin: '2px 0' }} />
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '2px 0' }} />
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                  padding: '10px 14px', color: '#EF4444', fontSize: 14,
+                  padding: '10px 14px', color: '#EF4444', fontSize: 13,
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#1F1F1F')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <LogOut size={15} strokeWidth={1.5} />
+                <LogOut size={14} strokeWidth={1.5} />
                 Chiqish
               </button>
             </motion.div>
@@ -342,28 +347,28 @@ export default function Sidebar({
           onClick={() => setProfileOpen(v => !v)}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
-            background: profileOpen ? '#1F1F1F' : 'transparent',
-            borderTop: '1px solid #1A1A1A', transition: 'background 0.15s',
+            padding: '8px 10px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            background: profileOpen ? 'rgba(255,255,255,0.05)' : 'transparent',
+            transition: 'background 0.15s',
             fontFamily: 'Inter, sans-serif',
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#1F1F1F')}
-          onMouseLeave={e => (e.currentTarget.style.background = profileOpen ? '#1F1F1F' : 'transparent')}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+          onMouseLeave={e => (e.currentTarget.style.background = profileOpen ? 'rgba(255,255,255,0.05)' : 'transparent')}
         >
           <div style={{
-            width: 32, height: 32, borderRadius: '50%', background: '#F59E0B',
+            width: 28, height: 28, borderRadius: '50%', background: '#F59E0B',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, fontWeight: 600, color: '#0A0A0B', flexShrink: 0,
+            fontSize: 12, fontWeight: 600, color: '#0A0A0B', flexShrink: 0,
           }}>
             {nickname.charAt(0).toUpperCase()}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 14, color: '#FAFAFA', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', textAlign: 'left' }}>
+            <span style={{ fontSize: 13, color: '#FAFAFA', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', textAlign: 'left' }}>
               {nickname}
             </span>
-            <span style={{ fontSize: 12, color: '#6B7280' }}>Free</span>
+            <span style={{ fontSize: 11, color: '#52525B' }}>Free</span>
           </div>
-          <ChevronUp size={14} strokeWidth={1.5} style={{ color: '#6B7280', transform: profileOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', flexShrink: 0 }} />
+          <ChevronUp size={13} strokeWidth={1.5} style={{ color: '#52525B', transform: profileOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s', flexShrink: 0 }} />
         </button>
       </div>
     </div>
@@ -380,11 +385,11 @@ export default function Sidebar({
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="fixed inset-0 z-40 md:hidden"
-              style={{ background: 'rgba(0,0,0,0.6)' }}
+              style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
               onClick={onClose}
             />
             <motion.div
-              initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
+              initial={{ x: -260 }} animate={{ x: 0 }} exit={{ x: -260 }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
               className="fixed left-0 top-0 bottom-0 z-50 md:hidden"
             >

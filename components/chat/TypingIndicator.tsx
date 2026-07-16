@@ -5,37 +5,47 @@ import { motion } from 'framer-motion';
 export default function TypingIndicator() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6, x: -8 }}
-      animate={{ opacity: 1, y: 0, x: 0 }}
-      exit={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.2 }}
-      className="flex items-start gap-3 px-4 sm:px-8 py-2 w-full"
+      className="flex items-start gap-3 w-full"
+      style={{ padding: '12px 0' }}
     >
+      {/* Montai logo avatar — matches AI message style */}
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold"
         style={{
+          width: 24, height: 24, borderRadius: '50%',
           background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-          color: '#0A0A0B',
-          boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+          fontSize: 10, fontWeight: 700, color: '#0A0A0B',
           fontFamily: 'Sora, sans-serif',
+          boxShadow: '0 2px 8px rgba(245,158,11,0.25)',
+          marginTop: 2,
         }}
       >
         M
       </div>
 
-      <div
-        className="rounded-[18px] rounded-tl-sm px-5 py-3.5"
-        style={{
-          background: 'var(--bg-tertiary)',
-          borderLeft: '3px solid var(--accent-primary)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-        }}
-      >
-        <div className="flex items-center gap-1.5 h-5">
-          <div className="typing-dot" />
-          <div className="typing-dot" />
-          <div className="typing-dot" />
-        </div>
+      {/* Three dots */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, paddingTop: 4 }}>
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: '#52525B',
+            }}
+            animate={{ y: [0, -5, 0], opacity: [0.4, 1, 0.4] }}
+            transition={{
+              duration: 1.2,
+              repeat: Infinity,
+              delay: i * 0.18,
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
       </div>
     </motion.div>
   );

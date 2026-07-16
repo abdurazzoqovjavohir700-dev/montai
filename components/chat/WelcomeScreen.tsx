@@ -25,7 +25,7 @@ const SUBTITLES: Record<Language, string> = {
 
 const SUGGESTION_CARDS = [
   {
-    icon: <Palette size={18} strokeWidth={1.5} />,
+    icon: <Palette size={16} strokeWidth={1.5} />,
     accent: 'rgba(245,158,11,0.9)',
     bg: 'rgba(245,158,11,0.08)',
     title: 'Color Grading Basics',
@@ -33,7 +33,7 @@ const SUGGESTION_CARDS = [
     prompt: 'Color grading nima va qanday qilinadi? Eng oddiy usuldan boshlab o\'rgat',
   },
   {
-    icon: <Scissors size={18} strokeWidth={1.5} />,
+    icon: <Scissors size={16} strokeWidth={1.5} />,
     accent: 'rgba(139,92,246,0.9)',
     bg: 'rgba(139,92,246,0.08)',
     title: 'Cut Types Masterclass',
@@ -41,7 +41,7 @@ const SUGGESTION_CARDS = [
     prompt: 'Barcha professional montaj turlari: J-cut, L-cut, match cut, jump cut. Har birini misollar bilan tushuntir',
   },
   {
-    icon: <Volume2 size={18} strokeWidth={1.5} />,
+    icon: <Volume2 size={16} strokeWidth={1.5} />,
     accent: 'rgba(34,197,94,0.9)',
     bg: 'rgba(34,197,94,0.08)',
     title: 'Audio & Sound Design',
@@ -49,7 +49,7 @@ const SUGGESTION_CARDS = [
     prompt: 'Professional audio mixing qanday qilinadi? Dialogue, musiqa va SFX qanday darajalarda bo\'lishi kerak?',
   },
   {
-    icon: <Play size={18} strokeWidth={1.5} />,
+    icon: <Play size={16} strokeWidth={1.5} />,
     accent: 'rgba(239,68,68,0.9)',
     bg: 'rgba(239,68,68,0.08)',
     title: 'YouTube uchun montaj',
@@ -57,7 +57,7 @@ const SUGGESTION_CARDS = [
     prompt: 'YouTube video uchun professional montaj qanday qilinadi? Birinchi 5 sekundda qanday hook qilaman?',
   },
   {
-    icon: <Monitor size={18} strokeWidth={1.5} />,
+    icon: <Monitor size={16} strokeWidth={1.5} />,
     accent: 'rgba(14,165,233,0.9)',
     bg: 'rgba(14,165,233,0.08)',
     title: 'Kompyuter talablari',
@@ -65,7 +65,7 @@ const SUGGESTION_CARDS = [
     prompt: 'Video montaj uchun kompyuter qanday bo\'lishi kerak? GPU, RAM, CPU talablari nima? Budget variant bormi?',
   },
   {
-    icon: <Zap size={18} strokeWidth={1.5} />,
+    icon: <Zap size={16} strokeWidth={1.5} />,
     accent: 'rgba(249,115,22,0.9)',
     bg: 'rgba(249,115,22,0.08)',
     title: 'Tez maslahatlar',
@@ -75,10 +75,10 @@ const SUGGESTION_CARDS = [
 ];
 
 const QUICK_ACTIONS = [
-  { icon: <Download size={14} strokeWidth={1.5} />, label: "Dastur o'rnatish", prompt: "After Effects yoki DaVinci Resolve ni qanday o'rnataman? System requirements nima?" },
-  { icon: <Wand2 size={14} strokeWidth={1.5} />, label: 'Plugin tavsiya', prompt: "Video montaj uchun eng yaxshi pluginlar qaysilar? Bepul va pullik variantlar" },
-  { icon: <Play size={14} strokeWidth={1.5} />, label: 'Birinchi loyiha', prompt: "Men yangi boshlovchiman. Birinchi video loyihamni qanday boshlashim kerak? Step by step ko'rsat" },
-  { icon: <BookOpen size={14} strokeWidth={1.5} />, label: 'Storytelling', prompt: "Editing orqali kuchli hikoya qilish qanday? Pacing, rhythm, emotional arc tushuntir" },
+  { icon: <Download size={13} strokeWidth={1.5} />, label: "Dastur o'rnatish", prompt: "After Effects yoki DaVinci Resolve ni qanday o'rnataman? System requirements nima?" },
+  { icon: <Wand2 size={13} strokeWidth={1.5} />, label: 'Plugin tavsiya', prompt: "Video montaj uchun eng yaxshi pluginlar qaysilar? Bepul va pullik variantlar" },
+  { icon: <Play size={13} strokeWidth={1.5} />, label: 'Birinchi loyiha', prompt: "Men yangi boshlovchiman. Birinchi video loyihamni qanday boshlashim kerak? Step by step ko'rsat" },
+  { icon: <BookOpen size={13} strokeWidth={1.5} />, label: 'Storytelling', prompt: "Editing orqali kuchli hikoya qilish qanday? Pacing, rhythm, emotional arc tushuntir" },
 ];
 
 interface WelcomeScreenProps {
@@ -96,36 +96,56 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
   const subtitle = SUBTITLES[language] ?? SUBTITLES.en;
 
   return (
-    <div className="flex flex-col items-center flex-1 min-h-full px-6 py-8 overflow-y-auto">
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100%',
+        padding: '40px 24px 24px',
+        overflowY: 'auto',
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col items-center text-center w-full"
-        style={{ maxWidth: 768 }}
+        style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          textAlign: 'center', width: '100%', maxWidth: 680,
+        }}
       >
-        {/* Logo */}
-        <div className="relative flex items-center justify-center mb-5">
+        {/* Logo with float animation */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
           <div
-            className="absolute rounded-3xl"
-            style={{ width: 96, height: 96, background: 'rgba(245,158,11,0.15)', filter: 'blur(20px)' }}
+            style={{
+              position: 'absolute', width: 96, height: 96,
+              background: 'rgba(245,158,11,0.12)', filter: 'blur(24px)', borderRadius: '50%',
+            }}
           />
           <motion.div
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ filter: 'drop-shadow(0 8px 24px rgba(245,158,11,0.4))' }}
+            style={{ filter: 'drop-shadow(0 6px 20px rgba(245,158,11,0.35))' }}
           >
-            <MontaiLogo size={76} />
+            <MontaiLogo size={64} />
           </motion.div>
         </div>
 
         {/* Greeting */}
         <motion.h1
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-          className="font-bold leading-snug mb-2"
-          style={{ fontFamily: 'Sora, sans-serif', color: 'var(--text-primary)', fontSize: '28px' }}
+          transition={{ delay: 0.12, duration: 0.35 }}
+          style={{
+            fontFamily: 'Sora, sans-serif',
+            color: '#FAFAFA',
+            fontSize: '28px',
+            fontWeight: 700,
+            lineHeight: 1.3,
+            marginBottom: 8,
+          }}
         >
           {greeting}
         </motion.h1>
@@ -133,9 +153,8 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
-          className="mb-5"
-          style={{ color: 'var(--text-tertiary)', fontSize: '14px' }}
+          transition={{ delay: 0.2, duration: 0.35 }}
+          style={{ color: '#52525B', fontSize: '14px', marginBottom: 24 }}
         >
           {subtitle}
         </motion.p>
@@ -144,7 +163,7 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
+          transition={{ delay: 0.28, duration: 0.35 }}
           style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}
         >
           {QUICK_ACTIONS.map((action) => (
@@ -153,20 +172,20 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
               onClick={() => onSelectSuggestion(action.prompt)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                padding: '7px 14px', borderRadius: 20,
-                background: '#1A1A1A', border: '1px solid #2D2D2D',
-                color: '#A0A0A0', fontSize: 13, cursor: 'pointer',
+                padding: '6px 13px', borderRadius: 20,
+                background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
+                color: '#71717A', fontSize: 13, cursor: 'pointer',
                 transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = '#222';
-                (e.currentTarget as HTMLElement).style.borderColor = '#3F3F46';
+                (e.currentTarget as HTMLElement).style.background = '#1A1A1A';
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)';
                 (e.currentTarget as HTMLElement).style.color = '#FAFAFA';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = '#1A1A1A';
-                (e.currentTarget as HTMLElement).style.borderColor = '#2D2D2D';
-                (e.currentTarget as HTMLElement).style.color = '#A0A0A0';
+                (e.currentTarget as HTMLElement).style.background = '#141414';
+                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)';
+                (e.currentTarget as HTMLElement).style.color = '#71717A';
               }}
             >
               <span style={{ color: '#F59E0B' }}>{action.icon}</span>
@@ -175,32 +194,32 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
           ))}
         </motion.div>
 
-        {/* 6 suggestion cards — 3x2 grid */}
+        {/* 6 suggestion cards — 2-column on wider screens, 1-column on mobile */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(2, 1fr)',
           gap: 8,
           width: '100%',
         }}>
           {SUGGESTION_CARDS.map((card, i) => (
             <motion.button
               key={card.title}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 + i * 0.06, duration: 0.35 }}
+              transition={{ delay: 0.32 + i * 0.05, duration: 0.3 }}
               onClick={() => onSelectSuggestion(card.prompt)}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                textAlign: 'left', padding: 14, borderRadius: 12,
-                background: '#18181B', border: '1px solid #27272A',
+                textAlign: 'left', padding: 16, borderRadius: 12,
+                background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
                 cursor: 'pointer', transition: 'all 0.2s',
                 fontFamily: 'Inter, sans-serif',
               }}
               whileHover={{
                 y: -2,
-                borderColor: 'rgba(245,158,11,0.35)',
-                boxShadow: '0 0 20px rgba(245,158,11,0.1)',
-                background: '#1F1F23',
+                borderColor: 'rgba(245,158,11,0.3)',
+                boxShadow: '0 4px 20px rgba(245,158,11,0.08)',
+                background: '#1A1A1A',
               }}
               whileTap={{ scale: 0.97 }}
             >
@@ -209,10 +228,10 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
                 background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: card.accent,
               }}>{card.icon}</div>
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#FAFAFA', marginBottom: 3, display: 'block' }}>
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#E4E4E7', marginBottom: 4, display: 'block' }}>
                 {card.title}
               </span>
-              <span style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.4 }}>
+              <span style={{ fontSize: 12, color: '#52525B', lineHeight: 1.4 }}>
                 {card.description}
               </span>
             </motion.button>

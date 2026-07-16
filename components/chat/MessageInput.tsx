@@ -62,7 +62,7 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 150)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, []);
 
   const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -108,18 +108,27 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
 
   return (
     <div className="w-full">
-      {/* Image preview */}
+      {/* Image preview — compact 48px thumbnail */}
       {attachedImage && (
         <div
-          className="mb-2 flex items-center gap-2 p-2 rounded-xl"
-          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+          className="mb-2 flex items-center gap-2 px-3 py-2 rounded-xl"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
         >
-          <Image src={attachedImage.preview} alt="Attached" width={40} height={40} className="w-10 h-10 object-cover rounded-lg" />
-          <span className="text-xs flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>{attachedImage.name}</span>
+          <Image
+            src={attachedImage.preview}
+            alt="Attached"
+            width={48}
+            height={48}
+            className="object-cover rounded-lg flex-shrink-0"
+            style={{ width: 48, height: 48 }}
+          />
+          <span className="text-xs flex-1 truncate" style={{ color: '#71717A', fontSize: 12 }}>{attachedImage.name}</span>
           <button
             onClick={() => setAttachedImage(null)}
-            className="p-1 rounded transition-colors"
-            style={{ color: 'var(--text-tertiary)' }}
+            className="p-1 rounded-md transition-colors flex-shrink-0"
+            style={{ color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#A1A1AA')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#52525B')}
           >
             <X size={14} strokeWidth={1.5} />
           </button>
@@ -128,25 +137,38 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
 
       {/* Input wrapper */}
       <div
-        className="flex items-end gap-2"
         style={{
-          background: '#2F2F2F',
-          border: `1px solid ${focused ? '#52525B' : '#2F2F2F'}`,
-          borderRadius: '24px',
-          padding: '14px 18px',
+          background: '#1A1A1A',
+          border: `1px solid ${focused ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
+          borderRadius: '16px',
+          padding: '12px 16px',
+          boxShadow: focused ? '0 0 0 3px rgba(245,158,11,0.08)' : 'none',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: 10,
         }}
       >
         {/* Attach */}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isLoading || disabled}
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-150 disabled:opacity-40"
-          style={{ color: 'var(--text-tertiary)' }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)'; }}
+          style={{
+            width: 32, height: 32,
+            borderRadius: 8,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#52525B',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#52525B'; }}
           title="Attach image"
         >
-          <Paperclip size={18} strokeWidth={1.5} />
+          <Paperclip size={16} strokeWidth={1.5} />
         </button>
 
         <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFileSelect} className="hidden" />
@@ -162,12 +184,19 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
           placeholder="Xabar yozing…"
           disabled={disabled}
           rows={1}
-          className="flex-1 bg-transparent resize-none outline-none leading-6 py-1.5"
           style={{
-            color: 'var(--text-primary)',
+            flex: 1,
+            background: 'transparent',
+            resize: 'none',
+            outline: 'none',
+            border: 'none',
+            color: '#FAFAFA',
             fontFamily: 'Inter, sans-serif',
-            fontSize: '16px',
+            fontSize: '15px',
+            lineHeight: '1.6',
             maxHeight: '200px',
+            paddingTop: 4,
+            paddingBottom: 4,
           }}
         />
 
@@ -175,33 +204,52 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
         {isLoading ? (
           <button
             onClick={onStop}
-            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: '#3F3F46', color: '#FAFAFA' }}
+            style={{
+              width: 36, height: 36,
+              borderRadius: 8,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              background: '#3F3F46',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#FAFAFA',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#52525B')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#3F3F46')}
             aria-label="Stop"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-              <rect x="2" y="2" width="10" height="10" rx="2" />
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+              <rect x="1" y="1" width="10" height="10" rx="2" />
             </svg>
           </button>
         ) : (
           <button
             onClick={handleSend}
             disabled={!canSend}
-            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
-              background: canSend ? '#FAFAFA' : '#3F3F46',
-              color: canSend ? '#0A0A0B' : '#71717A',
+              width: 36, height: 36,
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              background: canSend ? 'linear-gradient(135deg, #F59E0B, #F97316)' : 'rgba(255,255,255,0.06)',
+              border: 'none',
+              cursor: canSend ? 'pointer' : 'not-allowed',
+              color: canSend ? '#0A0A0B' : '#3F3F46',
+              opacity: canSend ? 1 : 0.5,
+              transition: 'all 0.15s',
+              transform: 'scale(1)',
             }}
-            onMouseEnter={(e) => { if (canSend) (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)'; }}
+            onMouseEnter={(e) => { if (canSend) (e.currentTarget as HTMLElement).style.transform = 'scale(1.06)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
             aria-label="Send message"
           >
-            <ArrowUp size={17} strokeWidth={1.5} />
+            <ArrowUp size={16} strokeWidth={1.5} />
           </button>
         )}
       </div>
 
-      <p className="text-center mt-2" style={{ fontSize: '12px', color: '#52525B' }}>
+      <p className="text-center mt-2" style={{ fontSize: '12px', color: '#3F3F46' }}>
         Montai xato qilishi mumkin. Muhim ma&apos;lumotlarni tekshiring.
       </p>
     </div>

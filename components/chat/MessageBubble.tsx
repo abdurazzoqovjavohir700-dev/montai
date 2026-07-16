@@ -61,9 +61,9 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
         className="flex justify-end w-full group"
-        style={{ padding: '4px 0' }}
+        style={{ padding: '12px 0' }}
       >
-        <div className="flex flex-col items-end gap-1" style={{ maxWidth: '70%' }}>
+        <div className="flex flex-col items-end gap-1.5" style={{ maxWidth: '75%' }}>
           {message.imageUrl && (
             <div className="rounded-xl overflow-hidden mb-1">
               <Image
@@ -79,9 +79,9 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
           {editing ? (
             /* ── EDIT BOX ── */
             <div style={{
-              background: '#2F2F2F',
-              borderRadius: '16px',
-              padding: '16px',
+              background: 'rgba(255,255,255,0.06)',
+              borderRadius: '18px 18px 4px 18px',
+              padding: '14px 16px',
               width: '100%',
               maxWidth: '600px',
               marginLeft: 'auto',
@@ -102,13 +102,13 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
                   outline: 'none',
                   color: '#FAFAFA',
                   fontSize: '15px',
-                  lineHeight: '1.5',
+                  lineHeight: '1.6',
                   resize: 'none',
                   minHeight: '60px',
                   fontFamily: 'Inter, sans-serif',
                 }}
               />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
                 <button
                   onClick={cancelEdit}
                   style={{
@@ -116,7 +116,7 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
                     color: '#E4E4E7',
                     border: 'none',
                     borderRadius: '20px',
-                    padding: '8px 16px',
+                    padding: '7px 14px',
                     fontSize: '13px',
                     cursor: 'pointer',
                   }}
@@ -132,7 +132,7 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
                     color: '#0A0A0B',
                     border: 'none',
                     borderRadius: '20px',
-                    padding: '8px 16px',
+                    padding: '7px 14px',
                     fontSize: '13px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -149,11 +149,11 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
             <div
               onClick={startEdit}
               style={{
-                background: '#2F2F2F',
+                background: 'rgba(255,255,255,0.08)',
                 color: '#FAFAFA',
-                borderRadius: '20px',
-                padding: '12px 18px',
-                fontSize: '16px',
+                borderRadius: '18px 18px 4px 18px',
+                padding: '12px 16px',
+                fontSize: '15px',
                 lineHeight: '1.6',
                 wordBreak: 'break-word',
                 overflowWrap: 'break-word',
@@ -169,24 +169,24 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
           {/* Hover actions */}
           {!editing && (
             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-              <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+              <span className="text-[11px]" style={{ color: '#52525B' }}>
                 {formatTimestamp(message.createdAt)}
               </span>
               <button
                 onClick={handleCopy}
                 className="p-1 rounded-md transition-colors"
-                style={{ color: copied ? 'var(--accent-primary)' : 'var(--text-tertiary)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+                style={{ color: copied ? '#F59E0B' : '#52525B', background: 'transparent', border: 'none', cursor: 'pointer' }}
                 title="Nusxalash"
               >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
+                {copied ? <Check size={12} strokeWidth={1.5} /> : <Copy size={12} strokeWidth={1.5} />}
               </button>
               <button
                 onClick={startEdit}
                 className="p-1 rounded-md transition-colors"
-                style={{ color: 'var(--text-tertiary)', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+                style={{ color: '#52525B', background: 'transparent', border: 'none', cursor: 'pointer' }}
                 title="Tahrirlash"
               >
-                <Pencil size={12} />
+                <Pencil size={12} strokeWidth={1.5} />
               </button>
             </div>
           )}
@@ -197,36 +197,39 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
 
   /* ── AI MESSAGE ── */
   const actionBtns = [
-    { icon: copied ? <Check size={16} /> : <Copy size={16} />, action: handleCopy, title: 'Nusxalash', active: copied },
-    { icon: <ThumbsUp size={16} />, action: () => setLiked(l => l === 'up' ? null : 'up'), title: 'Yaxshi', active: liked === 'up' },
-    { icon: <ThumbsDown size={16} />, action: () => setLiked(l => l === 'down' ? null : 'down'), title: 'Yomon', active: liked === 'down' },
-    { icon: <Share2 size={16} />, action: () => navigator.share?.({ text: message.content }).catch(() => {}), title: 'Ulashish', active: false },
-    { icon: <Download size={16} />, action: () => { const b = new Blob([message.content], { type: 'text/plain' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'montai.txt'; a.click(); URL.revokeObjectURL(u); }, title: 'Yuklab olish', active: false },
-    { icon: <RefreshCw size={16} />, action: () => {}, title: 'Qayta', active: false },
-    { icon: <MoreHorizontal size={16} />, action: () => {}, title: 'Ko\'proq', active: false },
+    { icon: copied ? <Check size={14} strokeWidth={1.5} /> : <Copy size={14} strokeWidth={1.5} />, action: handleCopy, title: 'Nusxalash', active: copied },
+    { icon: <ThumbsUp size={14} strokeWidth={1.5} />, action: () => setLiked(l => l === 'up' ? null : 'up'), title: 'Yaxshi', active: liked === 'up' },
+    { icon: <ThumbsDown size={14} strokeWidth={1.5} />, action: () => setLiked(l => l === 'down' ? null : 'down'), title: 'Yomon', active: liked === 'down' },
+    { icon: <Share2 size={14} strokeWidth={1.5} />, action: () => navigator.share?.({ text: message.content }).catch(() => {}), title: 'Ulashish', active: false },
+    { icon: <Download size={14} strokeWidth={1.5} />, action: () => { const b = new Blob([message.content], { type: 'text/plain' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'montai.txt'; a.click(); URL.revokeObjectURL(u); }, title: 'Yuklab olish', active: false },
+    { icon: <RefreshCw size={14} strokeWidth={1.5} />, action: () => {}, title: 'Qayta', active: false },
+    { icon: <MoreHorizontal size={14} strokeWidth={1.5} />, action: () => {}, title: 'Ko\'proq', active: false },
   ];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="flex items-start gap-3 w-full group"
-      style={{ padding: '4px 0', maxWidth: '85%' }}
+      style={{ padding: '12px 0' }}
     >
+      {/* Montai logo avatar */}
       <div
-        className="flex items-center justify-center flex-shrink-0 font-bold mt-1"
+        className="flex items-center justify-center flex-shrink-0 font-bold mt-0.5"
         style={{
           width: 24, height: 24, borderRadius: '50%',
-          background: '#F59E0B', color: '#0A0A0B',
-          fontSize: 12, fontFamily: 'Sora, sans-serif',
+          background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+          color: '#0A0A0B',
+          fontSize: 10, fontFamily: 'Sora, sans-serif',
+          boxShadow: '0 2px 8px rgba(245,158,11,0.25)',
         }}
       >
         M
       </div>
 
       <div className="flex flex-col gap-2 min-w-0 flex-1">
-        <div style={{ color: '#D4D4D8', fontSize: '16px', lineHeight: '1.8' }}>
+        <div style={{ color: '#E4E4E7', fontSize: '15px', lineHeight: '1.8' }}>
           <MarkdownRenderer content={message.content} />
         </div>
 
@@ -240,24 +243,26 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
                 title={btn.title}
                 className="flex items-center justify-center rounded-md transition-all duration-150"
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  color: btn.active ? '#F59E0B' : '#71717A',
+                  width: '28px',
+                  height: '28px',
+                  color: btn.active ? '#F59E0B' : '#52525B',
                   background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
                 }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.background = '#27272A';
-                  (e.currentTarget as HTMLElement).style.color = btn.active ? '#F59E0B' : '#D4D4D8';
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)';
+                  (e.currentTarget as HTMLElement).style.color = btn.active ? '#F59E0B' : '#A1A1AA';
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLElement).style.background = 'transparent';
-                  (e.currentTarget as HTMLElement).style.color = btn.active ? '#F59E0B' : '#71717A';
+                  (e.currentTarget as HTMLElement).style.color = btn.active ? '#F59E0B' : '#52525B';
                 }}
               >
                 {btn.icon}
               </button>
             ))}
-            <span className="ml-1 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="ml-1 text-[11px]" style={{ color: '#52525B' }}>
               {formatTimestamp(message.createdAt)}
             </span>
           </div>

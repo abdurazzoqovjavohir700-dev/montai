@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Menu, PanelLeftClose } from 'lucide-react';
+import { Menu, PanelLeftOpen } from 'lucide-react';
 import MontaiLogo from '@/components/shared/MontaiLogo';
 import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/layout/Sidebar';
-import Logo from '@/components/shared/Logo';
 import type { Chat, Message, User, Language } from '@/lib/types';
 
 export default function ChatByIdPage() {
@@ -71,15 +70,15 @@ export default function ChatByIdPage() {
   if (!user) return null;
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[var(--bg-primary)]">
+    <div className="h-screen flex overflow-hidden" style={{ background: '#0D0D0D' }}>
       {/* Desktop sidebar */}
       <div
         className="hidden md:block flex-shrink-0 h-full"
         style={{
-          width: desktopSidebarVisible ? '260px' : '0px',
-          minWidth: desktopSidebarVisible ? '260px' : '0px',
+          width: desktopSidebarVisible ? '240px' : '0px',
+          minWidth: desktopSidebarVisible ? '240px' : '0px',
           overflow: 'hidden',
-          transition: 'all 0.3s ease',
+          transition: 'all 0.25s ease',
         }}
       >
         <Sidebar
@@ -106,27 +105,34 @@ export default function ChatByIdPage() {
         />
       </div>
 
-      <div className="flex flex-col flex-1 min-w-0 h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+      {/* Main area — no separate header bar */}
+      <div className="flex flex-col flex-1 min-w-0 h-full relative">
+        {/* Floating sidebar toggle */}
+        <div
+          style={{
+            position: 'absolute', top: 12, left: 12, zIndex: 10,
+          }}
+        >
           <button
             onClick={() => {
               if (window.innerWidth < 768) setSidebarOpen(true);
               else setDesktopSidebarVisible((v) => !v);
             }}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: 'var(--text-secondary)' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-tertiary)'; (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+            style={{
+              width: 32, height: 32, borderRadius: 8,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: '#52525B', transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#52525B'; }}
             aria-label="Toggle sidebar"
           >
-            {desktopSidebarVisible ? <PanelLeftClose size={20} className="hidden md:block" /> : <Menu size={20} className="hidden md:block" />}
-            <Menu size={20} className="md:hidden" />
+            {desktopSidebarVisible
+              ? <PanelLeftOpen size={18} strokeWidth={1.5} className="hidden md:block" />
+              : <Menu size={18} strokeWidth={1.5} className="hidden md:block" />}
+            <Menu size={18} strokeWidth={1.5} className="md:hidden" />
           </button>
-          <div className="md:hidden">
-            <Logo size="sm" href={undefined} />
-          </div>
-          <div className="w-9 md:hidden" />
         </div>
 
         <div className="flex-1 min-h-0">
