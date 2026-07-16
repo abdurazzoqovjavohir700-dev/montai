@@ -56,7 +56,9 @@ Use their nickname naturally (not every message). Respond in their language. Ada
   const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition;
 
   const hasImage = messages.some(m => hasImageContent(m.content));
-  const model = hasImage ? 'meta/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
+  // Vision uchun llama-3.2-90b-vision-preview (Groq'da ishlaydi), text uchun llama-3.3-70b-versatile
+  const model = hasImage ? 'llama-3.2-90b-vision-preview' : 'llama-3.3-70b-versatile';
+  const maxTokens = hasImage ? 1500 : 2048;
 
   const groqMessages: Groq.Chat.ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt },
@@ -71,8 +73,8 @@ Use their nickname naturally (not every message). Respond in their language. Ada
     stream = await getGroq().chat.completions.create({
       model,
       messages: groqMessages,
-      max_tokens: 1024,
-      temperature: 0.7,
+      max_tokens: maxTokens,
+      temperature: 0.65,
       stream: true,
     });
   } catch (err) {
@@ -82,7 +84,7 @@ Use their nickname naturally (not every message). Respond in their language. Ada
         model: 'llama-3.1-8b-instant',
         messages: groqMessages,
         max_tokens: 1024,
-        temperature: 0.7,
+        temperature: 0.65,
         stream: true,
       });
     } else {

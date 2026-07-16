@@ -4,7 +4,7 @@ import { useState, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Copy, Check, ThumbsUp, ThumbsDown, Share2,
-  Download, RefreshCw, MoreHorizontal, Pencil,
+  Download, RefreshCw, Pencil,
 } from 'lucide-react';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 import { formatTimestamp } from '@/lib/utils';
@@ -14,9 +14,10 @@ import Image from 'next/image';
 interface MessageBubbleProps {
   message: Message;
   onEditResend?: (id: string, newContent: string) => void;
+  onRegenerate?: (id: string) => void;
 }
 
-function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
+function MessageBubble({ message, onEditResend, onRegenerate }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState<'up' | 'down' | null>(null);
   const [editing, setEditing] = useState(false);
@@ -210,9 +211,8 @@ function MessageBubble({ message, onEditResend }: MessageBubbleProps) {
     { icon: <ThumbsUp size={14} strokeWidth={1.5} />, action: () => setLiked(l => l === 'up' ? null : 'up'), title: 'Yaxshi', active: liked === 'up' },
     { icon: <ThumbsDown size={14} strokeWidth={1.5} />, action: () => setLiked(l => l === 'down' ? null : 'down'), title: 'Yomon', active: liked === 'down' },
     { icon: <Share2 size={14} strokeWidth={1.5} />, action: () => navigator.share?.({ text: message.content }).catch(() => {}), title: 'Ulashish', active: false },
-    { icon: <Download size={14} strokeWidth={1.5} />, action: () => { const b = new Blob([message.content], { type: 'text/plain' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'montai.txt'; a.click(); URL.revokeObjectURL(u); }, title: 'Yuklab olish', active: false },
-    { icon: <RefreshCw size={14} strokeWidth={1.5} />, action: () => {}, title: 'Qayta', active: false },
-    { icon: <MoreHorizontal size={14} strokeWidth={1.5} />, action: () => {}, title: 'Ko\'proq', active: false },
+    { icon: <Download size={14} strokeWidth={1.5} />, action: () => { const b = new Blob([message.content], { type: 'text/plain' }); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'montai-javob.txt'; a.click(); URL.revokeObjectURL(u); }, title: 'Yuklab olish', active: false },
+    { icon: <RefreshCw size={14} strokeWidth={1.5} />, action: () => onRegenerate?.(message.id), title: 'Qayta generatsiya', active: false },
   ];
 
   return (

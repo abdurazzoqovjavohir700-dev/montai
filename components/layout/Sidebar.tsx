@@ -91,7 +91,6 @@ export default function Sidebar({
   const ChatItem = ({ chat }: { chat: Chat }) => {
     const isActive = chat.id === activeChatId;
     const isRenaming = renamingId === chat.id;
-    const isConfirming = confirmDeleteId === chat.id;
     const [hovered, setHovered] = useState(false);
 
     if (isRenaming) {
@@ -112,47 +111,6 @@ export default function Sidebar({
               color: '#FAFAFA', outline: 'none', fontFamily: 'Inter, sans-serif',
             }}
           />
-        </div>
-      );
-    }
-
-    if (isConfirming) {
-      return (
-        <div style={{
-          padding: '8px 10px', borderRadius: 8,
-          background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-        }}>
-          <p style={{ fontSize: 12, color: '#A1A1AA', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
-            Bu chatni o&apos;chirasizmi?
-          </p>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button
-              onClick={() => handleDelete(chat.id)}
-              style={{
-                flex: 1, padding: '5px 0', borderRadius: 6, border: 'none',
-                background: '#EF4444', color: '#fff',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#DC2626')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#EF4444')}
-            >
-              O&apos;chirish
-            </button>
-            <button
-              onClick={() => setConfirmDeleteId(null)}
-              style={{
-                flex: 1, padding: '5px 0', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent', color: '#71717A',
-                fontSize: 12, cursor: 'pointer',
-                fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.05)'); (e.currentTarget.style.color = '#A1A1AA'); }}
-              onMouseLeave={e => { (e.currentTarget.style.background = 'transparent'); (e.currentTarget.style.color = '#71717A'); }}
-            >
-              Bekor
-            </button>
-          </div>
         </div>
       );
     }
@@ -419,9 +377,108 @@ export default function Sidebar({
     </div>
   );
 
+  /* Delete confirmation — center screen modal */
+  const confirmingChat = chats.find(c => c.id === confirmDeleteId);
+
   return (
     <>
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+      {/* Delete confirmation modal */}
+      <AnimatePresence>
+        {confirmDeleteId && confirmingChat && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => setConfirmDeleteId(null)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.75)',
+              backdropFilter: 'blur(6px)',
+              padding: '20px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 8 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#141414',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 16,
+                padding: '28px 28px 24px',
+                width: '100%',
+                maxWidth: 360,
+                boxShadow: '0 24px 60px rgba(0,0,0,0.7)',
+              }}
+            >
+              {/* Icon */}
+              <div style={{
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'rgba(239,68,68,0.12)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 16,
+              }}>
+                <Trash2 size={18} strokeWidth={1.5} style={{ color: '#EF4444' }} />
+              </div>
+
+              <h3 style={{
+                fontSize: 16, fontWeight: 600, color: '#FAFAFA',
+                fontFamily: 'Inter, sans-serif', marginBottom: 6,
+              }}>
+                Chatni o&apos;chirish
+              </h3>
+              <p style={{
+                fontSize: 13.5, color: '#71717A', fontFamily: 'Inter, sans-serif',
+                lineHeight: 1.5, marginBottom: 24,
+              }}>
+                <span style={{ color: '#A1A1AA', fontWeight: 500 }}>
+                  &ldquo;{confirmingChat.title.length > 40 ? confirmingChat.title.slice(0, 40) + '…' : confirmingChat.title}&rdquo;
+                </span>{' '}
+                chatni o&apos;chirmoqchimisiz? Bu amalni qaytarib bo&apos;lmaydi.
+              </p>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'transparent', color: '#A1A1AA',
+                    fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.06)'); (e.currentTarget.style.color = '#FAFAFA'); }}
+                  onMouseLeave={e => { (e.currentTarget.style.background = 'transparent'); (e.currentTarget.style.color = '#A1A1AA'); }}
+                >
+                  Bekor
+                </button>
+                <button
+                  onClick={() => handleDelete(confirmDeleteId)}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
+                    background: '#EF4444', color: '#fff',
+                    fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
+                    boxShadow: '0 4px 16px rgba(239,68,68,0.3)',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#DC2626')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#EF4444')}
+                >
+                  O&apos;chirish
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="hidden md:flex h-full">{sidebarContent}</div>
       <AnimatePresence>
         {isOpen && (

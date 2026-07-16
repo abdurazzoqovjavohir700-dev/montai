@@ -164,9 +164,16 @@ export default function ChatWindow({
           createdAt: new Date().toISOString(),
         };
 
-        // UI'ni darhol yangilash — save'ni kutmasdan
         setMessages((prev) => [...prev, aiMessage]);
         setStreamingContent('');
+
+        // Browser notification — foydalanuvchi boshqa tabda bo'lsa
+        if (typeof window !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('Montai javob berdi', {
+            body: fullContent.slice(0, 80) + (fullContent.length > 80 ? '…' : ''),
+            icon: '/favicon.svg',
+          });
+        }
 
         // DB'ga saqlash
         fetch('/api/chat/message', {
@@ -211,6 +218,65 @@ export default function ChatWindow({
     ]
   );
 
+  // Notification ruxsati so'rash
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  // Qayta generatsiya — AI javobini o'chira va qaytadan stream qiladi
+  const handleRegenerate = useCallback(async (messageId: string) => {
+    const idx = messages.findIndex(m => m.id === messageId);
+    if (idx < 0 || isLoading) return;
+    const contextMessages = messages.slice(0, idx);
+    setMessages(contextMessages);
+    setIsLoading(true);
+    setStreamingContent('');
+    abortRef.current = new AbortController();
+    try {
+      const streamRes = await fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: contextMessages.map(m => ({
+            role: m.role,
+            content: m.imageUrl
+              ? [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: m.imageUrl.split(',')[1] } }, { type: 'text', text: m.content }]
+              : m.content,
+          })),
+          userContext: { nickname, language, experienceLevel, primarySoftware, focusAreas },
+        }),
+        signal: abortRef.current.signal,
+      });
+      if (!streamRes.ok || !streamRes.body) throw new Error('Stream failed');
+      const reader = streamRes.body.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        fullContent += decoder.decode(value);
+        setStreamingContent(fullContent);
+      }
+      if (!fullContent.trim()) throw new Error('Bo\'sh javob');
+      const aiMsg: Message = { id: crypto.randomUUID(), chatId: currentChatId ?? '', role: 'assistant', content: fullContent, createdAt: new Date().toISOString() };
+      setMessages(prev => [...prev, aiMsg]);
+      setStreamingContent('');
+      if (currentChatId) {
+        fetch('/api/chat/message', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chatId: currentChatId, role: 'assistant', content: fullContent }) }).catch(() => {});
+      }
+    } catch (err) {
+      if ((err as { name?: string }).name !== 'AbortError') {
+        toast.error('Qayta urinishda xatolik yuz berdi');
+        setStreamingContent('');
+      }
+    } finally {
+      setIsLoading(false);
+      abortRef.current = null;
+    }
+  }, [messages, isLoading, currentChatId, nickname, language, experienceLevel, primarySoftware, focusAreas]);
+
   const showWelcome = messages.length === 0 && !isLoading && !streamingContent;
 
   return (
@@ -236,6 +302,7 @@ export default function ChatWindow({
                     setMessages(prev => prev.slice(0, idx));
                     void handleSend(newContent);
                   }}
+                  onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined}
                 />
               ))}
             </AnimatePresence>
