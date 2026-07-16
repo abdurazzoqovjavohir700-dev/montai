@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
     role: 'user' | 'assistant';
     content: string;
     imageBase64?: string;
+    imageMime?: string;
   };
 
   if (!body.chatId || !body.role || !body.content) {
@@ -29,15 +30,17 @@ export async function POST(req: NextRequest) {
 
   if (!chat) return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
 
-  // Upload image if provided
+  // Upload image if provided — use actual MIME type, not hardcoded jpeg
   let imageUrl: string | null = null;
   if (body.imageBase64 && body.role === 'user') {
+    const mime = body.imageMime ?? 'image/jpeg';
+    const ext = mime.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
     const buffer = Buffer.from(body.imageBase64, 'base64');
-    const filename = `${user.id}/${body.chatId}/${Date.now()}.jpg`;
+    const filename = `${user.id}/${body.chatId}/${Date.now()}.${ext}`;
     const { data: uploadData } = await supabase.storage
       .from('chat-images')
       .upload(filename, buffer, {
-        contentType: 'image/jpeg',
+        contentType: mime,
         upsert: false,
       });
     if (uploadData) {

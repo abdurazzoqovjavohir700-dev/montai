@@ -66,16 +66,18 @@ export default function ChatWindow({
   };
 
   const handleSend = useCallback(
-    async (content: string, imageBase64?: string) => {
+    async (content: string, imageBase64?: string, imageMime?: string) => {
       if (!content.trim() && !imageBase64) return;
       if (isLoading) return;
 
+      // Build correct data URL with actual MIME type (not hardcoded jpeg)
+      const mime = imageMime ?? 'image/jpeg';
       const userMessage: Message = {
         id: crypto.randomUUID(),
         chatId: currentChatId ?? '',
         role: 'user',
         content,
-        imageUrl: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : undefined,
+        imageUrl: imageBase64 ? `data:${mime};base64,${imageBase64}` : undefined,
         createdAt: new Date().toISOString(),
       };
 
@@ -108,7 +110,7 @@ export default function ChatWindow({
         fetch('/api/chat/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chatId: activeChatId, role: 'user', content, imageBase64 }),
+          body: JSON.stringify({ chatId: activeChatId, role: 'user', content, imageBase64, imageMime: mime }),
         }).catch(e => console.error('[Save user msg]', e));
 
         // Stream AI response
@@ -116,22 +118,31 @@ export default function ChatWindow({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: allMessages.map((m) => ({
-              role: m.role,
-              content: m.imageUrl
-                ? [
-                    {
-                      type: 'image',
-                      source: {
-                        type: 'base64',
-                        media_type: 'image/jpeg',
-                        data: m.imageUrl.split(',')[1],
-                      },
-                    },
-                    { type: 'text', text: m.content },
-                  ]
-                : m.content,
-            })),
+            messages: allMessages.map((m) => {
+              if (!m.imageUrl) return { role: m.role, content: m.content };
+
+              // Build vision content block from data URL or Supabase URL
+              // data URL: "data:image/png;base64,..." → extract MIME + base64
+              // storage URL: "https://...supabase.co/..." → pass as image_url directly
+              const isDataUrl = m.imageUrl.startsWith('data:');
+              const imageBlock = isDataUrl
+                ? (() => {
+                    const [header, data] = m.imageUrl!.split(',');
+                    const mediaType = header.replace('data:', '').replace(';base64', '') || 'image/jpeg';
+                    return {
+                      type: 'image' as const,
+                      source: { type: 'base64' as const, media_type: mediaType, data },
+                    };
+                  })()
+                : {
+                    type: 'image_url' as const,
+                    image_url: { url: m.imageUrl },
+                  };
+
+              const blocks: unknown[] = [imageBlock];
+              if (m.content.trim()) blocks.push({ type: 'text', text: m.content });
+              return { role: m.role, content: blocks };
+            }),
             userContext: { nickname, language, experienceLevel, primarySoftware, focusAreas },
           }),
           signal: abortRef.current.signal,
@@ -256,12 +267,20 @@ export default function ChatWindow({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: contextMessages.map(m => ({
-            role: m.role,
-            content: m.imageUrl
-              ? [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: m.imageUrl.split(',')[1] } }, { type: 'text', text: m.content }]
-              : m.content,
-          })),
+          messages: contextMessages.map(m => {
+            if (!m.imageUrl) return { role: m.role, content: m.content };
+            const isDataUrl = m.imageUrl.startsWith('data:');
+            const imageBlock = isDataUrl
+              ? (() => {
+                  const [header, data] = m.imageUrl!.split(',');
+                  const mediaType = header.replace('data:', '').replace(';base64', '') || 'image/jpeg';
+                  return { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data } };
+                })()
+              : { type: 'image_url' as const, image_url: { url: m.imageUrl } };
+            const blocks: unknown[] = [imageBlock];
+            if (m.content.trim()) blocks.push({ type: 'text', text: m.content });
+            return { role: m.role, content: blocks };
+          }),
           userContext: { nickname, language, experienceLevel, primarySoftware, focusAreas },
         }),
         signal: abortRef.current.signal,

@@ -55,10 +55,16 @@ Use their nickname naturally (not every message). Respond in their language. Ada
 
   const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition;
 
-  const hasImage = messages.some(m => hasImageContent(m.content));
-  // Vision uchun llama-3.2-90b-vision-preview (Groq'da ishlaydi), text uchun llama-3.3-70b-versatile
-  const model = hasImage ? 'llama-3.2-90b-vision-preview' : 'llama-3.3-70b-versatile';
+  // Only trigger vision model if the LAST user message has an image (not old history)
+  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+  const hasImage = lastUserMsg ? hasImageContent(lastUserMsg.content) : false;
+  // Primary vision model: llama-3.2-11b-vision-preview (stable), fallback: 90b
+  const VISION_MODEL   = 'meta-llama/llama-4-scout-17b-16e-instruct';
+  const VISION_FALLBACK = 'llama-3.2-11b-vision-preview';
+  const TEXT_MODEL     = 'llama-3.3-70b-versatile';
+  const model = hasImage ? VISION_MODEL : TEXT_MODEL;
   const maxTokens = hasImage ? 1500 : 2048;
+  console.log(`[AI] model=${model} hasImage=${hasImage} messages=${messages.length}`);
 
   const groqMessages: Groq.Chat.ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt },
@@ -79,7 +85,18 @@ Use their nickname naturally (not every message). Respond in their language. Ada
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
+    console.error(`[AI] Primary model failed (${model}):`, msg);
+    // Vision fallback: try smaller vision model if large one is unavailable
+    if (hasImage && (msg.includes('model') || msg.includes('404') || msg.includes('not found') || msg.includes('deprecated'))) {
+      console.log(`[AI] Trying vision fallback: ${VISION_FALLBACK}`);
+      stream = await getGroq().chat.completions.create({
+        model: VISION_FALLBACK,
+        messages: groqMessages,
+        max_tokens: 1024,
+        temperature: 0.65,
+        stream: true,
+      });
+    } else if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
       stream = await getGroq().chat.completions.create({
         model: 'llama-3.1-8b-instant',
         messages: groqMessages,

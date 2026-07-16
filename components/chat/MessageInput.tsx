@@ -41,7 +41,7 @@ interface AttachedImage {
 }
 
 interface MessageInputProps {
-  onSend: (message: string, imageBase64?: string) => void;
+  onSend: (message: string, imageBase64?: string, imageMime?: string) => void;
   onStop?: () => void;
   isLoading: boolean;
   disabled?: boolean;
@@ -137,7 +137,7 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
     if (isLoading || disabled || isReading) return;
     const corrected = autocorrect(trimmed);
     if (corrected !== trimmed) toast.info('Avtomatik tuzatildi');
-    onSend(corrected, image?.base64);
+    onSend(corrected, image?.base64, image?.mime);
     setMessage('');
     setImage(null);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';

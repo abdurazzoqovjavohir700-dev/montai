@@ -71,7 +71,12 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+/* Opacity transitions only on elements that actually need them — not SVG children */
+button, a, [data-opacity-transition] {
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s, transform 0.15s;
 }
 
 html { scroll-behavior: smooth; }

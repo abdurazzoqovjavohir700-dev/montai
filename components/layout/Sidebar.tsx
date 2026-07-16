@@ -40,6 +40,7 @@ export default function Sidebar({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -328,7 +329,7 @@ export default function Sidebar({
               </Link>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '2px 0' }} />
               <button
-                onClick={() => signOut({ callbackUrl: '/' })}
+                onClick={() => { setProfileOpen(false); setConfirmLogout(true); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                   padding: '10px 14px', color: '#EF4444', fontSize: 13,
@@ -472,6 +473,82 @@ export default function Sidebar({
                   onMouseLeave={e => (e.currentTarget.style.background = '#EF4444')}
                 >
                   O&apos;chirish
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Logout confirmation modal */}
+      <AnimatePresence>
+        {confirmLogout && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => setConfirmLogout(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', padding: '20px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 8 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#141414', border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 16, padding: '28px 28px 24px',
+                width: '100%', maxWidth: 360,
+                boxShadow: '0 24px 60px rgba(0,0,0,0.7)',
+              }}
+            >
+              <div style={{
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+              }}>
+                <LogOut size={18} strokeWidth={1.5} style={{ color: '#EF4444' }} />
+              </div>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#FAFAFA', fontFamily: 'Inter, sans-serif', marginBottom: 6 }}>
+                Chiqishni tasdiqlang
+              </h3>
+              <p style={{ fontSize: 13.5, color: '#71717A', fontFamily: 'Inter, sans-serif', lineHeight: 1.5, marginBottom: 24 }}>
+                Montai dan chiqmoqchimisiz? Chat tarixi saqlanib qoladi.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => setConfirmLogout(false)}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'transparent', color: '#A1A1AA',
+                    fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.06)'); (e.currentTarget.style.color = '#FAFAFA'); }}
+                  onMouseLeave={e => { (e.currentTarget.style.background = 'transparent'); (e.currentTarget.style.color = '#A1A1AA'); }}
+                >
+                  Bekor
+                </button>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
+                    background: '#EF4444', color: '#fff',
+                    fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif',
+                    boxShadow: '0 4px 16px rgba(239,68,68,0.3)',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#DC2626')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#EF4444')}
+                >
+                  Chiqish
                 </button>
               </div>
             </motion.div>

@@ -59,13 +59,18 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[Stream Error]', msg);
-    const is429 = msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit');
+    const is429 = msg.includes('429') || msg.toLowerCase().includes('rate limit');
+    const isAuth = msg.includes('401') || msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('unauthorized');
+    const isModel = msg.includes('404') || msg.toLowerCase().includes('model') || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('deprecated');
+    const isImage = msg.toLowerCase().includes('image') || msg.toLowerCase().includes('vision') || msg.toLowerCase().includes('multimodal');
+    const errText = is429     ? 'Groq rate limit — 1 daqiqa kuting va qaytadan yuboring.'
+      : isAuth   ? 'AI API kaliti noto\'g\'ri yoki muddati tugagan.'
+      : isModel  ? 'Tanlangan AI modeli mavjud emas — yangilash kerak.'
+      : isImage  ? 'Rasm tahlil qilishda xatolik — rasm formatini tekshiring.'
+      : 'AI xizmati hozir mavjud emas. Qaytadan urinib ko\'ring.';
     return new Response(
-      JSON.stringify({ error: is429
-        ? 'Groq rate limit — 1 daqiqa kuting va qaytadan yuboring.'
-        : 'AI xizmati hozir mavjud emas. Qaytadan urinib ko\'ring.'
-      }),
-      { status: is429 ? 429 : 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: errText }),
+      { status: is429 ? 429 : isAuth ? 401 : 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
