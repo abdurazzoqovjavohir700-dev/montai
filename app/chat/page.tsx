@@ -49,8 +49,9 @@ export default function ChatPage() {
       { id: chatId, userId: user?.id ?? '', title, preview: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
       ...prev.filter((c) => c.id !== chatId),
     ]);
-    router.replace(`/chat/${chatId}`);
-  }, [user, router]);
+    // URL ni yangilaymiz lekin navigation qilmaymiz — remount bo'lmasin
+    window.history.replaceState(null, '', `/chat/${chatId}`);
+  }, [user]);
 
   if (loading) {
     return (
