@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { MONTAI_SYSTEM_PROMPT } from './constants';
+import { getImageSafetyPrompt, logModerationEvent } from './moderation';
 
 function getGroq(): Groq {
   return new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
@@ -53,11 +54,13 @@ User experience: ${userContext?.experienceLevel ?? 'beginner'}
 User software: ${userContext?.primarySoftware?.join(', ') ?? 'not specified'}
 Use their nickname naturally (not every message). Respond in their language. Adapt to their experience level.`;
 
-  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition;
-
   // Only trigger vision model if the LAST user message has an image (not old history)
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
   const hasImage = lastUserMsg ? hasImageContent(lastUserMsg.content) : false;
+
+  // Inject image safety rules when the request contains images
+  const safetyAddition = hasImage ? getImageSafetyPrompt() : '';
+  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + safetyAddition;
   // Primary vision model: llama-3.2-11b-vision-preview (stable), fallback: 90b
   const VISION_MODEL   = 'meta-llama/llama-4-scout-17b-16e-instruct';
   const VISION_FALLBACK = 'llama-3.2-11b-vision-preview';
@@ -87,8 +90,9 @@ Use their nickname naturally (not every message). Respond in their language. Ada
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[AI] Primary model failed (${model}):`, msg);
     // Vision fallback: try smaller vision model if large one is unavailable
-    if (hasImage && (msg.includes('model') || msg.includes('404') || msg.includes('not found') || msg.includes('deprecated'))) {
+    if (hasImage && (msg.includes('model') || msg.includes('404') || msg.includes('not found') || msg.includes('deprecated') || msg.includes('unsupported'))) {
       console.log(`[AI] Trying vision fallback: ${VISION_FALLBACK}`);
+      logModerationEvent({ type: 'image', category: 'safe', confidence: 'low', timestamp: new Date().toISOString() });
       stream = await getGroq().chat.completions.create({
         model: VISION_FALLBACK,
         messages: groqMessages,

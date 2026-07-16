@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { getSessionUser, checkRateLimit } from '@/lib/session';
 import { streamChatResponse, type ChatMessage } from '@/lib/ai';
+import { moderateText, logModerationEvent } from '@/lib/moderation';
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
@@ -36,6 +37,30 @@ export async function POST(req: NextRequest) {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  // Server-side text moderation on the last user message
+  const lastMsg = body.messages.at(-1);
+  if (lastMsg?.role === 'user') {
+    const textContent = typeof lastMsg.content === 'string'
+      ? lastMsg.content
+      : (lastMsg.content as Array<{ type: string; text?: string }>)
+          .filter(b => b.type === 'text')
+          .map(b => b.text ?? '')
+          .join(' ');
+
+    const modResult = moderateText(textContent);
+    if (modResult.blocked) {
+      logModerationEvent({
+        type: 'text', category: modResult.category,
+        confidence: modResult.confidence, timestamp: new Date().toISOString(),
+        userId: user.id,
+      });
+      return new Response(
+        JSON.stringify({ error: modResult.message }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
   }
 
   // Limit message history to last 20 messages

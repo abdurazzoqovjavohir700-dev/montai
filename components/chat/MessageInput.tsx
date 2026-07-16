@@ -8,6 +8,7 @@ import { Paperclip, ArrowUp, X, ImageIcon, AlertCircle } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { isImageFile, formatFileSize } from '@/lib/utils';
 import { MAX_IMAGE_SIZE_MB, MAX_MESSAGE_LENGTH } from '@/lib/constants';
+import { moderateText } from '@/lib/moderation';
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
 
@@ -137,6 +138,16 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
     if (isLoading || disabled || isReading) return;
     const corrected = autocorrect(trimmed);
     if (corrected !== trimmed) toast.info('Avtomatik tuzatildi');
+
+    // Client-side moderation — block before sending
+    const modResult = moderateText(corrected);
+    if (modResult.blocked) {
+      toast.error(modResult.message ?? 'Bu turdagi kontent uchun yordam bera olmayman.', {
+        description: 'Videomontaj, ranglar, texnika yoki boshqa mavzular bo\'yicha so\'rang.',
+      });
+      return;
+    }
+
     onSend(corrected, image?.base64, image?.mime);
     setMessage('');
     setImage(null);

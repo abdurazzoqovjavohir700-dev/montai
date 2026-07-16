@@ -152,6 +152,26 @@ export default function ChatWindow({
           const errData = await streamRes.json().catch(() => ({})) as { error?: string };
           throw new Error(errData.error ?? 'Stream failed');
         }
+
+        // Moderation block — server returns 200 with JSON error field
+        const contentType = streamRes.headers.get('Content-Type') ?? '';
+        if (contentType.includes('application/json')) {
+          const modData = await streamRes.json().catch(() => ({})) as { error?: string };
+          if (modData.error) {
+            // Show moderation message as AI response in chat
+            const modMsg = {
+              id: crypto.randomUUID(),
+              chatId: currentChatId ?? '',
+              role: 'assistant' as const,
+              content: modData.error,
+              createdAt: new Date().toISOString(),
+            };
+            setMessages(prev => [...prev, modMsg]);
+            setIsLoading(false);
+            return;
+          }
+        }
+
         if (!streamRes.body) throw new Error('No response body');
 
         const reader = streamRes.body.getReader();

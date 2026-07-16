@@ -75,8 +75,9 @@ export default function Features() {
     <section
       id="features"
       ref={sectionRef}
+      className="features-section"
       style={{
-        maxWidth: 1100, margin: '0 auto', padding: '100px 48px',
+        maxWidth: 1100, margin: '0 auto',
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(32px)',
         transition: 'opacity 0.8s ease, transform 0.8s ease',
@@ -109,7 +110,7 @@ export default function Features() {
       </div>
 
       {/* Cards grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      <div className="features-grid" style={{ display: 'grid', gap: 16 }}>
         {features.map((f, i) => (
           <FeatureCard key={f.title} feature={f} delay={i * 0.08} visible={isVisible} />
         ))}

@@ -19,16 +19,18 @@ export default function Hero({ onGetStarted }: HeroProps) {
   });
 
   return (
-    <section style={{
-      minHeight: '90vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      overflow: 'hidden',
-      padding: '100px 48px 60px',
-    }}>
+    <section
+      className="hero-section"
+      style={{
+        minHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
       {/* Animated film strip bottom */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', opacity: 0.05, pointerEvents: 'none' }}>
         <div className="animate-filmstrip" style={{ display: 'flex', width: '200%' }}>
@@ -74,7 +76,7 @@ export default function Hero({ onGetStarted }: HeroProps) {
         </div>
 
         {/* Headline */}
-        <h1 style={{
+        <h1 className="hero-headline" style={{
           ...fadeUp(0.3),
           fontFamily: 'var(--font-outfit), Outfit, sans-serif',
           fontWeight: 900,
@@ -110,7 +112,7 @@ export default function Hero({ onGetStarted }: HeroProps) {
         </p>
 
         {/* CTA */}
-        <div style={{ ...fadeUp(0.6), display: 'flex', gap: 12, marginBottom: 56, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="hero-cta" style={{ ...fadeUp(0.6), display: 'flex', gap: 12, marginBottom: 56, flexWrap: 'wrap', justifyContent: 'center' }}>
           <button
             onClick={onGetStarted}
             style={{
@@ -161,7 +163,7 @@ export default function Hero({ onGetStarted }: HeroProps) {
         </div>
 
         {/* Stats */}
-        <div style={{ ...fadeUp(0.75), display: 'flex', gap: 48, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div className="hero-stats" style={{ ...fadeUp(0.75), display: 'flex', gap: 48, flexWrap: 'wrap', justifyContent: 'center' }}>
           {[
             { num: '10+', label: 'Expert Topics' },
             { num: '13', label: 'Languages' },
