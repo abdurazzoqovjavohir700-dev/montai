@@ -103,7 +103,28 @@ Use their nickname naturally (not every message). Respond in their language. Ada
         }
         controller.close();
       } catch (err) {
-        controller.error(err);
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
+          // Fallback model bilan qayta urinish
+          try {
+            const fallback = await getGroq().chat.completions.create({
+              model: 'llama-3.1-8b-instant',
+              messages: groqMessages,
+              max_tokens: 1024,
+              temperature: 0.7,
+              stream: true,
+            });
+            for await (const chunk of fallback) {
+              const text = chunk.choices[0]?.delta?.content ?? '';
+              if (text) controller.enqueue(encoder.encode(text));
+            }
+            controller.close();
+          } catch (fallbackErr) {
+            controller.error(fallbackErr);
+          }
+        } else {
+          controller.error(err);
+        }
       }
     },
   });

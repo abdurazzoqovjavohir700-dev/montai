@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
@@ -37,7 +38,9 @@ export default function ChatWindow({
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -48,6 +51,17 @@ export default function ChatWindow({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingContent]);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollBtn(distFromBottom > 200);
+  }, []);
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleSend = useCallback(
     async (content: string, imageBase64?: string) => {
@@ -74,45 +88,26 @@ export default function ChatWindow({
 
         // Create or get chat ID
         let activeChatId = currentChatId;
+        let newChatTitle = '';
         if (!activeChatId) {
-          const chatTitle = generateChatTitle(content);
+          newChatTitle = generateChatTitle(content);
           const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'create', title: chatTitle, userId }),
+            body: JSON.stringify({ action: 'create', title: newChatTitle, userId }),
             signal: abortRef.current.signal,
           });
           const data = await res.json() as { chatId: string };
           activeChatId = data.chatId;
           setCurrentChatId(activeChatId);
-
-          // Auto-generate better title in background
-          fetch('/api/chat/title', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId: activeChatId, message: content }),
-          })
-            .then((r) => r.json() as Promise<{ title: string }>)
-            .then(({ title }) => {
-              onChatCreated?.(activeChatId!, title);
-            })
-            .catch(() => {
-              onChatCreated?.(activeChatId!, chatTitle);
-            });
         }
 
-        // Save user message
-        await fetch('/api/chat/message', {
+        // Save user message (fire-and-forget)
+        fetch('/api/chat/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chatId: activeChatId,
-            role: 'user',
-            content,
-            imageBase64,
-          }),
-          signal: abortRef.current.signal,
-        });
+          body: JSON.stringify({ chatId: activeChatId, role: 'user', content, imageBase64 }),
+        }).catch(e => console.error('[Save user msg]', e));
 
         // Stream AI response
         const streamRes = await fetch('/api/chat/stream', {
@@ -140,7 +135,10 @@ export default function ChatWindow({
           signal: abortRef.current.signal,
         });
 
-        if (!streamRes.ok) throw new Error('Stream failed');
+        if (!streamRes.ok) {
+          const errData = await streamRes.json().catch(() => ({})) as { error?: string };
+          throw new Error(errData.error ?? 'Stream failed');
+        }
         if (!streamRes.body) throw new Error('No response body');
 
         const reader = streamRes.body.getReader();
@@ -155,7 +153,8 @@ export default function ChatWindow({
           setStreamingContent(fullContent);
         }
 
-        // Save AI response
+        if (!fullContent.trim()) throw new Error('Bo\'sh javob keldi');
+
         const aiMessage: Message = {
           id: crypto.randomUUID(),
           chatId: activeChatId,
@@ -164,21 +163,32 @@ export default function ChatWindow({
           createdAt: new Date().toISOString(),
         };
 
-        await fetch('/api/chat/message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chatId: activeChatId,
-            role: 'assistant',
-            content: fullContent,
-          }),
-        });
-
+        // UI'ni darhol yangilash — save'ni kutmasdan
         setMessages((prev) => [...prev, aiMessage]);
         setStreamingContent('');
+
+        // DB'ga saqlash
+        fetch('/api/chat/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatId: activeChatId, role: 'assistant', content: fullContent }),
+        }).catch(e => console.error('[Save AI msg]', e));
+
+        // Stream tugagandan keyin navigation — refresh ko'rinmaydi
+        if (newChatTitle) {
+          fetch('/api/chat/title', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: activeChatId, message: content }),
+          })
+            .then((r) => r.json() as Promise<{ title: string }>)
+            .then(({ title }) => onChatCreated?.(activeChatId!, title))
+            .catch(() => onChatCreated?.(activeChatId!, newChatTitle));
+        }
       } catch (err: unknown) {
         if ((err as { name?: string }).name !== 'AbortError') {
-          toast.error('Failed to get response. Please try again.');
+          const msg = (err as Error).message ?? '';
+          toast.error(msg || 'Xatolik yuz berdi. Qaytadan urinib ko\'ring.');
           setStreamingContent('');
         }
       } finally {
@@ -203,24 +213,32 @@ export default function ChatWindow({
   const showWelcome = messages.length === 0 && !isLoading && !streamingContent;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+      {/* Messages scroll */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        style={{ flex: 1, overflowY: 'auto' }}
+      >
         {showWelcome ? (
-          <WelcomeScreen
-            nickname={nickname}
-            language={language}
-            onSelectSuggestion={handleSend}
-          />
+          <WelcomeScreen nickname={nickname} language={language} onSelectSuggestion={handleSend} />
         ) : (
-          <div className="py-4 space-y-1">
+          <div style={{ maxWidth: '768px', margin: '0 auto', padding: '24px' }}>
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} />
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  onEditResend={(id, newContent) => {
+                    const idx = messages.findIndex(m => m.id === id);
+                    if (idx === -1) return;
+                    setMessages(prev => prev.slice(0, idx));
+                    void handleSend(newContent);
+                  }}
+                />
               ))}
             </AnimatePresence>
 
-            {/* Streaming message */}
             {streamingContent && (
               <MessageBubble
                 message={{
@@ -233,23 +251,41 @@ export default function ChatWindow({
               />
             )}
 
-            {/* Typing indicator (before streaming starts) */}
-            {isLoading && !streamingContent && (
-              <TypingIndicator />
-            )}
-
+            {isLoading && !streamingContent && <TypingIndicator />}
             <div ref={bottomRef} />
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]">
-        <MessageInput
-          onSend={handleSend}
-          isLoading={isLoading}
-          disabled={false}
-        />
+      {/* Scroll to bottom button */}
+      <AnimatePresence>
+        {showScrollBtn && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={scrollToBottom}
+            className="absolute bottom-28 right-6 w-9 h-9 rounded-full flex items-center justify-center shadow-lg z-10"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <ChevronDown size={18} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Input — centered at 768px */}
+      <div style={{ width: '100%', padding: '16px 24px 24px', background: 'var(--bg-primary)' }}>
+        <div style={{ maxWidth: '768px', margin: '0 auto' }}>
+          <MessageInput
+            onSend={handleSend}
+            onStop={() => { abortRef.current?.abort(); }}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
     </div>
   );
