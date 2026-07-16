@@ -8,6 +8,7 @@ import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
 import MessageInput from './MessageInput';
 import { toast, ToastContainer } from '@/components/ui/Toast';
+import { loadChatBg, applyChatBg } from '@/components/settings/ChatBgPicker';
 import type { Message, Language } from '@/lib/types';
 import { generateChatTitle } from '@/lib/utils';
 
@@ -236,6 +237,11 @@ export default function ChatWindow({
     }
   }, []);
 
+  // Chat background — localStorage dan yuklash
+  useEffect(() => {
+    applyChatBg(loadChatBg());
+  }, []);
+
   // Qayta generatsiya — AI javobini o'chira va qaytadan stream qiladi
   const handleRegenerate = useCallback(async (messageId: string) => {
     const idx = messages.findIndex(m => m.id === messageId);
@@ -292,6 +298,10 @@ export default function ChatWindow({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+      {/* Chat background layers */}
+      <div className="chat-bg-layer" />
+      <div className="chat-bg-overlay" />
+
       <ToastContainer />
       {/* Messages scroll */}
       <div

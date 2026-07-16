@@ -402,6 +402,42 @@ textarea::placeholder, input::placeholder {
   background: var(--bg-elevated);
 }
 
+/* ─── Chat background system ─── */
+:root {
+  --chat-bg-image: none;
+  --chat-bg-color: transparent;
+  --chat-bg-size: cover;
+  --chat-bg-filter: none;
+  --chat-overlay: 0;
+}
+
+.chat-bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--chat-bg-color);
+  background-image: var(--chat-bg-image);
+  background-size: var(--chat-bg-size);
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: var(--chat-bg-filter);
+  pointer-events: none;
+}
+
+.chat-bg-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0,0,0,var(--chat-overlay));
+  pointer-events: none;
+}
+
+.chat-bg-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+}
+
 /* ─── Image hover overlay in message bubble ─── */
 .image-zoom-overlay:hover {
   background: rgba(0,0,0,0.32) !important;

@@ -5,8 +5,9 @@ import { signOut } from 'next-auth/react';
 import { toast } from '@/components/ui/Toast';
 import {
   Settings, User, Film, Palette, Shield, Download, LogOut, Trash2, Check, X,
-  Bell, BarChart2, Keyboard, Info, ChevronRight, Zap, Globe, Moon,
+  Bell, BarChart2, Keyboard, Info, ChevronRight, Zap, Globe, Moon, ImageIcon,
 } from 'lucide-react';
+import ChatBgPicker from './ChatBgPicker';
 import { LANGUAGES, SOFTWARE_OPTIONS, FOCUS_AREAS, EXPERIENCE_LEVELS } from '@/lib/constants';
 import type { User as UserType, Language } from '@/lib/types';
 
@@ -21,6 +22,7 @@ const TABS = [
   ]},
   { group: 'AI',      items: [
     { id: 'editing',   label: 'Montaj & AI',    icon: <Film      size={15} strokeWidth={1.5} /> },
+    { id: 'chatbg',    label: 'Chat foni',      icon: <ImageIcon size={15} strokeWidth={1.5} /> },
     { id: 'notifs',   label: 'Bildirishnomalar',icon: <Bell      size={15} strokeWidth={1.5} /> },
   ]},
   { group: "Ma'lumot",items: [
@@ -379,6 +381,16 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </p>
         </div>
         <SaveBtn />
+      </div>
+    ),
+
+    chatbg: (
+      <div>
+        <h2 style={titleStyle}>Chat foni</h2>
+        <p style={{ fontSize: 13, color: '#71717A', fontFamily: 'Inter, sans-serif', marginBottom: 20, lineHeight: 1.6 }}>
+          Chat sahifasining fonini o&apos;zgartiring. O&apos;zgarishlar darhol ko&apos;rinadi. Faqat sizning brauzeringizda saqlanadi.
+        </p>
+        <ChatBgPicker onClose={onClose} />
       </div>
     ),
 
