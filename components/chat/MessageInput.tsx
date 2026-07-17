@@ -4,15 +4,17 @@ import {
   useState, useRef, useCallback, useEffect,
   type KeyboardEvent, type ChangeEvent, type DragEvent, type ClipboardEvent,
 } from 'react';
-import { ArrowUp, Plus, X } from 'lucide-react';
+import { ArrowUp, Plus, X, FileText } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { isImageFile, formatFileSize } from '@/lib/utils';
 import { MAX_IMAGE_SIZE_MB, MAX_MESSAGE_LENGTH } from '@/lib/constants';
 import { moderateText } from '@/lib/moderation';
 import QuickActionMenu from './QuickActionMenu';
 
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+const ACCEPTED_TYPES = [...ACCEPTED_IMAGE_TYPES, 'application/pdf'];
 const MAX_IMAGES = 3;
+const MAX_PDF_SIZE_MB = 20;
 
 const TYPO_FIXES: Record<string, string> = {
   'nma': 'nima', 'qalaysa': 'qalaysan', 'yxshi': 'yaxshi',
@@ -52,8 +54,15 @@ export interface AttachedImage {
   mime: string;
 }
 
+export interface AttachedPdf {
+  name: string;
+  size: number;
+  text: string;    // extracted text from server
+  pages: number;
+}
+
 interface MessageInputProps {
-  onSend: (message: string, images?: AttachedImage[]) => void;
+  onSend: (message: string, images?: AttachedImage[], pdf?: AttachedPdf) => void;
   onStop?: () => void;
   onNewChat?: () => void;
   isLoading: boolean;
@@ -63,6 +72,7 @@ interface MessageInputProps {
 export default function MessageInput({ onSend, onStop, onNewChat, isLoading, disabled }: MessageInputProps) {
   const [message, setMessage]       = useState('');
   const [images, setImages]         = useState<AttachedImage[]>([]);
+  const [pdf, setPdf]               = useState<AttachedPdf | null>(null);
   const [isReading, setIsReading]   = useState(false);
   const [focused, setFocused]       = useState(false);
   const [dragOver, setDragOver]     = useState(false);
@@ -70,6 +80,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const textareaRef                 = useRef<HTMLTextAreaElement>(null);
   const fileInputRef                = useRef<HTMLInputElement>(null);
+  const pdfInputRef                 = useRef<HTMLInputElement>(null);
   const menuAnchorRef               = useRef<HTMLDivElement>(null);
   const plusBtnRef                  = useRef<HTMLButtonElement>(null);
 
@@ -89,10 +100,54 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, []);
 
+  const processPdf = useCallback((file: File) => {
+    if (pdf) {
+      toast.error('Bir vaqtda faqat 1 ta PDF biriktiriladi. Avvalgisini o\'chiring.');
+      return;
+    }
+    if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
+      toast.error(`PDF hajmi ${MAX_PDF_SIZE_MB}MB dan kichik bo'lishi kerak`);
+      return;
+    }
+    setIsReading(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const dataUrl = ev.target?.result as string;
+        const base64 = dataUrl.split(',')[1];
+        const res = await fetch('/api/parse-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64, name: file.name }),
+        });
+        const data = await res.json() as { text?: string; pages?: number; error?: string };
+        if (!res.ok || data.error) {
+          toast.error(data.error ?? 'PDF tahlil qilishda xatolik');
+          return;
+        }
+        setPdf({ name: file.name, size: file.size, text: data.text ?? '', pages: data.pages ?? 0 });
+        toast.success(`PDF yuklandi: ${data.pages} sahifa`);
+      } catch {
+        toast.error('PDF o\'qishda xatolik yuz berdi');
+      } finally {
+        setIsReading(false);
+      }
+    };
+    reader.onerror = () => {
+      toast.error('Faylni o\'qishda xatolik yuz berdi');
+      setIsReading(false);
+    };
+    reader.readAsDataURL(file);
+  }, [pdf]);
+
   const processFile = useCallback((file: File) => {
     const mime = file.type.toLowerCase();
-    if (!ACCEPTED_TYPES.includes(mime)) {
-      toast.error('Faqat PNG, JPG, WEBP, GIF formatlari qabul qilinadi');
+    if (mime === 'application/pdf') {
+      processPdf(file);
+      return;
+    }
+    if (!ACCEPTED_IMAGE_TYPES.includes(mime)) {
+      toast.error('Faqat PNG, JPG, WEBP, GIF va PDF formatlari qabul qilinadi');
       return;
     }
     if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
@@ -121,7 +176,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
       setIsReading(false);
     };
     reader.readAsDataURL(file);
-  }, [images]);
+  }, [images, processPdf]);
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     Array.from(e.target.files ?? []).forEach(f => processFile(f));
@@ -153,7 +208,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
 
   const handleSend = useCallback(() => {
     const trimmed = message.trim();
-    if (!trimmed && images.length === 0) return;
+    if (!trimmed && images.length === 0 && !pdf) return;
     if (isLoading || disabled || isReading) return;
     const corrected = autocorrect(trimmed);
     if (corrected !== trimmed) toast.info('Avtomatik tuzatildi');
@@ -166,11 +221,12 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
       return;
     }
 
-    onSend(corrected, images.length > 0 ? images : undefined);
+    onSend(corrected, images.length > 0 ? images : undefined, pdf ?? undefined);
     setMessage('');
     setImages([]);
+    setPdf(null);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-  }, [message, images, isLoading, disabled, isReading, onSend]);
+  }, [message, images, pdf, isLoading, disabled, isReading, onSend]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -183,10 +239,11 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
   };
 
   const removeImage = (idx: number) => setImages(prev => prev.filter((_, i) => i !== idx));
+  const removePdf = () => setPdf(null);
 
-  const canSend = (message.trim().length > 0 || images.length > 0) && !isLoading && !disabled && !isReading;
+  const canSend = (message.trim().length > 0 || images.length > 0 || !!pdf) && !isLoading && !disabled && !isReading;
 
-  const showHint = !message && !isLoading && images.length === 0 && !dragOver;
+  const showHint = !message && !isLoading && images.length === 0 && !pdf && !dragOver;
 
   return (
     <div
@@ -196,9 +253,49 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
       onDrop={handleDrop}
       onPaste={handlePaste}
     >
-      {/* Images strip */}
-      {(images.length > 0 || isReading) && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+      {/* Attachments strip — images + PDF */}
+      {(images.length > 0 || pdf || isReading) && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          {/* PDF badge */}
+          {pdf && (
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div style={{
+                height: 60, borderRadius: 10, padding: '0 12px',
+                background: 'rgba(245,158,11,0.08)',
+                border: '1px solid rgba(245,158,11,0.25)',
+                display: 'flex', alignItems: 'center', gap: 8,
+                maxWidth: 200,
+              }}>
+                <FileText size={22} strokeWidth={1.5} style={{ color: '#F59E0B', flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 12, fontWeight: 600, color: '#F59E0B',
+                    fontFamily: 'Inter, sans-serif',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    maxWidth: 130,
+                  }}>
+                    {pdf.name}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: '#71717A', fontFamily: 'Inter, sans-serif' }}>
+                    PDF · {pdf.pages} sahifa
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={removePdf}
+                style={{
+                  position: 'absolute', top: -6, right: -6,
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: '#EF4444', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#fff', lineHeight: 0,
+                }}
+              >
+                <X size={10} strokeWidth={2} />
+              </button>
+            </div>
+          )}
+
           {images.map((img, idx) => (
             <div key={idx} style={{ position: 'relative', flexShrink: 0 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -257,6 +354,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
             isOpen={menuOpen}
             onClose={() => setMenuOpen(false)}
             onUploadImage={() => fileInputRef.current?.click()}
+            onUploadPdf={() => pdfInputRef.current?.click()}
             onNewChat={() => onNewChat?.()}
             anchorRef={plusBtnRef as React.RefObject<HTMLElement | null>}
           />
@@ -332,9 +430,16 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
           <input
             ref={fileInputRef}
             type="file"
-            accept={ACCEPTED_TYPES.join(',')}
+            accept={ACCEPTED_IMAGE_TYPES.join(',')}
             multiple
             onChange={handleFileSelect}
+            className="hidden"
+          />
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept="application/pdf"
+            onChange={e => { const f = e.target.files?.[0]; if (f) processPdf(f); e.target.value = ''; }}
             className="hidden"
           />
 

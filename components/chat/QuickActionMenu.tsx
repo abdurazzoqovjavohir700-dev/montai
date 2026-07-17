@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -26,6 +26,7 @@ interface QuickActionMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onUploadImage: () => void;
+  onUploadPdf?: () => void;
   onNewChat: () => void;
   /** Ref to the "+" anchor element for positioning */
   anchorRef?: React.RefObject<HTMLElement | null>;
@@ -44,7 +45,7 @@ function saveRecent(id: string) {
 }
 
 export default function QuickActionMenu({
-  isOpen, onClose, onUploadImage, onNewChat, anchorRef,
+  isOpen, onClose, onUploadImage, onUploadPdf, onNewChat, anchorRef,
 }: QuickActionMenuProps) {
   const router = useRouter();
   const [query, setQuery]   = useState('');
@@ -71,9 +72,14 @@ export default function QuickActionMenu({
     });
   }, [anchorRef]);
 
-  useEffect(() => {
+  // useLayoutEffect: position is computed before browser paints → animation starts from correct position
+  useLayoutEffect(() => {
     if (!isOpen) { setCanInteract(false); return; }
     updatePosition();
+  }, [isOpen, updatePosition]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     setQuery('');
     setFocused(0);
     setRecent(getRecent());
@@ -86,7 +92,7 @@ export default function QuickActionMenu({
       clearTimeout(interactTimer);
       if (focusTimer) clearTimeout(focusTimer);
     };
-  }, [isOpen, updatePosition]);
+  }, [isOpen]);
 
   // ─── Outside click — mousedown + touchstart for mobile ───────────────────
   useEffect(() => {
@@ -142,7 +148,8 @@ export default function QuickActionMenu({
     {
       id: 'upload-pdf', label: 'Upload PDF', labelUz: 'PDF yuklash',
       icon: <FileText size={16} strokeWidth={1.5} />, group: 'Fayllar',
-      keywords: ['pdf', 'hujjat'], available: false, badge: 'Tez kunda',
+      keywords: ['pdf', 'hujjat', 'document'], available: !!onUploadPdf,
+      onSelect: onUploadPdf,
     },
     {
       id: 'upload-video', label: 'Upload Video', labelUz: 'Video yuklash',
@@ -262,10 +269,11 @@ export default function QuickActionMenu({
           initial={{ opacity: 0, scale: 0.94, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 8 }}
-          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1], type: 'tween' }}
           // Prevent mouse events from reaching document listener
           onMouseDown={e => e.stopPropagation()}
           style={{
+            willChange: 'transform, opacity',
             position: 'fixed',
             bottom: pos.bottom,
             left: Math.max(8, Math.min(pos.left, window.innerWidth - 352)),

@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
-import MessageInput, { type AttachedImage } from './MessageInput';
+import MessageInput, { type AttachedImage, type AttachedPdf } from './MessageInput';
 import { toast, ToastContainer } from '@/components/ui/Toast';
 import { loadChatBg, applyChatBg } from '@/components/settings/ChatBgPicker';
 import type { Message, Language } from '@/lib/types';
@@ -66,16 +66,22 @@ export default function ChatWindow({
   };
 
   const handleSend = useCallback(
-    async (content: string, images?: AttachedImage[]) => {
-      if (!content.trim() && (!images || images.length === 0)) return;
+    async (content: string, images?: AttachedImage[], pdf?: AttachedPdf) => {
+      if (!content.trim() && (!images || images.length === 0) && !pdf) return;
       if (isLoading) return;
 
       const imageUrls = images?.map(img => `data:${img.mime};base64,${img.base64}`);
+
+      // Prepend PDF text to content so AI gets full context
+      const contentWithPdf = pdf
+        ? `📄 **${pdf.name}** (${pdf.pages} sahifa) PDF mazmuni:\n\n${pdf.text}\n\n---\n\n${content || 'Yuqoridagi PDF hujjatini tahlil qil.'}`
+        : content;
+
       const userMessage: Message = {
         id: crypto.randomUUID(),
         chatId: currentChatId ?? '',
         role: 'user',
-        content,
+        content: contentWithPdf,
         imageUrl: imageUrls?.[0],
         imageUrls,
         createdAt: new Date().toISOString(),
@@ -466,28 +472,38 @@ export default function ChatWindow({
         )}
       </div>
 
-      {/* Scroll to bottom button */}
-      <AnimatePresence>
-        {showScrollBtn && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={scrollToBottom}
-            className="scroll-down-btn w-9 h-9 rounded-full flex items-center justify-center shadow-lg z-10"
-            style={{
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            <ChevronDown size={18} />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
-      {/* Input */}
-      <div className="chat-input-wrapper" style={{ zIndex: 2 }}>
+      {/* Input — scroll button floats above input so it always clears the input area */}
+      <div className="chat-input-wrapper" style={{ zIndex: 2, position: 'relative' }}>
+        <AnimatePresence>
+          {showScrollBtn && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={scrollToBottom}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: '1.25rem',
+                transform: 'translateY(calc(-100% - 10px))',
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.5)',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                zIndex: 10,
+              }}
+            >
+              <ChevronDown size={18} />
+            </motion.button>
+          )}
+        </AnimatePresence>
         <div className="chat-input-inner">
           <MessageInput
             onSend={handleSend}

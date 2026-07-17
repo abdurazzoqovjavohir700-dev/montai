@@ -805,15 +805,7 @@ textarea::placeholder, input::placeholder {
   input, textarea { font-size: max(16px, 1em); } /* prevent iOS zoom on focus */
 }
 
-/* ─── Scroll down button responsive position ─── */
-.scroll-down-btn {
-  position: absolute;
-  bottom: 7rem;
-  right: 1.25rem;
-}
-@media (max-width: 479px) {
-  .scroll-down-btn { bottom: 6rem; right: 0.75rem; }
-}
+/* scroll-down-btn positioning is now inline in ChatWindow (adapts to dynamic input height) */
 
 /* ─── Landing page responsive layout ─── */
 .hero-section {
