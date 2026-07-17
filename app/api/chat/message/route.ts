@@ -30,12 +30,24 @@ export async function POST(req: NextRequest) {
 
   if (!chat) return NextResponse.json({ error: 'Chat not found' }, { status: 404 });
 
-  // Upload image if provided — use actual MIME type, not hardcoded jpeg
+  // Upload image if provided — strict server-side validation
   let imageUrl: string | null = null;
   if (body.imageBase64 && body.role === 'user') {
-    const mime = body.imageMime ?? 'image/jpeg';
+    const VALID_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    const mime = (body.imageMime ?? '').toLowerCase();
+    if (!VALID_MIMES.includes(mime)) {
+      return NextResponse.json({ error: 'Invalid image type' }, { status: 400 });
+    }
+    // Prevent DoS: base64 of 10MB = ~13.3M chars
+    if (body.imageBase64.length > 13_500_000) {
+      return NextResponse.json({ error: 'Image exceeds 10MB' }, { status: 413 });
+    }
     const ext = mime.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
     const buffer = Buffer.from(body.imageBase64, 'base64');
+    // Double check decoded size
+    if (buffer.byteLength > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Image exceeds 10MB' }, { status: 413 });
+    }
     const filename = `${user.id}/${body.chatId}/${Date.now()}.${ext}`;
     const { data: uploadData } = await supabase.storage
       .from('chat-images')

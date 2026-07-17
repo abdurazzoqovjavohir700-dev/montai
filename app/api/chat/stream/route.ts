@@ -83,16 +83,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    const msgLow = msg.toLowerCase();
     console.error('[Stream Error]', msg);
-    const is429 = msg.includes('429') || msg.toLowerCase().includes('rate limit');
-    const isAuth = msg.includes('401') || msg.toLowerCase().includes('api key') || msg.toLowerCase().includes('unauthorized');
-    const isModel = msg.includes('404') || msg.toLowerCase().includes('model') || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('deprecated');
-    const isImage = msg.toLowerCase().includes('image') || msg.toLowerCase().includes('vision') || msg.toLowerCase().includes('multimodal');
-    const errText = is429     ? 'Groq rate limit — 1 daqiqa kuting va qaytadan yuboring.'
-      : isAuth   ? 'AI API kaliti noto\'g\'ri yoki muddati tugagan.'
-      : isModel  ? 'Tanlangan AI modeli mavjud emas — yangilash kerak.'
-      : isImage  ? 'Rasm tahlil qilishda xatolik — rasm formatini tekshiring.'
-      : 'AI xizmati hozir mavjud emas. Qaytadan urinib ko\'ring.';
+    const is429 = msg.includes('429') || msgLow.includes('rate limit') || msgLow.includes('rate_limit') || msgLow.includes('too many requests');
+    const isAuth = msg.includes('401') || msgLow.includes('api key') || msgLow.includes('unauthorized') || msgLow.includes('invalid_api_key');
+    const isExhausted = msgLow.includes('exhausted');
+    const isImage = msgLow.includes('image') || msgLow.includes('vision') || msgLow.includes('multimodal');
+    const errText = is429       ? 'AI so\'rovlar limiti — 1 daqiqa kuting va qaytadan yuboring.'
+      : isAuth     ? 'AI ulanishida muammo — iltimos keyinroq urinib ko\'ring.'
+      : isExhausted ? 'AI xizmati vaqtincha yukli — bir daqiqada qaytadan urinib ko\'ring.'
+      : isImage    ? 'Rasm tahlil qilishda xatolik — rasm formatini tekshiring.'
+      : 'AI xizmati hozir band. Qaytadan urinib ko\'ring.';
     return new Response(
       JSON.stringify({ error: errText }),
       { status: is429 ? 429 : isAuth ? 401 : 500, headers: { 'Content-Type': 'application/json' } }

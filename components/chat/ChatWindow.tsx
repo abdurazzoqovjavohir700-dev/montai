@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
-import MessageInput from './MessageInput';
+import MessageInput, { type AttachedImage } from './MessageInput';
 import { toast, ToastContainer } from '@/components/ui/Toast';
 import { loadChatBg, applyChatBg } from '@/components/settings/ChatBgPicker';
 import type { Message, Language } from '@/lib/types';
@@ -66,18 +66,18 @@ export default function ChatWindow({
   };
 
   const handleSend = useCallback(
-    async (content: string, imageBase64?: string, imageMime?: string) => {
-      if (!content.trim() && !imageBase64) return;
+    async (content: string, images?: AttachedImage[]) => {
+      if (!content.trim() && (!images || images.length === 0)) return;
       if (isLoading) return;
 
-      // Build correct data URL with actual MIME type (not hardcoded jpeg)
-      const mime = imageMime ?? 'image/jpeg';
+      const imageUrls = images?.map(img => `data:${img.mime};base64,${img.base64}`);
       const userMessage: Message = {
         id: crypto.randomUUID(),
         chatId: currentChatId ?? '',
         role: 'user',
         content,
-        imageUrl: imageBase64 ? `data:${mime};base64,${imageBase64}` : undefined,
+        imageUrl: imageUrls?.[0],
+        imageUrls,
         createdAt: new Date().toISOString(),
       };
 
@@ -86,6 +86,8 @@ export default function ChatWindow({
       setStreamingContent('');
 
       abortRef.current = new AbortController();
+      // 60-second safety timeout — prevents infinite loading if stream hangs on mobile
+      const streamTimeout = setTimeout(() => abortRef.current?.abort(), 60_000);
 
       try {
         const allMessages = [...messages, userMessage];
@@ -101,45 +103,64 @@ export default function ChatWindow({
             body: JSON.stringify({ action: 'create', title: newChatTitle, userId }),
             signal: abortRef.current.signal,
           });
-          const data = await res.json() as { chatId: string };
+          if (res.status === 401) {
+            try { localStorage.removeItem('montai_init_cache'); } catch {}
+            window.location.href = '/';
+            return;
+          }
+          const data = await res.json() as { chatId?: string; error?: string };
+          if (!data.chatId) throw new Error(data.error ?? "Chat yaratib bo'lmadi");
           activeChatId = data.chatId;
           setCurrentChatId(activeChatId);
         }
 
-        // Save user message (fire-and-forget)
+        // Save user message (fire-and-forget, saves first image)
         fetch('/api/chat/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chatId: activeChatId, role: 'user', content, imageBase64, imageMime: mime }),
+          body: JSON.stringify({
+            chatId: activeChatId, role: 'user', content,
+            imageBase64: images?.[0]?.base64,
+            imageMime: images?.[0]?.mime,
+          }),
         }).catch(e => console.error('[Save user msg]', e));
 
         // Stream AI response
+        // IMPORTANT: Only send image data for the CURRENT message.
+        // Historical messages have their base64 stripped to avoid:
+        // 1. Enormous payloads (1MB image = millions of tokens in history)
+        // 2. Text-only model receiving image blocks → 400 error → frozen UI
         const streamRes = await fetch('/api/chat/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: allMessages.map((m) => {
-              if (!m.imageUrl) return { role: m.role, content: m.content };
+            messages: allMessages.map((m, idx) => {
+              const isCurrentMsg = idx === allMessages.length - 1;
+              const urls = m.imageUrls ?? (m.imageUrl ? [m.imageUrl] : []);
 
-              // Build vision content block from data URL or Supabase URL
-              // data URL: "data:image/png;base64,..." → extract MIME + base64
-              // storage URL: "https://...supabase.co/..." → pass as image_url directly
-              const isDataUrl = m.imageUrl.startsWith('data:');
-              const imageBlock = isDataUrl
-                ? (() => {
-                    const [header, data] = m.imageUrl!.split(',');
-                    const mediaType = header.replace('data:', '').replace(';base64', '') || 'image/jpeg';
-                    return {
-                      type: 'image' as const,
-                      source: { type: 'base64' as const, media_type: mediaType, data },
-                    };
-                  })()
-                : {
-                    type: 'image_url' as const,
-                    image_url: { url: m.imageUrl },
-                  };
+              // History messages with images → replace with text placeholder
+              if (urls.length > 0 && !isCurrentMsg) {
+                const note = urls.length > 1
+                  ? `[Foydalanuvchi ${urls.length} ta rasm yubordi]`
+                  : '[Foydalanuvchi rasm yubordi]';
+                return { role: m.role, content: m.content.trim() ? `${note}\n${m.content}` : note };
+              }
 
-              const blocks: unknown[] = [imageBlock];
+              // No images → plain text
+              if (urls.length === 0) return { role: m.role, content: m.content };
+
+              // Current message with images → full vision blocks
+              const toBlock = (url: string) => {
+                const isDataUrl = url.startsWith('data:');
+                if (isDataUrl) {
+                  const [header, data] = url.split(',');
+                  const mediaType = header.replace('data:', '').replace(';base64', '') || 'image/jpeg';
+                  return { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data } };
+                }
+                return { type: 'image_url' as const, image_url: { url } };
+              };
+
+              const blocks: unknown[] = urls.map(toBlock);
               if (m.content.trim()) blocks.push({ type: 'text', text: m.content });
               return { role: m.role, content: blocks };
             }),
@@ -149,8 +170,13 @@ export default function ChatWindow({
         });
 
         if (!streamRes.ok) {
+          if (streamRes.status === 401) {
+            try { localStorage.removeItem('montai_init_cache'); } catch {}
+            window.location.href = '/';
+            return;
+          }
           const errData = await streamRes.json().catch(() => ({})) as { error?: string };
-          throw new Error(errData.error ?? 'Stream failed');
+          throw new Error(errData.error ?? `Xatolik (${streamRes.status})`);
         }
 
         // Moderation block — server returns 200 with JSON error field
@@ -172,7 +198,7 @@ export default function ChatWindow({
           }
         }
 
-        if (!streamRes.body) throw new Error('No response body');
+        if (!streamRes.body) throw new Error("Javob kelmadi — qaytadan urinib ko'ring.");
 
         const reader = streamRes.body.getReader();
         const decoder = new TextDecoder();
@@ -226,23 +252,56 @@ export default function ChatWindow({
             .catch(() => onChatCreated?.(activeChatId!, newChatTitle));
         }
       } catch (err: unknown) {
-        if ((err as { name?: string }).name !== 'AbortError') {
+        const isAbort = (err as { name?: string }).name === 'AbortError';
+        if (!isAbort) {
           const msg = (err as Error).message ?? '';
-          const is429 = msg.includes('429') || msg.toLowerCase().includes('rate limit');
-          const isNet = msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch');
-          toast.error(
-            is429 ? 'AI server cheklovi — 1 daqiqa kuting' :
-            isNet ? 'Tarmoq xatosi — internet ulanishini tekshiring' :
-            msg.includes('timeout') ? 'So\'rov vaqti tugadi — qaytadan urinib ko\'ring' :
-            msg || 'Xatolik yuz berdi',
+          const is429 = msg.includes('429')
+            || msg.toLowerCase().includes('rate limit')
+            || msg.toLowerCase().includes('cheklovi')
+            || msg.toLowerCase().includes('limitiga')
+            || msg.toLowerCase().includes('limit exceeded');
+          const isNet = msg.includes('Failed to fetch')
+            || msg.includes('NetworkError')
+            || (msg.toLowerCase().includes('tarmoq'));
+          const isTimeout = msg.toLowerCase().includes('timeout')
+            || msg.toLowerCase().includes('aborted')
+            || msg.toLowerCase().includes('vaqti tugadi');
+
+          // Use server's Uzbek error message directly if it exists and is meaningful
+          const isBareInternalMsg = !msg || msg === 'Stream failed' || msg.startsWith('Xatolik (');
+          const friendlyText = is429
+            ? '⚠️ AI server cheklovi — bir daqiqa kuting va qaytadan yuboring.\n\n_(Groq bepul rejim limitiga yetildi. 60 soniya kutib qaytadan yuboring.)_'
+            : isNet
+            ? "⚠️ Tarmoq xatosi — internet ulanishingizni tekshiring va qaytadan urinib ko'ring."
+            : isTimeout
+            ? '⚠️ Javob vaqti tugadi — qaytadan yuboring.'
+            : isBareInternalMsg
+            ? "⚠️ Xatolik yuz berdi. Qaytadan urinib ko'ring."
+            : `⚠️ ${msg}`;
+
+          // Show error as chat message so it doesn't silently disappear
+          setMessages(prev => [
+            ...prev,
             {
-              description: is429 ? 'Groq free tier rate limit. Bir oz kutib qaytadan yuboring.' : undefined,
-              onRetry: is429 || isNet ? undefined : undefined,
-            }
-          );
+              id: crypto.randomUUID(),
+              chatId: currentChatId ?? '',
+              role: 'assistant' as const,
+              content: friendlyText,
+              createdAt: new Date().toISOString(),
+            },
+          ]);
           setStreamingContent('');
+
+          toast.error(
+            is429 ? 'AI cheklovi — 1 daqiqa kuting' :
+            isNet ? 'Tarmoq xatosi' :
+            isTimeout ? 'Javob vaqti tugadi' :
+            'Xatolik yuz berdi',
+          );
         }
+        setStreamingContent('');
       } finally {
+        clearTimeout(streamTimeout);
         setIsLoading(false);
         abortRef.current = null;
       }
@@ -287,17 +346,27 @@ export default function ChatWindow({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: contextMessages.map(m => {
-            if (!m.imageUrl) return { role: m.role, content: m.content };
-            const isDataUrl = m.imageUrl.startsWith('data:');
-            const imageBlock = isDataUrl
-              ? (() => {
-                  const [header, data] = m.imageUrl!.split(',');
-                  const mediaType = header.replace('data:', '').replace(';base64', '') || 'image/jpeg';
-                  return { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data } };
-                })()
-              : { type: 'image_url' as const, image_url: { url: m.imageUrl } };
-            const blocks: unknown[] = [imageBlock];
+          // Same strip-history-images logic as handleSend
+          messages: contextMessages.map((m, idx) => {
+            const isCurrentMsg = idx === contextMessages.length - 1;
+            const urls = m.imageUrls ?? (m.imageUrl ? [m.imageUrl] : []);
+            if (urls.length > 0 && !isCurrentMsg) {
+              const note = urls.length > 1
+                ? `[Foydalanuvchi ${urls.length} ta rasm yubordi]`
+                : '[Foydalanuvchi rasm yubordi]';
+              return { role: m.role, content: m.content.trim() ? `${note}\n${m.content}` : note };
+            }
+            if (urls.length === 0) return { role: m.role, content: m.content };
+            const toBlock = (url: string) => {
+              const isDataUrl = url.startsWith('data:');
+              if (isDataUrl) {
+                const [header, data] = url.split(',');
+                const mediaType = header.replace('data:', '').replace(';base64', '') || 'image/jpeg';
+                return { type: 'image' as const, source: { type: 'base64' as const, media_type: mediaType, data } };
+              }
+              return { type: 'image_url' as const, image_url: { url } };
+            };
+            const blocks: unknown[] = urls.map(toBlock);
             if (m.content.trim()) blocks.push({ type: 'text', text: m.content });
             return { role: m.role, content: blocks };
           }),
@@ -305,7 +374,16 @@ export default function ChatWindow({
         }),
         signal: abortRef.current.signal,
       });
-      if (!streamRes.ok || !streamRes.body) throw new Error('Stream failed');
+      if (streamRes.status === 401) {
+        try { localStorage.removeItem('montai_init_cache'); } catch {}
+        window.location.href = '/';
+        return;
+      }
+      if (!streamRes.ok) {
+        const errData = await streamRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(errData.error ?? `Xatolik (${streamRes.status})`);
+      }
+      if (!streamRes.body) throw new Error("Javob kelmadi.");
       const reader = streamRes.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
@@ -346,12 +424,12 @@ export default function ChatWindow({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        style={{ flex: 1, overflowY: 'auto' }}
+        style={{ flex: 1, overflowY: 'auto', zIndex: 2 }}
       >
         {showWelcome ? (
           <WelcomeScreen nickname={nickname} language={language} onSelectSuggestion={handleSend} />
         ) : (
-          <div style={{ maxWidth: '780px', margin: '0 auto', padding: '48px 24px 24px' }}>
+          <div className="chat-messages-container">
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
                 <MessageBubble
@@ -380,7 +458,9 @@ export default function ChatWindow({
               />
             )}
 
-            {isLoading && !streamingContent && <TypingIndicator />}
+            {isLoading && !streamingContent && (
+              <TypingIndicator hasImage={messages.at(-1)?.imageUrls ? messages.at(-1)!.imageUrls!.length > 0 : !!messages.at(-1)?.imageUrl} />
+            )}
             <div ref={bottomRef} />
           </div>
         )}
@@ -394,7 +474,7 @@ export default function ChatWindow({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToBottom}
-            className="absolute bottom-28 right-6 w-9 h-9 rounded-full flex items-center justify-center shadow-lg z-10"
+            className="scroll-down-btn w-9 h-9 rounded-full flex items-center justify-center shadow-lg z-10"
             style={{
               background: 'var(--bg-elevated)',
               border: '1px solid var(--border)',
@@ -406,12 +486,16 @@ export default function ChatWindow({
         )}
       </AnimatePresence>
 
-      {/* Input — centered at 780px */}
-      <div style={{ width: '100%', padding: '12px 24px 24px', background: '#0D0D0D' }}>
-        <div style={{ maxWidth: '780px', margin: '0 auto' }}>
+      {/* Input */}
+      <div className="chat-input-wrapper" style={{ zIndex: 2 }}>
+        <div className="chat-input-inner">
           <MessageInput
             onSend={handleSend}
             onStop={() => { abortRef.current?.abort(); }}
+            onNewChat={() => {
+              setMessages([]);
+              setCurrentChatId(null);
+            }}
             isLoading={isLoading}
           />
         </div>

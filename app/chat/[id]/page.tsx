@@ -8,6 +8,19 @@ import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/layout/Sidebar';
 import type { Chat, Message, User, Language } from '@/lib/types';
 
+const CACHE_KEY = 'montai_init_cache';
+
+function readCache(): { user: User; chats: Chat[] } | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) as { user: User; chats: Chat[] } : null;
+  } catch { return null; }
+}
+
+function writeCache(user: User, chats: Chat[]) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ user, chats })); } catch { /* ignore */ }
+}
+
 export default function ChatByIdPage() {
   const router = useRouter();
   const params = useParams();
@@ -21,29 +34,41 @@ export default function ChatByIdPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Show cached user+chats immediately
+    const cached = readCache();
+    if (cached?.user?.onboardingCompleted) {
+      setUser(cached.user);
+      setChats(cached.chats ?? []);
+      // Don't setLoading(false) yet — still need messages
+    }
+
+    // 2. Fetch in parallel: init (user+chats) + messages for this chat
     Promise.all([
-      fetch('/api/user').then((r) => {
+      fetch('/api/init').then((r) => {
         if (r.status === 401) { router.push('/'); return null; }
-        return r.json() as Promise<User>;
+        return r.json() as Promise<{ user: User; chats: Chat[] }>;
       }),
-      fetch('/api/chat/history').then((r) => r.json() as Promise<Chat[]>),
       fetch(`/api/chat/${chatId}`).then((r) => {
         if (!r.ok) return { messages: [] };
         return r.json() as Promise<{ messages: Message[] }>;
       }),
     ])
-      .then(([userData, chatsData, chatData]) => {
-        if (!userData) return;
-        if (!userData.onboardingCompleted) {
+      .then(([initData, chatData]) => {
+        if (!initData) return;
+        if (!initData.user.onboardingCompleted) {
           router.push('/onboarding');
           return;
         }
-        setUser(userData);
-        setChats(Array.isArray(chatsData) ? chatsData : []);
+        setUser(initData.user);
+        setChats(Array.isArray(initData.chats) ? initData.chats : []);
+        writeCache(initData.user, initData.chats ?? []);
         setMessages((chatData as { messages: Message[] }).messages ?? []);
         setLoading(false);
       })
-      .catch(() => router.push('/'));
+      .catch(() => {
+        if (!cached) router.push('/');
+        else setLoading(false);
+      });
   }, [router, chatId]);
 
   const handleNewChat = useCallback(() => {
@@ -51,10 +76,14 @@ export default function ChatByIdPage() {
   }, [router]);
 
   const handleChatCreated = useCallback((newChatId: string, title: string) => {
-    setChats((prev) => [
-      { id: newChatId, userId: user?.id ?? '', title, preview: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-      ...prev.filter((c) => c.id !== newChatId),
-    ]);
+    setChats((prev) => {
+      const updated = [
+        { id: newChatId, userId: user?.id ?? '', title, preview: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        ...prev.filter((c) => c.id !== newChatId),
+      ];
+      if (user) writeCache(user, updated);
+      return updated;
+    });
   }, [user]);
 
   if (loading) {
@@ -71,7 +100,6 @@ export default function ChatByIdPage() {
 
   return (
     <div className="h-screen flex overflow-hidden" style={{ background: '#0D0D0D' }}>
-      {/* Desktop sidebar */}
       <div
         className="hidden md:block flex-shrink-0 h-full"
         style={{
@@ -92,7 +120,6 @@ export default function ChatByIdPage() {
         />
       </div>
 
-      {/* Mobile sidebar */}
       <div className="md:hidden">
         <Sidebar
           chats={chats}
@@ -105,12 +132,13 @@ export default function ChatByIdPage() {
         />
       </div>
 
-      {/* Main area — no separate header bar */}
       <div className="flex flex-col flex-1 min-w-0 h-full relative">
-        {/* Floating sidebar toggle */}
         <div
           style={{
-            position: 'absolute', top: 12, left: 12, zIndex: 10,
+            position: 'absolute',
+            top: 'max(12px, env(safe-area-inset-top, 12px))',
+            left: 'max(12px, env(safe-area-inset-left, 12px))',
+            zIndex: 10,
           }}
         >
           <button
@@ -119,10 +147,11 @@ export default function ChatByIdPage() {
               else setDesktopSidebarVisible((v) => !v);
             }}
             style={{
-              width: 32, height: 32, borderRadius: 8,
+              width: 44, height: 44, borderRadius: 10,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: '#52525B', transition: 'background 0.15s, color 0.15s',
+              touchAction: 'manipulation',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#52525B'; }}

@@ -31,6 +31,9 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
       return <>{children}</>;
     },
     a({ href, children }) {
+      // Block javascript: / data: URIs and other non-HTTP schemes
+      const isSafe = !href || /^https?:\/\//i.test(href) || href.startsWith('/') || href.startsWith('#');
+      if (!isSafe) return <span style={{ textDecoration: 'line-through', color: '#52525B' }}>{children}</span>;
       const isYoutube = href?.includes('youtube.com') || href?.includes('youtu.be');
       if (isYoutube) {
         return (

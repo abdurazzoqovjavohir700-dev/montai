@@ -1,35 +1,134 @@
 import Groq from 'groq-sdk';
+import type { Stream } from 'groq-sdk/core/streaming';
+import type { ChatCompletionChunk } from 'groq-sdk/resources/chat/completions';
 import { MONTAI_SYSTEM_PROMPT } from './constants';
 import { getImageSafetyPrompt, logModerationEvent } from './moderation';
+
+// ─── Groq client ─────────────────────────────────────────────────────────────
 
 function getGroq(): Groq {
   return new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
 }
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string | Array<{ type: string; [key: string]: unknown }>;
 }
 
-function hasImageContent(content: ChatMessage['content']): boolean {
+type ErrorClass = 'model_unavailable' | 'rate_limit' | 'auth' | 'unknown';
+
+// ─── Fallback chains (ordered by preference) ─────────────────────────────────
+// Active Groq models as of 2026-07: llama-3.3-70b-versatile, llama-3.1-8b-instant,
+// meta-llama/llama-4-scout-17b-16e-instruct, qwen/qwen3-32b, openai/gpt-oss-20b
+// Deprecated: gemma2-9b-it, llama-3.2-*-preview
+
+// llama-3.3-70b TPM = 6K (too low for 5000-token system prompt — hits limit after 1 message)
+// llama-3.1-8b TPM = 131K — handles large system prompt fine
+const TEXT_CHAIN = [
+  'llama-3.1-8b-instant',      // Primary: 131K TPM, handles large system prompt
+  'llama-3.3-70b-versatile',   // Quality fallback (used when 8b fails)
+  'qwen/qwen3-32b',
+  'openai/gpt-oss-20b',
+] as const;
+
+const VISION_CHAIN = [
+  'meta-llama/llama-4-scout-17b-16e-instruct',
+] as const;
+
+// ─── Error classification ────────────────────────────────────────────────────
+
+function classifyError(err: unknown): ErrorClass {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  if (msg.includes('429') || msg.includes('rate limit') || msg.includes('rate_limit')) return 'rate_limit';
+  if (msg.includes('401') || msg.includes('api key') || msg.includes('unauthorized') || msg.includes('invalid_api_key')) return 'auth';
+  if (
+    msg.includes('404') || msg.includes('not found') ||
+    msg.includes('deprecated') || msg.includes('unsupported') ||
+    msg.includes('does not exist') || msg.includes('unavailable') ||
+    (msg.includes('model') && (msg.includes('invalid') || msg.includes('error') || msg.includes('fail')))
+  ) return 'model_unavailable';
+  return 'unknown';
+}
+
+function shouldTryNext(ec: ErrorClass): boolean {
+  return ec !== 'auth';
+}
+
+// ─── Content helpers ─────────────────────────────────────────────────────────
+
+export function hasImageContent(content: ChatMessage['content']): boolean {
   if (typeof content === 'string') return false;
   return content.some(b => b.type === 'image' || b.type === 'image_url');
 }
 
-function toGroqContent(content: ChatMessage['content']): Groq.Chat.ChatCompletionMessageParam['content'] {
+function toGroqContent(
+  content: ChatMessage['content'],
+): Groq.Chat.ChatCompletionMessageParam['content'] {
   if (typeof content === 'string') return content;
   return content.map(block => {
     if (block.type === 'image') {
       const src = block.source as { type: string; media_type: string; data: string };
-      return {
-        type: 'image_url' as const,
-        image_url: { url: `data:${src.media_type};base64,${src.data}` },
-      };
+      return { type: 'image_url' as const, image_url: { url: `data:${src.media_type};base64,${src.data}` } };
     }
-    if (block.type === 'image_url') return block as { type: 'image_url'; image_url: { url: string } };
+    if (block.type === 'image_url') {
+      return block as { type: 'image_url'; image_url: { url: string } };
+    }
     return { type: 'text' as const, text: (block as { type: string; text: string }).text ?? '' };
   });
 }
+
+function sanitizeForTextModel(content: ChatMessage['content']): string {
+  if (typeof content === 'string') return content;
+  return content
+    .filter(b => b.type === 'text')
+    .map(b => (b as { type: string; text?: string }).text ?? '')
+    .join(' ') || '[rasm]';
+}
+
+// ─── Core: try models in order ───────────────────────────────────────────────
+
+type GroqStream = Stream<ChatCompletionChunk>;
+
+interface StreamParams {
+  model: string;
+  messages: Groq.Chat.ChatCompletionMessageParam[];
+  max_tokens: number;
+  temperature: number;
+}
+
+async function tryModelsInOrder(
+  models: readonly string[],
+  buildParams: (model: string) => StreamParams,
+): Promise<{ stream: GroqStream; model: string }> {
+  const groq = getGroq();
+  let lastErr: unknown;
+  let highPriorityErr: unknown; // preserve rate_limit/auth over model_unavailable
+
+  for (const model of models) {
+    try {
+      console.log(`[AI] Trying model: ${model}`);
+      const stream = await groq.chat.completions.create({
+        ...buildParams(model),
+        stream: true,
+      }) as GroqStream;
+      console.log(`[AI] Model OK: ${model}`);
+      return { stream, model };
+    } catch (err) {
+      const cls = classifyError(err);
+      console.warn(`[AI] ${model} failed (${cls}):`, err instanceof Error ? err.message : String(err));
+      lastErr = err;
+      // Keep the highest-priority error (rate_limit/auth > model_unavailable/unknown)
+      if (cls === 'rate_limit' || cls === 'auth') highPriorityErr = err;
+      if (!shouldTryNext(cls)) break;
+    }
+  }
+
+  throw highPriorityErr ?? lastErr;
+}
+
+// ─── Main export ─────────────────────────────────────────────────────────────
 
 export async function streamChatResponse(
   messages: ChatMessage[],
@@ -54,117 +153,145 @@ User experience: ${userContext?.experienceLevel ?? 'beginner'}
 User software: ${userContext?.primarySoftware?.join(', ') ?? 'not specified'}
 Use their nickname naturally (not every message). Respond in their language. Adapt to their experience level.`;
 
-  // Only trigger vision model if the LAST user message has an image (not old history)
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
   const hasImage = lastUserMsg ? hasImageContent(lastUserMsg.content) : false;
 
-  // Inject image safety rules when the request contains images
   const safetyAddition = hasImage ? getImageSafetyPrompt() : '';
   const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + safetyAddition;
-  // Primary vision model: llama-3.2-11b-vision-preview (stable), fallback: 90b
-  const VISION_MODEL   = 'meta-llama/llama-4-scout-17b-16e-instruct';
-  const VISION_FALLBACK = 'llama-3.2-11b-vision-preview';
-  const TEXT_MODEL     = 'llama-3.3-70b-versatile';
-  const model = hasImage ? VISION_MODEL : TEXT_MODEL;
-  const maxTokens = hasImage ? 1500 : 2048;
-  console.log(`[AI] model=${model} hasImage=${hasImage} messages=${messages.length}`);
+  const maxTokens = hasImage ? 1500 : 1024;
 
-  const groqMessages: Groq.Chat.ChatCompletionMessageParam[] = [
+  const buildGroqMessages = (visionOk: boolean): Groq.Chat.ChatCompletionMessageParam[] => [
     { role: 'system', content: systemPrompt },
-    ...messages.map((msg) => ({
-      role: msg.role as 'user' | 'assistant',
-      content: toGroqContent(msg.content),
-    } as Groq.Chat.ChatCompletionMessageParam)),
+    ...messages.map((msg) => {
+      const hasImgInMsg = typeof msg.content !== 'string' && hasImageContent(msg.content);
+      const content = (!visionOk && hasImgInMsg)
+        ? sanitizeForTextModel(msg.content)
+        : toGroqContent(msg.content);
+      return { role: msg.role as 'user' | 'assistant', content } as Groq.Chat.ChatCompletionMessageParam;
+    }),
   ];
 
-  let stream;
+  const modelChain = hasImage ? VISION_CHAIN : TEXT_CHAIN;
+  console.log(`[AI] hasImage=${hasImage} chain=[${modelChain.join(', ')}]`);
+
+  let activeStream: GroqStream;
+  let activeModel: string;
+  let usingVision = hasImage;
+
   try {
-    stream = await getGroq().chat.completions.create({
+    const result = await tryModelsInOrder(modelChain, (model) => ({
       model,
-      messages: groqMessages,
+      messages: buildGroqMessages(hasImage),
       max_tokens: maxTokens,
       temperature: 0.65,
-      stream: true,
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[AI] Primary model failed (${model}):`, msg);
-    // Vision fallback: try smaller vision model if large one is unavailable
-    if (hasImage && (msg.includes('model') || msg.includes('404') || msg.includes('not found') || msg.includes('deprecated') || msg.includes('unsupported'))) {
-      console.log(`[AI] Trying vision fallback: ${VISION_FALLBACK}`);
-      logModerationEvent({ type: 'image', category: 'safe', confidence: 'low', timestamp: new Date().toISOString() });
-      stream = await getGroq().chat.completions.create({
-        model: VISION_FALLBACK,
-        messages: groqMessages,
-        max_tokens: 1024,
-        temperature: 0.65,
-        stream: true,
-      });
-    } else if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
-      stream = await getGroq().chat.completions.create({
-        model: 'llama-3.1-8b-instant',
-        messages: groqMessages,
-        max_tokens: 1024,
-        temperature: 0.65,
-        stream: true,
-      });
-    } else {
-      throw err;
-    }
+    }));
+    activeStream = result.stream;
+    activeModel = result.model;
+  } catch (visionErr) {
+    if (!hasImage) throw visionErr;
+
+    console.warn('[AI] All vision models failed, degrading to text chain');
+    logModerationEvent({ type: 'image', category: 'safe', confidence: 'low', timestamp: new Date().toISOString() });
+    usingVision = false;
+
+    const result = await tryModelsInOrder(TEXT_CHAIN, (model) => ({
+      model,
+      messages: buildGroqMessages(false),
+      max_tokens: 1024,
+      temperature: 0.65,
+    }));
+    activeStream = result.stream;
+    activeModel = result.model;
   }
 
+  console.log(`[AI] Streaming model=${activeModel} vision=${usingVision}`);
   const encoder = new TextEncoder();
+
+  const drainStream = async (
+    stream: GroqStream,
+    controller: ReadableStreamDefaultController<Uint8Array>,
+  ) => {
+    for await (const chunk of stream) {
+      const text = (chunk as ChatCompletionChunk).choices[0]?.delta?.content ?? '';
+      if (text) controller.enqueue(encoder.encode(text));
+    }
+  };
 
   return new ReadableStream({
     async start(controller) {
       try {
-        for await (const chunk of stream) {
-          const text = chunk.choices[0]?.delta?.content ?? '';
-          if (text) {
-            controller.enqueue(encoder.encode(text));
-          }
-        }
+        await drainStream(activeStream, controller);
         controller.close();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
-          // Fallback model bilan qayta urinish
+      } catch (streamErr) {
+        const cls = classifyError(streamErr);
+        console.warn(`[AI] Stream error (${cls}) on ${activeModel}`);
+
+        if (!shouldTryNext(cls)) {
+          controller.error(streamErr);
+          return;
+        }
+
+        const chain: string[] = usingVision
+          ? [...VISION_CHAIN, ...TEXT_CHAIN]
+          : [...TEXT_CHAIN];
+        const remaining = chain.filter(m => m !== activeModel);
+
+        if (remaining.length === 0) {
+          controller.error(streamErr);
+          return;
+        }
+
+        const groq = getGroq();
+        let recovered = false;
+        for (const fallbackModel of remaining) {
           try {
-            const fallback = await getGroq().chat.completions.create({
-              model: 'llama-3.1-8b-instant',
-              messages: groqMessages,
+            console.log(`[AI] Stream recovery: trying ${fallbackModel}`);
+            const visionOk = (VISION_CHAIN as readonly string[]).includes(fallbackModel);
+            const fallback = await groq.chat.completions.create({
+              model: fallbackModel,
+              messages: buildGroqMessages(visionOk),
               max_tokens: 1024,
               temperature: 0.7,
               stream: true,
-            });
-            for await (const chunk of fallback) {
-              const text = chunk.choices[0]?.delta?.content ?? '';
-              if (text) controller.enqueue(encoder.encode(text));
-            }
-            controller.close();
-          } catch (fallbackErr) {
-            controller.error(fallbackErr);
+            }) as GroqStream;
+            await drainStream(fallback, controller);
+            console.log(`[AI] Recovered with ${fallbackModel}`);
+            recovered = true;
+            break;
+          } catch (fbErr) {
+            if (!shouldTryNext(classifyError(fbErr))) break;
           }
+        }
+
+        if (!recovered) {
+          controller.error(new Error('All fallback models exhausted'));
         } else {
-          controller.error(err);
+          controller.close();
         }
       }
     },
   });
 }
 
-export async function generateChatTitle(userMessage: string): Promise<string> {
-  const response = await getGroq().chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    max_tokens: 30,
-    messages: [
-      {
-        role: 'user',
-        content: `Generate a concise 3-6 word title for a chat that starts with this message. Return ONLY the title, nothing else:\n\n"${userMessage.slice(0, 200)}"`,
-      },
-    ],
-  });
+// ─── Chat title generation ────────────────────────────────────────────────────
 
-  const title = response.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') ?? 'New Chat';
-  return title.slice(0, 60) || 'New Chat';
+export async function generateChatTitle(userMessage: string): Promise<string> {
+  const groq = getGroq();
+  const payload: Groq.Chat.ChatCompletionMessageParam = {
+    role: 'user',
+    content: `Generate a concise 3-6 word title for a chat that starts with this message. Return ONLY the title, nothing else:\n\n"${userMessage.slice(0, 200)}"`,
+  };
+
+  for (const model of ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'qwen/qwen3-32b'] as const) {
+    try {
+      const response = await groq.chat.completions.create({
+        model, max_tokens: 30, messages: [payload],
+      });
+      const title = response.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') ?? '';
+      return title.slice(0, 60) || 'New Chat';
+    } catch {
+      // try next
+    }
+  }
+  return 'New Chat';
 }

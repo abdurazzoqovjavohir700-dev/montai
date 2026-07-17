@@ -103,7 +103,7 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100%',
-        padding: '40px 24px 24px',
+        padding: 'clamp(20px, 5vw, 40px) clamp(12px, 4vw, 24px) 24px',
         overflowY: 'auto',
       }}
     >
@@ -138,10 +138,11 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12, duration: 0.35 }}
+          className="welcome-heading"
           style={{
             fontFamily: 'Sora, sans-serif',
             color: '#FAFAFA',
-            fontSize: '28px',
+            fontSize: 'clamp(20px, 5.5vw, 28px)',
             fontWeight: 700,
             lineHeight: 1.3,
             marginBottom: 8,
@@ -170,6 +171,7 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
             <button
               key={action.label}
               onClick={() => onSelectSuggestion(action.prompt)}
+              className="welcome-quick-pill"
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '6px 13px', borderRadius: 20,
@@ -195,12 +197,7 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
         </motion.div>
 
         {/* 6 suggestion cards — 2-column on wider screens, 1-column on mobile */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 8,
-          width: '100%',
-        }}>
+        <div className="welcome-cards-grid">
           {SUGGESTION_CARDS.map((card, i) => (
             <motion.button
               key={card.title}
@@ -231,7 +228,7 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
               <span style={{ fontSize: 13, fontWeight: 500, color: '#E4E4E7', marginBottom: 4, display: 'block' }}>
                 {card.title}
               </span>
-              <span style={{ fontSize: 12, color: '#52525B', lineHeight: 1.4 }}>
+              <span className="welcome-card-desc" style={{ fontSize: 12, color: '#71717A', lineHeight: 1.4 }}>
                 {card.description}
               </span>
             </motion.button>

@@ -170,7 +170,7 @@ export default function Sidebar({
   };
 
   const sidebarContent = (
-    <div style={{
+    <div className="sidebar-glass" style={{
       width: 240, background: '#0A0A0A', borderRight: '1px solid rgba(255,255,255,0.06)',
       display: 'flex', flexDirection: 'column', height: '100%', padding: 8,
     }}>

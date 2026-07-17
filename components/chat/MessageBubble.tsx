@@ -83,7 +83,8 @@ function UserBubble({ message, onEditResend }: Props) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const hasImage = !!message.imageUrl;
+  const imageUrls = message.imageUrls ?? (message.imageUrl ? [message.imageUrl] : []);
+  const hasImage = imageUrls.length > 0;
   const hasText  = !!message.content.trim();
 
   /* ── Edit mode ─── */
@@ -160,56 +161,69 @@ function UserBubble({ message, onEditResend }: Props) {
       className="flex justify-end w-full group"
       style={{ padding: '6px 0' }}
     >
-      <div style={{ maxWidth: '78%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
+      <div style={{ maxWidth: 'var(--msg-bubble-max, 78%)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
 
         {/* Unified bubble */}
-        <div style={{
+        <div className="message-user-bubble" style={{
           background: 'rgba(255,255,255,0.09)',
           borderRadius: bubbleRadius,
           border: '1px solid rgba(255,255,255,0.07)',
           overflow: 'hidden',
         }}>
-          {/* Image — top of bubble */}
+          {/* Images — grid layout */}
           {hasImage && (
-            <div
-              onClick={() => setLightbox(true)}
-              style={{
-                position: 'relative', cursor: 'pointer',
-                background: 'rgba(0,0,0,0.2)',
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={message.imageUrl!}
-                alt="Uploaded"
-                style={{
-                  display: 'block',
-                  maxWidth: '320px',
-                  maxHeight: '260px',
-                  width: '100%',
-                  height: 'auto',
-                  objectFit: 'contain',
-                }}
-              />
-              {/* Zoom hover overlay */}
-              <div
-                className="image-zoom-overlay"
-                style={{
-                  position: 'absolute', inset: 0,
-                  background: 'rgba(0,0,0,0)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.18s',
-                }}
-              >
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'rgba(0,0,0,0)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'rgba(255,255,255,0)', transition: 'all 0.18s',
-                }} className="image-zoom-icon">
-                  <ZoomIn size={18} strokeWidth={1.5} />
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: imageUrls.length === 1 ? '1fr' : imageUrls.length === 2 ? '1fr 1fr' : '1fr 1fr',
+              gap: 2,
+              background: 'rgba(0,0,0,0.2)',
+            }}>
+              {imageUrls.map((url, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setLightbox(true)}
+                  style={{ position: 'relative', cursor: 'pointer' }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`Rasm ${idx + 1}`}
+                    style={{
+                      display: 'block', width: '100%',
+                      maxWidth: imageUrls.length === 1 ? '320px' : '160px',
+                      maxHeight: imageUrls.length === 1 ? '260px' : '160px',
+                      height: 'auto', objectFit: 'cover',
+                    }}
+                  />
+                  {idx === imageUrls.length - 1 && imageUrls.length > 1 && (
+                    <div style={{
+                      position: 'absolute', top: 6, right: 6,
+                      fontSize: 10, fontWeight: 600, color: '#fff',
+                      background: 'rgba(0,0,0,0.55)', borderRadius: 6,
+                      padding: '2px 6px', fontFamily: 'Inter, sans-serif',
+                    }}>
+                      {imageUrls.length} rasm
+                    </div>
+                  )}
+                  <div
+                    className="image-zoom-overlay"
+                    style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(0,0,0,0)', transition: 'background 0.18s',
+                    }}
+                  >
+                    <div className="image-zoom-icon" style={{
+                      width: 30, height: 30, borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'rgba(255,255,255,0)', background: 'rgba(0,0,0,0)',
+                      transition: 'all 0.18s',
+                    }}>
+                      <ZoomIn size={16} strokeWidth={1.5} />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           )}
 
@@ -247,10 +261,10 @@ function UserBubble({ message, onEditResend }: Props) {
         </div>
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox — shows first image */}
       {hasImage && (
         <ImageLightbox
-          src={message.imageUrl!}
+          src={imageUrls[0]}
           isOpen={lightbox}
           onClose={() => setLightbox(false)}
         />
@@ -327,7 +341,7 @@ function AIBubble({ message, onRegenerate }: Props) {
 
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
         {/* Content */}
-        <div style={{
+        <div className="message-ai-text" style={{
           color: '#E4E4E7', fontSize: '15.5px', lineHeight: '1.85',
           letterSpacing: '-0.01em', fontFamily: 'Inter, sans-serif',
         }}>

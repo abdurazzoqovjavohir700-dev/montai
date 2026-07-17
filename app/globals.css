@@ -416,6 +416,9 @@ textarea::placeholder, input::placeholder {
   --chat-bg-size: cover;
   --chat-bg-filter: none;
   --chat-overlay: 0;
+  /* Adaptive wallpaper engine (lib/wallpaper-engine.ts) */
+  --wp-size: cover;
+  --wp-position: 50% 50%;
 }
 
 .chat-bg-layer {
@@ -424,11 +427,49 @@ textarea::placeholder, input::placeholder {
   z-index: 0;
   background-color: var(--chat-bg-color);
   background-image: var(--chat-bg-image);
-  background-size: var(--chat-bg-size);
-  background-position: center;
+  /* Use smart wallpaper variables when available, fallback to static vars */
+  background-size: var(--wp-size, var(--chat-bg-size, cover));
+  background-position: var(--wp-position, center center);
   background-repeat: no-repeat;
   filter: var(--chat-bg-filter);
   pointer-events: none;
+  /* Smooth orientation change transition — does NOT reload image */
+  transition: background-position 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              background-size 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Force GPU compositing for smooth transitions */
+  will-change: background-position;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* HiDPI / Retina: keep images sharp */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .chat-bg-layer {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
+  }
+}
+
+/* Phone: add extra blur behind UI for readability */
+[data-wp-device="phone"] .chat-bg-layer {
+  filter: var(--chat-bg-filter, none);
+}
+
+/* Ultrawide: prevent awkward over-stretch at wide focal points */
+[data-wp-device="ultrawide"] .chat-bg-layer {
+  background-attachment: fixed;
+}
+
+/* Landscape → portrait transition hint */
+@media (orientation: landscape) {
+  .chat-bg-layer {
+    background-size: var(--wp-size, cover);
+  }
+}
+@media (orientation: portrait) {
+  .chat-bg-layer {
+    background-size: var(--wp-size, cover);
+  }
 }
 
 .chat-bg-overlay {
@@ -445,6 +486,200 @@ textarea::placeholder, input::placeholder {
   height: 100%;
 }
 
+/* ═══════════════════════════════════════════════════════
+   ADAPTIVE FOCUS MODE SYSTEM
+
+   CSS variables set by applyFocusProfile() in
+   lib/wallpaper-analysis.ts via data attributes.
+
+   Variable hierarchy:
+   --focus-* (set by JS analysis, auto-updated)
+   --glass-*  (derived from --focus-*)
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Default focus variable fallbacks ─── */
+:root {
+  --focus-overlay:            0;
+  --focus-blur:               0px;
+  --focus-glass-opacity:      0.82;
+  --focus-glass-border-alpha: 0.07;
+  --focus-msg-bubble-opacity: 0.09;
+  --focus-chat-width:         780px;
+  --focus-score:              100;
+}
+
+/* ─── Derived glass values (reusable) ─── */
+[data-wallpaper] {
+  --glass-bg:       rgba(13, 13, 13, calc(var(--focus-glass-opacity)));
+  --glass-bg-strong: rgba(13, 13, 13, calc(min(1, var(--focus-glass-opacity) + 0.10)));
+  --glass-blur:     var(--focus-blur);
+  --glass-border:   rgba(255, 255, 255, var(--focus-glass-border-alpha));
+  --glass-shadow:   0 8px 32px rgba(0, 0, 0, 0.40);
+  --text-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+  /* Adaptive text colors for welcome screen */
+  --card-desc-color: #9A9AA6;
+  --card-pill-bg: rgba(20, 20, 26, 0.85);
+}
+
+/* BUSY wallpaper — extra punch */
+[data-bg-category="busy"] {
+  --text-shadow-sm: 0 1px 5px rgba(0, 0, 0, 0.70);
+}
+
+/* BRIGHT wallpaper */
+[data-bg-lum="bright"] {
+  --text-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.75);
+  --card-desc-color: #6A6A76;
+}
+
+/* DARK wallpaper */
+[data-bg-category="dark"] {
+  --card-desc-color: #8A8A96;
+  --card-pill-bg: rgba(28, 28, 36, 0.88);
+}
+
+/* ─── Input area glass ─── */
+[data-wallpaper] .chat-input-wrapper {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(max(18px, var(--glass-blur)));
+  -webkit-backdrop-filter: blur(max(18px, var(--glass-blur)));
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ─── Sidebar glass ─── */
+[data-wallpaper] .sidebar-glass {
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(max(16px, var(--glass-blur)));
+  -webkit-backdrop-filter: blur(max(16px, var(--glass-blur)));
+  border-right: 1px solid var(--glass-border) !important;
+}
+
+/* ─── Chat message area adaptive width ─── */
+[data-wallpaper] .chat-messages-container {
+  max-width: var(--focus-chat-width) !important;
+}
+
+[data-wallpaper] .chat-input-inner {
+  max-width: var(--focus-chat-width) !important;
+}
+
+/* ─── Chat message bubbles ─── */
+[data-wallpaper] .message-user-bubble {
+  background: rgba(255, 255, 255, calc(0.08 + var(--focus-msg-bubble-opacity))) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.40);
+}
+
+[data-wallpaper] .message-ai-text {
+  text-shadow: var(--text-shadow-sm);
+}
+
+/* ─── Typing indicator ─── */
+[data-wallpaper] .typing-glass {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--glass-border);
+}
+
+/* ─── Scroll-to-bottom button ─── */
+[data-wallpaper] .scroll-down-btn {
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* ─── Welcome screen ─── */
+[data-wallpaper] .welcome-heading {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+}
+
+/* Welcome cards — always visible glass effect */
+[data-wallpaper] .welcome-cards-grid > button {
+  background: rgba(18, 18, 22, 0.88) !important;
+  backdrop-filter: blur(max(10px, var(--focus-blur, 0px)));
+  -webkit-backdrop-filter: blur(max(10px, var(--focus-blur, 0px)));
+  border-color: rgba(255, 255, 255, calc(var(--focus-glass-border-alpha, 0.07) + 0.06)) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Dark wallpaper: cards must stand out — lighter border + shadow lift */
+[data-wallpaper][data-bg-category="dark"] .welcome-cards-grid > button,
+[data-wallpaper][data-bg-lum="dark"] .welcome-cards-grid > button {
+  background: rgba(28, 28, 35, 0.92) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+/* Bright wallpaper: strong dark contrast */
+[data-wallpaper][data-bg-category="bright"] .welcome-cards-grid > button,
+[data-wallpaper][data-bg-lum="bright"] .welcome-cards-grid > button {
+  background: rgba(8, 8, 12, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* Busy wallpaper: strong blur glass */
+[data-wallpaper][data-bg-category="busy"] .welcome-cards-grid > button {
+  background: rgba(12, 12, 18, 0.93) !important;
+}
+
+/* Card description text — lighter than default when wallpaper is active */
+[data-wallpaper] .welcome-card-desc {
+  color: var(--card-desc-color) !important;
+}
+
+/* Quick action pills */
+[data-wallpaper] .welcome-quick-pill {
+  background: var(--card-pill-bg, rgba(20, 20, 26, 0.85)) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ─── Category-specific adaptations ─── */
+
+/* Busy wallpaper: tighter typography */
+[data-bg-category="busy"] .markdown-content {
+  line-height: 1.95;
+  letter-spacing: 0.008em;
+}
+
+/* Minimal wallpaper: airy feel */
+[data-bg-category="minimal"] [data-wallpaper] .chat-input-wrapper {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Bright wallpaper: vignette via overlay */
+[data-bg-lum="bright"].chat-bg-overlay {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0,0,0,calc(var(--focus-overlay) * 0.6)) 0%,
+    rgba(0,0,0,var(--focus-overlay)) 100%
+  );
+}
+
+/* ─── Modals and dialogs over wallpaper ─── */
+[data-wallpaper] .modal-glass {
+  background: rgba(16, 16, 18, 0.97) !important;
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
+
+/* ─── Image attachments ─── */
+[data-wallpaper] .chat-image-attachment {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.50);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 /* ─── Image hover overlay in message bubble ─── */
 .image-zoom-overlay:hover {
   background: rgba(0,0,0,0.32) !important;
@@ -458,6 +693,126 @@ textarea::placeholder, input::placeholder {
 @keyframes logoPulse {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.06); opacity: 0.85; }
+}
+
+/* ─── Safe area support (iOS notch / Dynamic Island / Android cutout) ─── */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* ─── Responsive CSS variables — override per breakpoint ─── */
+:root {
+  --chat-h-pad: 24px;
+  --chat-v-pad-top: 48px;
+  --chat-v-pad-bot: 24px;
+  --input-h-pad: 24px;
+  --input-v-pad: 12px 24px 24px;
+  --msg-bubble-max: 78%;
+  --welcome-grid-cols: repeat(2, 1fr);
+  --sidebar-touch: 36px;
+}
+
+/* Small phones: 320–479px */
+@media (max-width: 479px) {
+  :root {
+    --chat-h-pad: 12px;
+    --chat-v-pad-top: 16px;
+    --chat-v-pad-bot: 12px;
+    --input-h-pad: 12px;
+    --input-v-pad: 8px 12px calc(12px + var(--safe-bottom));
+    --msg-bubble-max: 88%;
+    --welcome-grid-cols: 1fr;
+    --sidebar-touch: 44px;
+  }
+
+  /* Larger touch targets on mobile */
+  .sidebar-chat-item { height: 44px !important; }
+  .sidebar-action-btn { width: 44px !important; height: 44px !important; }
+
+  /* Markdown tables scroll on narrow screens */
+  .markdown-content table { display: block; overflow-x: auto; white-space: nowrap; }
+
+  /* Fluid heading in welcome screen */
+  .welcome-heading { font-size: clamp(20px, 6vw, 28px) !important; }
+}
+
+/* Mid phones: 480–767px */
+@media (min-width: 480px) and (max-width: 767px) {
+  :root {
+    --chat-h-pad: 16px;
+    --chat-v-pad-top: 24px;
+    --chat-v-pad-bot: 16px;
+    --input-h-pad: 16px;
+    --input-v-pad: 10px 16px calc(16px + var(--safe-bottom));
+    --msg-bubble-max: 84%;
+    --welcome-grid-cols: 1fr;
+    --sidebar-touch: 44px;
+  }
+}
+
+/* Tablets portrait: 768–1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --chat-h-pad: 20px;
+    --chat-v-pad-top: 36px;
+    --welcome-grid-cols: repeat(2, 1fr);
+  }
+}
+
+/* Large desktop: 1600px+ */
+@media (min-width: 1600px) {
+  :root { --chat-h-pad: 32px; }
+}
+
+/* ─── Responsive chat container ─── */
+.chat-messages-container {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--chat-v-pad-top) var(--chat-h-pad) var(--chat-v-pad-bot);
+  width: 100%;
+}
+
+/* ─── Responsive input wrapper ─── */
+.chat-input-wrapper {
+  width: 100%;
+  padding: var(--input-v-pad);
+  padding-left: max(var(--input-h-pad), var(--safe-left));
+  padding-right: max(var(--input-h-pad), var(--safe-right));
+  background: #0D0D0D;
+}
+
+.chat-input-inner {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+/* ─── Welcome screen responsive grid ─── */
+.welcome-cards-grid {
+  display: grid;
+  grid-template-columns: var(--welcome-grid-cols);
+  gap: 8px;
+  width: 100%;
+}
+
+/* ─── Touch-friendly minimum sizes ─── */
+@media (hover: none) and (pointer: coarse) {
+  /* Touch devices — increase targets */
+  button { min-height: 40px; }
+  a { min-height: 40px; display: inline-flex; align-items: center; }
+  input, textarea { font-size: max(16px, 1em); } /* prevent iOS zoom on focus */
+}
+
+/* ─── Scroll down button responsive position ─── */
+.scroll-down-btn {
+  position: absolute;
+  bottom: 7rem;
+  right: 1.25rem;
+}
+@media (max-width: 479px) {
+  .scroll-down-btn { bottom: 6rem; right: 0.75rem; }
 }
 
 /* ─── Landing page responsive layout ─── */
@@ -495,12 +850,10 @@ textarea::placeholder, input::placeholder {
   .footer-inner {
     padding: 0 20px !important;
   }
-  /* Hero headline font size for very small screens */
   .hero-headline {
     font-size: clamp(36px, 10vw, 56px) !important;
     letter-spacing: -1.5px !important;
   }
-  /* CTA buttons stack vertically */
   .hero-cta {
     flex-direction: column !important;
     width: 100% !important;
@@ -510,8 +863,25 @@ textarea::placeholder, input::placeholder {
     width: 100% !important;
     justify-content: center !important;
   }
-  /* Stats row on mobile */
   .hero-stats {
     gap: 24px !important;
   }
 }
+
+/* ─── Responsive image in message bubbles ─── */
+.msg-image {
+  max-width: min(320px, 100%);
+  max-height: 260px;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Overflow guards ─── */
+* { max-width: 100%; box-sizing: border-box; }
+img, video, canvas, svg { max-width: 100%; }
+pre { overflow-x: auto; }
+
+/* ─── Prevent body scroll jump when modal opens on mobile ─── */
+body.modal-open { overflow: hidden; }

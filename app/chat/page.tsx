@@ -8,6 +8,23 @@ import ChatWindow from '@/components/chat/ChatWindow';
 import Sidebar from '@/components/layout/Sidebar';
 import type { Chat, User, Language } from '@/lib/types';
 
+const CACHE_KEY = 'montai_init_cache';
+
+function readCache(): { user: User; chats: Chat[] } | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) as { user: User; chats: Chat[] } : null;
+  } catch { return null; }
+}
+
+function writeCache(user: User, chats: Chat[]) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ user, chats })); } catch { /* ignore */ }
+}
+
+export function clearInitCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+}
+
 export default function ChatPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -18,24 +35,35 @@ export default function ChatPage() {
   const [chatKey, setChatKey] = useState(0);
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/user').then((r) => {
-        if (r.status === 401) { router.push('/'); return null; }
-        return r.json() as Promise<User>;
-      }),
-      fetch('/api/chat/history').then((r) => r.json() as Promise<Chat[]>),
-    ])
-      .then(([userData, chatsData]) => {
-        if (!userData) return;
-        if (!userData.onboardingCompleted) {
+    // 1. Show cached data immediately — eliminates visible loading spinner on refresh
+    const cached = readCache();
+    if (cached?.user?.onboardingCompleted) {
+      setUser(cached.user);
+      setChats(cached.chats ?? []);
+      setLoading(false);
+    }
+
+    // 2. Fetch fresh data in background (single request: user + chats)
+    fetch('/api/init')
+      .then((r) => {
+        if (r.status === 401) { clearInitCache(); router.push('/'); return null; }
+        return r.json() as Promise<{ user: User; chats: Chat[] }>;
+      })
+      .then((data) => {
+        if (!data) return;
+        if (!data.user.onboardingCompleted) {
+          clearInitCache();
           router.push('/onboarding');
           return;
         }
-        setUser(userData);
-        setChats(Array.isArray(chatsData) ? chatsData : []);
+        setUser(data.user);
+        setChats(Array.isArray(data.chats) ? data.chats : []);
+        writeCache(data.user, data.chats ?? []);
         setLoading(false);
       })
-      .catch(() => router.push('/'));
+      .catch(() => {
+        if (!cached) router.push('/');
+      });
   }, [router]);
 
   const handleNewChat = useCallback(() => {
@@ -44,21 +72,22 @@ export default function ChatPage() {
   }, [router]);
 
   const handleChatCreated = useCallback((chatId: string, title: string) => {
-    setChats((prev) => [
-      { id: chatId, userId: user?.id ?? '', title, preview: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-      ...prev.filter((c) => c.id !== chatId),
-    ]);
-    // URL ni yangilaymiz lekin navigation qilmaymiz — remount bo'lmasin
+    setChats((prev) => {
+      const updated = [
+        { id: chatId, userId: user?.id ?? '', title, preview: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+        ...prev.filter((c) => c.id !== chatId),
+      ];
+      if (user) writeCache(user, updated);
+      return updated;
+    });
     window.history.replaceState(null, '', `/chat/${chatId}`);
   }, [user]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
-        <div className="flex flex-col items-center gap-4">
-          <div style={{ animation: 'logoPulse 1.5s ease infinite' }}>
-            <MontaiLogo size={64} />
-          </div>
+        <div style={{ animation: 'logoPulse 1.5s ease infinite' }}>
+          <MontaiLogo size={64} />
         </div>
       </div>
     );
@@ -68,7 +97,6 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen flex overflow-hidden" style={{ background: '#0D0D0D' }}>
-      {/* Desktop sidebar wrapper with slide animation */}
       <div
         className="hidden md:block flex-shrink-0 h-full"
         style={{
@@ -89,7 +117,6 @@ export default function ChatPage() {
         />
       </div>
 
-      {/* Mobile sidebar */}
       <div className="md:hidden">
         <Sidebar
           chats={chats}
@@ -102,12 +129,13 @@ export default function ChatPage() {
         />
       </div>
 
-      {/* Main area — no separate header bar */}
       <div className="flex flex-col flex-1 min-w-0 h-full relative">
-        {/* Floating sidebar toggle — top-left, overlaid on content */}
         <div
           style={{
-            position: 'absolute', top: 12, left: 12, zIndex: 10,
+            position: 'absolute',
+            top: 'max(12px, env(safe-area-inset-top, 12px))',
+            left: 'max(12px, env(safe-area-inset-left, 12px))',
+            zIndex: 10,
           }}
         >
           <button
@@ -116,10 +144,11 @@ export default function ChatPage() {
               else setDesktopSidebarVisible((v) => !v);
             }}
             style={{
-              width: 32, height: 32, borderRadius: 8,
+              width: 44, height: 44, borderRadius: 10,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: '#52525B', transition: 'background 0.15s, color 0.15s',
+              touchAction: 'manipulation',
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#52525B'; }}
@@ -132,7 +161,6 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* Chat window */}
         <div className="flex-1 min-h-0">
           <ChatWindow
             key={chatKey}

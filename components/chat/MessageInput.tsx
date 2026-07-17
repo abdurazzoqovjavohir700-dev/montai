@@ -1,16 +1,18 @@
 'use client';
 
 import {
-  useState, useRef, useCallback,
+  useState, useRef, useCallback, useEffect,
   type KeyboardEvent, type ChangeEvent, type DragEvent, type ClipboardEvent,
 } from 'react';
-import { Paperclip, ArrowUp, X, ImageIcon, AlertCircle } from 'lucide-react';
+import { ArrowUp, Plus, X } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { isImageFile, formatFileSize } from '@/lib/utils';
 import { MAX_IMAGE_SIZE_MB, MAX_MESSAGE_LENGTH } from '@/lib/constants';
 import { moderateText } from '@/lib/moderation';
+import QuickActionMenu from './QuickActionMenu';
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+const MAX_IMAGES = 3;
 
 const TYPO_FIXES: Record<string, string> = {
   'nma': 'nima', 'qalaysa': 'qalaysan', 'yxshi': 'yaxshi',
@@ -33,7 +35,16 @@ function autocorrect(text: string): string {
   return result;
 }
 
-interface AttachedImage {
+const PLACEHOLDERS = [
+  'Xabar yozing…',
+  'Savol bering…',
+  'Ctrl+V — rasm joylash…',
+  'Video montaj bo\'yicha so\'rang…',
+  'Rasm tashlang…',
+  'Color grading, sound design…',
+];
+
+export interface AttachedImage {
   preview: string;
   base64: string;
   name: string;
@@ -42,20 +53,34 @@ interface AttachedImage {
 }
 
 interface MessageInputProps {
-  onSend: (message: string, imageBase64?: string, imageMime?: string) => void;
+  onSend: (message: string, images?: AttachedImage[]) => void;
   onStop?: () => void;
+  onNewChat?: () => void;
   isLoading: boolean;
   disabled?: boolean;
 }
 
-export default function MessageInput({ onSend, onStop, isLoading, disabled }: MessageInputProps) {
-  const [message, setMessage]           = useState('');
-  const [image, setImage]               = useState<AttachedImage | null>(null);
-  const [isReading, setIsReading]       = useState(false);
-  const [focused, setFocused]           = useState(false);
-  const [dragOver, setDragOver]         = useState(false);
-  const textareaRef                     = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef                    = useRef<HTMLInputElement>(null);
+export default function MessageInput({ onSend, onStop, onNewChat, isLoading, disabled }: MessageInputProps) {
+  const [message, setMessage]       = useState('');
+  const [images, setImages]         = useState<AttachedImage[]>([]);
+  const [isReading, setIsReading]   = useState(false);
+  const [focused, setFocused]       = useState(false);
+  const [dragOver, setDragOver]     = useState(false);
+  const [menuOpen, setMenuOpen]     = useState(false);
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const textareaRef                 = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef                = useRef<HTMLInputElement>(null);
+  const menuAnchorRef               = useRef<HTMLDivElement>(null);
+  const plusBtnRef                  = useRef<HTMLButtonElement>(null);
+
+  /* Rotate placeholder when not typing */
+  useEffect(() => {
+    if (message || isLoading) return;
+    const id = setInterval(() => {
+      setPlaceholderIdx(i => (i + 1) % PLACEHOLDERS.length);
+    }, 3500);
+    return () => clearInterval(id);
+  }, [message, isLoading]);
 
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
@@ -64,7 +89,6 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, []);
 
-  /* ── Process a File object (shared by picker / drop / paste) ── */
   const processFile = useCallback((file: File) => {
     const mime = file.type.toLowerCase();
     if (!ACCEPTED_TYPES.includes(mime)) {
@@ -75,17 +99,21 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
       toast.error(`Rasm hajmi ${MAX_IMAGE_SIZE_MB}MB dan kichik bo'lishi kerak`);
       return;
     }
+    if (images.length >= MAX_IMAGES) {
+      toast.error(`Maksimal ${MAX_IMAGES} ta rasm biriktiriladi`);
+      return;
+    }
     setIsReading(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result as string;
-      setImage({
+      setImages(prev => prev.length < MAX_IMAGES ? [...prev, {
         preview: result,
         base64: result.split(',')[1],
         name: file.name,
         size: file.size,
         mime,
-      });
+      }] : prev);
       setIsReading(false);
     };
     reader.onerror = () => {
@@ -93,33 +121,25 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
       setIsReading(false);
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [images]);
 
-  /* ── File picker ─────────────────────────────────────────── */
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+    Array.from(e.target.files ?? []).forEach(f => processFile(f));
     e.target.value = '';
   };
 
-  /* ── Drag & Drop ─────────────────────────────────────────── */
   const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(true);
+    e.preventDefault(); e.stopPropagation(); setDragOver(true);
   };
   const handleDragLeave = (e: DragEvent) => {
     e.preventDefault();
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
   };
   const handleDrop = (e: DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    e.preventDefault(); setDragOver(false);
+    Array.from(e.dataTransfer.files).slice(0, MAX_IMAGES - images.length).forEach(f => processFile(f));
   };
 
-  /* ── Paste from clipboard ────────────────────────────────── */
   const handlePaste = (e: ClipboardEvent) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -131,15 +151,13 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
     }
   };
 
-  /* ── Send ────────────────────────────────────────────────── */
   const handleSend = useCallback(() => {
     const trimmed = message.trim();
-    if (!trimmed && !image) return;
+    if (!trimmed && images.length === 0) return;
     if (isLoading || disabled || isReading) return;
     const corrected = autocorrect(trimmed);
     if (corrected !== trimmed) toast.info('Avtomatik tuzatildi');
 
-    // Client-side moderation — block before sending
     const modResult = moderateText(corrected);
     if (modResult.blocked) {
       toast.error(modResult.message ?? 'Bu turdagi kontent uchun yordam bera olmayman.', {
@@ -148,11 +166,11 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
       return;
     }
 
-    onSend(corrected, image?.base64, image?.mime);
+    onSend(corrected, images.length > 0 ? images : undefined);
     setMessage('');
-    setImage(null);
+    setImages([]);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-  }, [message, image, isLoading, disabled, isReading, onSend]);
+  }, [message, images, isLoading, disabled, isReading, onSend]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -164,76 +182,11 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
     adjustHeight();
   };
 
-  const canSend = (message.trim().length > 0 || !!image) && !isLoading && !disabled && !isReading;
+  const removeImage = (idx: number) => setImages(prev => prev.filter((_, i) => i !== idx));
 
-  /* ── Skeleton shimmer during FileReader ──────────────────── */
-  const ImageSkeleton = () => (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '8px 10px',
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 10, marginBottom: 8,
-    }}>
-      <div className="skeleton" style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0 }} />
-      <div style={{ flex: 1 }}>
-        <div className="skeleton" style={{ height: 10, width: '60%', borderRadius: 4, marginBottom: 6 }} />
-        <div className="skeleton" style={{ height: 9, width: '35%', borderRadius: 4 }} />
-      </div>
-    </div>
-  );
+  const canSend = (message.trim().length > 0 || images.length > 0) && !isLoading && !disabled && !isReading;
 
-  /* ── Image preview card ──────────────────────────────────── */
-  const ImagePreview = () => image && (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      padding: '8px 10px',
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.09)',
-      borderRadius: 10, marginBottom: 8,
-    }}>
-      {/* Thumbnail */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={image.preview}
-        alt="Preview"
-        style={{
-          width: 44, height: 44, borderRadius: 8,
-          objectFit: 'cover', flexShrink: 0,
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}
-      />
-
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{
-          fontSize: 12.5, color: '#D4D4D8', fontFamily: 'Inter, sans-serif',
-          fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          margin: 0,
-        }}>
-          {image.name}
-        </p>
-        <p style={{ fontSize: 11.5, color: '#52525B', fontFamily: 'Inter, sans-serif', margin: '2px 0 0' }}>
-          {formatFileSize(image.size)} · {image.mime.split('/')[1].toUpperCase()}
-        </p>
-      </div>
-
-      {/* Remove */}
-      <button
-        onClick={() => setImage(null)}
-        style={{
-          padding: 5, borderRadius: 6, border: 'none',
-          background: 'rgba(255,255,255,0.05)', color: '#52525B',
-          cursor: 'pointer', flexShrink: 0, lineHeight: 0,
-        }}
-        onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(239,68,68,0.1)'); (e.currentTarget.style.color = '#EF4444'); }}
-        onMouseLeave={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.05)'); (e.currentTarget.style.color = '#52525B'); }}
-        title="Rasmni olib tashlash"
-      >
-        <X size={13} strokeWidth={1.5} />
-      </button>
-    </div>
-  );
+  const showHint = !message && !isLoading && images.length === 0 && !dragOver;
 
   return (
     <div
@@ -243,155 +196,216 @@ export default function MessageInput({ onSend, onStop, isLoading, disabled }: Me
       onDrop={handleDrop}
       onPaste={handlePaste}
     >
-      {/* Image states */}
-      {isReading && <ImageSkeleton />}
-      {!isReading && image && <ImagePreview />}
-
-      {/* Input wrapper */}
-      <div
-        style={{
-          background: dragOver ? '#1E1E1E' : '#1A1A1A',
-          border: `1px solid ${
-            dragOver ? 'rgba(245,158,11,0.5)' :
-            focused   ? 'rgba(255,255,255,0.2)' :
-                        'rgba(255,255,255,0.1)'
-          }`,
-          borderRadius: 16,
-          padding: '12px 14px',
-          boxShadow: dragOver
-            ? '0 0 0 3px rgba(245,158,11,0.12), inset 0 0 0 1px rgba(245,158,11,0.15)'
-            : focused
-            ? '0 0 0 3px rgba(245,158,11,0.07)'
-            : 'none',
-          transition: 'border-color 0.15s, box-shadow 0.15s, background 0.15s',
-          display: 'flex', alignItems: 'flex-end', gap: 10,
-          position: 'relative',
-        }}
-      >
-        {/* Drag overlay label */}
-        {dragOver && (
-          <div style={{
-            position: 'absolute', inset: 0, borderRadius: 16,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 8, pointerEvents: 'none',
-            background: 'rgba(245,158,11,0.04)',
-            color: '#F59E0B', fontSize: 13.5, fontWeight: 500,
-            fontFamily: 'Inter, sans-serif',
-            zIndex: 1,
-          }}>
-            <ImageIcon size={18} strokeWidth={1.5} />
-            Rasmni bu yerga tashlang
-          </div>
-        )}
-
-        {/* Attach button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isLoading || disabled}
-          title="Rasm biriktirish (yoki rasm joylashtiring)"
-          style={{
-            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: image ? 'rgba(245,158,11,0.1)' : 'transparent',
-            border: 'none', cursor: 'pointer',
-            color: image ? '#F59E0B' : '#52525B',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = image ? '#F59E0B' : '#A1A1AA'; (e.currentTarget as HTMLElement).style.background = image ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = image ? '#F59E0B' : '#52525B'; (e.currentTarget as HTMLElement).style.background = image ? 'rgba(245,158,11,0.1)' : 'transparent'; }}
-        >
-          <Paperclip size={16} strokeWidth={1.5} />
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_TYPES.join(',')}
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-
-        {/* Textarea */}
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={dragOver ? '' : 'Xabar yozing… (rasm joylashtirib yuboring)'}
-          disabled={disabled || dragOver}
-          rows={1}
-          style={{
-            flex: 1, background: 'transparent', resize: 'none',
-            outline: 'none', border: 'none',
-            color: dragOver ? 'transparent' : '#FAFAFA',
-            fontFamily: 'Inter, sans-serif', fontSize: 15,
-            lineHeight: '1.6', maxHeight: 200,
-            paddingTop: 4, paddingBottom: 4,
-            opacity: dragOver ? 0 : 1,
-            transition: 'opacity 0.1s',
-          }}
-        />
-
-        {/* Stop / Send */}
-        {isLoading ? (
-          <button
-            onClick={onStop}
-            style={{
-              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+      {/* Images strip */}
+      {(images.length > 0 || isReading) && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+          {images.map((img, idx) => (
+            <div key={idx} style={{ position: 'relative', flexShrink: 0 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.preview}
+                alt={img.name}
+                style={{
+                  width: 60, height: 60, borderRadius: 10,
+                  objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)',
+                  display: 'block',
+                }}
+              />
+              <button
+                onClick={() => removeImage(idx)}
+                style={{
+                  position: 'absolute', top: -6, right: -6,
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: '#EF4444', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#fff', lineHeight: 0,
+                }}
+              >
+                <X size={10} strokeWidth={2} />
+              </button>
+              {idx === 0 && images.length > 1 && (
+                <div style={{
+                  position: 'absolute', bottom: 3, right: 3,
+                  fontSize: 9, fontWeight: 700, color: '#fff',
+                  background: 'rgba(0,0,0,0.55)', borderRadius: 4,
+                  padding: '1px 4px', fontFamily: 'Inter, sans-serif',
+                }}>
+                  {images.length}/{MAX_IMAGES}
+                </div>
+              )}
+            </div>
+          ))}
+          {isReading && (
+            <div style={{
+              width: 60, height: 60, borderRadius: 10,
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: '#3F3F46', border: 'none', cursor: 'pointer', color: '#FAFAFA',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#52525B')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#3F3F46')}
-            aria-label="Stop"
-          >
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor">
-              <rect x="1" y="1" width="10" height="10" rx="2" />
-            </svg>
-          </button>
-        ) : (
-          <button
-            onClick={handleSend}
-            disabled={!canSend}
-            style={{
-              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: canSend ? 'linear-gradient(135deg, #F59E0B, #F97316)' : 'rgba(255,255,255,0.06)',
-              border: 'none',
-              cursor: canSend ? 'pointer' : 'not-allowed',
-              color: canSend ? '#0A0A0B' : '#3F3F46',
-              opacity: canSend ? 1 : 0.5,
-              transform: 'scale(1)',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => { if (canSend) (e.currentTarget as HTMLElement).style.transform = 'scale(1.07)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
-            aria-label="Send"
-          >
-            <ArrowUp size={16} strokeWidth={1.5} />
-          </button>
-        )}
-      </div>
-
-      {/* Format hint */}
-      {!isLoading && (
-        <p style={{ textAlign: 'center', marginTop: 8, fontSize: 11.5, color: '#3F3F46', fontFamily: 'Inter, sans-serif' }}>
-          Montai xato qilishi mumkin. Rasm: PNG, JPG, WEBP, GIF · Drag &amp; drop yoki ctrl+v
-        </p>
-      )}
-
-      {/* Validation error for unsupported actions */}
-      {isReading && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          marginTop: 4, color: '#71717A',
-          fontSize: 12, fontFamily: 'Inter, sans-serif',
-        }}>
-          <AlertCircle size={12} strokeWidth={1.5} />
-          Rasm o&apos;qilmoqda…
+              flexShrink: 0,
+            }}>
+              <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid rgba(245,158,11,0.3)', borderTopColor: '#F59E0B', animation: 'spin 0.8s linear infinite' }} />
+            </div>
+          )}
         </div>
       )}
+
+      {/* Main input wrapper */}
+      <div style={{ position: 'relative' }}>
+        {/* QuickActionMenu anchor */}
+        <div ref={menuAnchorRef} style={{ position: 'absolute', left: 0, bottom: '100%' }}>
+          <QuickActionMenu
+            isOpen={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            onUploadImage={() => fileInputRef.current?.click()}
+            onNewChat={() => onNewChat?.()}
+            anchorRef={plusBtnRef as React.RefObject<HTMLElement | null>}
+          />
+        </div>
+
+        <div
+          style={{
+            background: dragOver ? 'rgba(245,158,11,0.04)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${
+              dragOver ? 'rgba(245,158,11,0.5)' :
+              focused   ? 'rgba(255,255,255,0.18)' :
+                          'rgba(255,255,255,0.09)'
+            }`,
+            borderRadius: 18,
+            padding: '11px 12px',
+            boxShadow: dragOver
+              ? '0 0 0 3px rgba(245,158,11,0.12), 0 8px 32px rgba(0,0,0,0.4)'
+              : focused
+              ? '0 0 0 2px rgba(245,158,11,0.07), 0 8px 32px rgba(0,0,0,0.35)'
+              : '0 4px 20px rgba(0,0,0,0.25)',
+            transition: 'border-color 0.18s, box-shadow 0.18s, background 0.15s',
+            display: 'flex', alignItems: 'flex-end', gap: 8,
+            position: 'relative',
+          }}
+        >
+          {/* Drag overlay */}
+          {dragOver && (
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: 18,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: 8, pointerEvents: 'none',
+              color: '#F59E0B', fontSize: 14, fontWeight: 500,
+              fontFamily: 'Inter, sans-serif', zIndex: 1,
+            }}>
+              📎 Bu yerga tashlang
+            </div>
+          )}
+
+          {/* "+" button — intentionally NOT disabled while AI loading so user can open new chat/upload */}
+          <button
+            ref={plusBtnRef}
+            onClick={() => setMenuOpen(v => !v)}
+            disabled={disabled}
+            title="Fayl qo'shish yoki amallar"
+            style={{
+              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: menuOpen ? 'rgba(245,158,11,0.12)' : 'transparent',
+              border: `1px solid ${menuOpen ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}`,
+              cursor: 'pointer',
+              color: menuOpen ? '#F59E0B' : '#52525B',
+              transition: 'all 0.15s',
+              transform: menuOpen ? 'rotate(45deg)' : 'none',
+            }}
+            onMouseEnter={e => {
+              if (!menuOpen) {
+                (e.currentTarget.style.color = '#A1A1AA');
+                (e.currentTarget.style.background = 'rgba(255,255,255,0.06)');
+                (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)');
+              }
+            }}
+            onMouseLeave={e => {
+              if (!menuOpen) {
+                (e.currentTarget.style.color = '#52525B');
+                (e.currentTarget.style.background = 'transparent');
+                (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)');
+              }
+            }}
+          >
+            <Plus size={16} strokeWidth={1.8} />
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_TYPES.join(',')}
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder={dragOver ? '' : PLACEHOLDERS[placeholderIdx]}
+            disabled={disabled || dragOver}
+            rows={1}
+            style={{
+              flex: 1, background: 'transparent', resize: 'none',
+              outline: 'none', border: 'none',
+              color: dragOver ? 'transparent' : '#FAFAFA',
+              fontFamily: 'Inter, sans-serif', fontSize: 15,
+              lineHeight: '1.6', maxHeight: 200,
+              paddingTop: 3, paddingBottom: 3,
+              opacity: dragOver ? 0 : 1,
+              transition: 'opacity 0.12s',
+              caretColor: '#F59E0B',
+            }}
+          />
+
+          {/* Stop / Send */}
+          {isLoading ? (
+            <button
+              onClick={onStop}
+              style={{
+                width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+                cursor: 'pointer', color: '#FAFAFA', transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.14)'); }}
+              onMouseLeave={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.08)'); }}
+              aria-label="Stop"
+            >
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
+                <rect x="1" y="1" width="10" height="10" rx="2.5" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!canSend}
+              style={{
+                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: canSend ? 'linear-gradient(135deg, #F59E0B, #F97316)' : 'rgba(255,255,255,0.06)',
+                border: 'none',
+                cursor: canSend ? 'pointer' : 'not-allowed',
+                color: canSend ? '#0A0A0B' : '#3F3F46',
+                opacity: canSend ? 1 : 0.45,
+                transform: 'scale(1)',
+                transition: 'all 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+                boxShadow: canSend ? '0 2px 12px rgba(245,158,11,0.35)' : 'none',
+              }}
+              onMouseEnter={e => { if (canSend) { (e.currentTarget as HTMLElement).style.transform = 'scale(1.08)'; } }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
+              aria-label="Yuborish"
+            >
+              <ArrowUp size={15} strokeWidth={2} />
+            </button>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }

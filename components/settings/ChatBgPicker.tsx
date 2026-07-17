@@ -1,18 +1,35 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Upload, X, RotateCcw, Check } from 'lucide-react';
+import { Upload, X, RotateCcw, Check, Zap, Maximize2 } from 'lucide-react';
+import { analyzeWallpaperCached, applyFocusProfile, clearFocusProfile } from '@/lib/wallpaper-analysis';
+import {
+  detectFocalPointCached,
+  computeLayout,
+  applyWallpaperLayout,
+  setupOrientationWatcher,
+  clearWallpaperLayout,
+  type WallpaperFit,
+  type WallpaperPosition,
+} from '@/lib/wallpaper-engine';
 import { toast } from '@/components/ui/Toast';
 
 /* ─── Types ──────────────────────────────────────────────── */
 export type BgMode = 'default' | 'solid' | 'gradient' | 'pattern' | 'image';
+export type OverlayMode = 'auto' | 'dark' | 'light' | 'none';
+export type FocusMode = 'auto' | 'minimal' | 'glass' | 'focus' | 'manual';
 
 export interface ChatBg {
   mode: BgMode;
-  value?: string;      // hex / gradient string / data URL / pattern id
-  blur?: number;       // 0–20
-  brightness?: number; // 0.4–1.6
-  overlay?: number;    // 0–0.8 (dark overlay opacity)
+  value?: string;        // hex / gradient string / data URL / pattern id
+  blur?: number;         // 0–20
+  brightness?: number;   // 0.4–1.6
+  overlay?: number;      // 0–0.8 (dark overlay opacity)
+  overlayMode?: OverlayMode; // auto | dark | light | none
+  saturation?: number;   // 0–2 (image saturation filter)
+  focusMode?: FocusMode; // adaptive focus mode
+  fitMode?: WallpaperFit;        // smart-cover | cover | contain | ...
+  wallpaperPosition?: WallpaperPosition; // auto | center | top | bottom | left | right
 }
 
 const DEFAULT_BG: ChatBg = { mode: 'default', blur: 0, brightness: 1, overlay: 0 };
@@ -77,12 +94,48 @@ function saveChatBg(bg: ChatBg) {
   localStorage.setItem(KEY, JSON.stringify(bg));
 }
 
+/* ─── Image luminance analysis ───────────────────────────── */
+export function analyzeImageLuminance(dataUrl: string): Promise<number> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const SIZE = 48;
+        const canvas = document.createElement('canvas');
+        canvas.width = SIZE; canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(0.3); return; }
+        ctx.drawImage(img, 0, 0, SIZE, SIZE);
+        const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
+        let total = 0;
+        const pixels = SIZE * SIZE;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i] / 255;
+          const g = data[i + 1] / 255;
+          const b = data[i + 2] / 255;
+          total += 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        }
+        resolve(total / pixels);
+      } catch { resolve(0.3); }
+    };
+    img.onerror = () => resolve(0.3);
+    img.src = dataUrl;
+  });
+}
+
+function autoOverlayFromLuminance(luminance: number): number {
+  if (luminance > 0.65) return 0.48;  // Very bright (white walls, sky) → heavy dark overlay
+  if (luminance > 0.45) return 0.36;  // Bright → medium dark overlay
+  if (luminance > 0.25) return 0.20;  // Mid → light overlay
+  return 0.08;                         // Dark → almost no overlay (already readable)
+}
+
 /* ─── Apply to DOM ───────────────────────────────────────── */
 export function applyChatBg(bg: ChatBg) {
   const root = document.documentElement;
-  const blur    = bg.blur    ?? 0;
-  const bright  = bg.brightness ?? 1;
-  const overlay = bg.overlay ?? 0;
+  const blur   = bg.blur       ?? 0;
+  const bright = bg.brightness ?? 1;
+  const sat    = bg.saturation ?? 1;
 
   if (bg.mode === 'default') {
     root.style.removeProperty('--chat-bg-image');
@@ -90,21 +143,39 @@ export function applyChatBg(bg: ChatBg) {
     root.style.removeProperty('--chat-bg-size');
     root.style.removeProperty('--chat-bg-filter');
     root.style.removeProperty('--chat-overlay');
+    root.removeAttribute('data-wallpaper');
+    clearFocusProfile();
+    clearWallpaperLayout();
     return;
   }
 
-  const filter = `blur(${blur}px) brightness(${bright})`;
+  root.setAttribute('data-wallpaper', bg.mode);
+
+  const filter = [
+    blur > 0     ? `blur(${blur}px)` : '',
+    bright !== 1 ? `brightness(${bright})` : '',
+    sat !== 1    ? `saturate(${sat})` : '',
+  ].filter(Boolean).join(' ') || 'none';
+
   root.style.setProperty('--chat-bg-filter', filter);
-  root.style.setProperty('--chat-overlay', String(overlay));
+
+  const overlayMode = bg.overlayMode ?? 'auto';
+  if (overlayMode === 'none') {
+    root.style.setProperty('--chat-overlay', '0');
+  } else if (overlayMode === 'light') {
+    root.style.setProperty('--chat-overlay', String(bg.overlay ?? 0.15));
+  } else {
+    root.style.setProperty('--chat-overlay', String(bg.overlay ?? 0.25));
+  }
 
   if (bg.mode === 'solid') {
     root.style.setProperty('--chat-bg-color', bg.value ?? '#111113');
     root.style.removeProperty('--chat-bg-image');
-    root.style.removeProperty('--chat-bg-size');
+    clearWallpaperLayout();
   } else if (bg.mode === 'gradient') {
     root.style.setProperty('--chat-bg-image', bg.value ?? '');
     root.style.removeProperty('--chat-bg-color');
-    root.style.removeProperty('--chat-bg-size');
+    clearWallpaperLayout();
   } else if (bg.mode === 'pattern') {
     const pat = PATTERNS.find(p => p.id === bg.value);
     if (pat) {
@@ -112,10 +183,38 @@ export function applyChatBg(bg: ChatBg) {
       root.style.setProperty('--chat-bg-color', '#0D0D0D');
       root.style.setProperty('--chat-bg-size', PATTERN_SIZES[bg.value!] ?? '24px 24px');
     }
+    clearWallpaperLayout();
   } else if (bg.mode === 'image') {
     root.style.setProperty('--chat-bg-image', `url("${bg.value}")`);
     root.style.removeProperty('--chat-bg-color');
-    root.style.setProperty('--chat-bg-size', 'cover');
+
+    if (bg.value) {
+      const fit      = bg.fitMode           ?? 'smart-cover';
+      const position = bg.wallpaperPosition ?? 'auto';
+
+      // Run focal point detection + focus analysis in parallel
+      Promise.all([
+        detectFocalPointCached(bg.value),
+        analyzeWallpaperCached(bg.value),
+      ]).then(([focal, profile]) => {
+        // Apply smart wallpaper positioning
+        const layout = computeLayout(focal, fit, position);
+        applyWallpaperLayout(layout);
+
+        // Watch for orientation/resize changes and re-derive position without reloading image
+        setupOrientationWatcher(focal, fit, position);
+
+        // Apply adaptive focus (glass/blur/overlay)
+        applyFocusProfile(profile, bg.focusMode ?? 'auto');
+        if (overlayMode === 'auto' || bg.overlay === undefined) {
+          root.style.setProperty('--chat-overlay', String(profile.overlayOpacity));
+        }
+      });
+    }
+  } else {
+    clearFocusProfile();
+    clearWallpaperLayout();
+    root.setAttribute('data-focus-mode', 'wallpaper');
   }
 }
 
@@ -330,13 +429,152 @@ export default function ChatBgPicker({ onClose }: Props) {
         </div>
       )}
 
+      {/* Smart Wallpaper section — fit mode + position */}
+      {bg.mode === 'image' && (
+        <div style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.07)', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+            <Maximize2 size={13} style={{ color: '#A1A1AA' }} strokeWidth={2} />
+            <span style={{ fontSize: 12, color: '#A1A1AA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Inter, sans-serif' }}>
+              Wallpaper Fit
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5, marginBottom: 14 }}>
+            {([
+              { id: 'smart-cover',  label: 'Smart Cover',  desc: 'Aqlli markazlash ✦' },
+              { id: 'cover',        label: 'Cover',         desc: 'To\'ldirish (markazda)' },
+              { id: 'contain',      label: 'Contain',       desc: 'Butun rasm ko\'rinadi' },
+              { id: 'fill-width',   label: 'Fill Width',    desc: 'Kenglikni to\'ldirish' },
+              { id: 'fill-height',  label: 'Fill Height',   desc: 'Balandlikni to\'ldirish' },
+              { id: 'adaptive-crop', label: 'Adaptive',     desc: 'Qirqilmaslik uchun' },
+            ] as { id: WallpaperFit; label: string; desc: string }[]).map(m => {
+              const active = (bg.fitMode ?? 'smart-cover') === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setBg(prev => ({ ...prev, fitMode: m.id }))}
+                  style={{
+                    padding: '8px 8px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                    textAlign: 'left', fontFamily: 'Inter, sans-serif',
+                    background: active ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)',
+                    outline: active ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: active ? '#F59E0B' : '#A1A1AA', marginBottom: 2 }}>{m.label}</div>
+                  <div style={{ fontSize: 9.5, color: '#52525B', lineHeight: 1.3 }}>{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Position row */}
+          <div style={{ marginBottom: 0 }}>
+            <span style={{ fontSize: 11, color: '#52525B', fontFamily: 'Inter, sans-serif', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Pozitsiya
+            </span>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {(['auto','center','top','bottom','left','right'] as WallpaperPosition[]).map(p => {
+                const active = (bg.wallpaperPosition ?? 'auto') === p;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setBg(prev => ({ ...prev, wallpaperPosition: p }))}
+                    style={{
+                      flex: 1, padding: '5px 0', borderRadius: 7, fontSize: 10.5, fontWeight: 500,
+                      border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                      background: active ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.04)',
+                      color: active ? '#F59E0B' : '#71717A',
+                      outline: active ? '1px solid rgba(245,158,11,0.35)' : '1px solid transparent',
+                      transition: 'all 0.12s', textTransform: 'capitalize',
+                    }}
+                  >
+                    {p === 'auto' ? 'Auto' : p}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Adaptive Focus Mode section */}
+      {bg.mode === 'image' && (
+        <div style={{ padding: '14px 16px', background: 'rgba(245,158,11,0.04)', borderRadius: 10, border: '1px solid rgba(245,158,11,0.12)', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+            <Zap size={13} style={{ color: '#F59E0B' }} strokeWidth={2} />
+            <span style={{ fontSize: 12, color: '#A1A1AA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Inter, sans-serif' }}>
+              Adaptive Focus Mode
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
+            {([
+              { id: 'auto',    label: 'Auto (AI)',   desc: 'Rasmga qarab optimal sozlama' },
+              { id: 'minimal', label: 'Minimal',     desc: 'Shaffof, engil glass effekt' },
+              { id: 'glass',   label: 'Glass',       desc: 'Kuchli glassmorphism' },
+              { id: 'focus',   label: 'Focus',       desc: 'Maksimal o\'qilishi uchun' },
+            ] as const).map(m => {
+              const active = (bg.focusMode ?? 'auto') === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setBg(prev => ({ ...prev, focusMode: m.id }))}
+                  style={{
+                    padding: '10px 10px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                    textAlign: 'left', fontFamily: 'Inter, sans-serif',
+                    background: active ? 'rgba(245,158,11,0.14)' : 'rgba(255,255,255,0.04)',
+                    outline: active ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: active ? '#F59E0B' : '#A1A1AA', marginBottom: 2 }}>{m.label}</div>
+                  <div style={{ fontSize: 10.5, color: '#52525B', lineHeight: 1.3 }}>{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Adjustments (only when mode !== default) */}
       {bg.mode !== 'default' && (
         <div style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 16 }}>
           <p style={{ fontSize: 12, color: '#52525B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>Sozlash</p>
+
+          {/* Overlay mode selector */}
+          <div style={{ marginBottom: 14 }}>
+            <span style={{ fontSize: 12.5, color: '#71717A', fontFamily: 'Inter, sans-serif', display: 'block', marginBottom: 6 }}>Overlay rejim</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {(['auto','dark','light','none'] as const).map(m => (
+                <button
+                  key={m}
+                  onClick={() => setBg(prev => ({ ...prev, overlayMode: m }))}
+                  style={{
+                    flex: 1, padding: '5px 0', borderRadius: 7, fontSize: 11.5, fontWeight: 500,
+                    border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                    background: (bg.overlayMode ?? 'auto') === m ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.05)',
+                    color: (bg.overlayMode ?? 'auto') === m ? '#F59E0B' : '#71717A',
+                    outline: (bg.overlayMode ?? 'auto') === m ? '1px solid rgba(245,158,11,0.4)' : '1px solid transparent',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {m === 'auto' ? 'Auto' : m === 'dark' ? 'Qorang\'i' : m === 'light' ? 'Yorug\'' : 'Yo\'q'}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Slider label="Xiralash (blur)" value={bg.blur ?? 0} min={0} max={20} step={0.5} onChange={v => set('blur', v)} />
           <Slider label="Yorqinlik" value={bg.brightness ?? 1} min={0.4} max={1.6} step={0.05} onChange={v => set('brightness', v)} />
-          <Slider label="Qorayish (overlay)" value={bg.overlay ?? 0} min={0} max={0.8} step={0.02} onChange={v => set('overlay', v)} />
+          {bg.mode === 'image' && (
+            <Slider label="To'yinganlik" value={bg.saturation ?? 1} min={0} max={2} step={0.05} onChange={v => set('saturation', v)} />
+          )}
+          {(bg.overlayMode ?? 'auto') !== 'auto' && (
+            <Slider
+              label={(bg.overlayMode ?? 'auto') === 'light' ? "Oq overlay" : "Qora overlay"}
+              value={bg.overlay ?? 0.25} min={0} max={0.75} step={0.02}
+              onChange={v => set('overlay', v)}
+            />
+          )}
         </div>
       )}
 
