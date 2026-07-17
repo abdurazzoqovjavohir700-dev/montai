@@ -24,17 +24,23 @@ type ErrorClass = 'model_unavailable' | 'rate_limit' | 'auth' | 'unknown';
 // meta-llama/llama-4-scout-17b-16e-instruct, qwen/qwen3-32b, openai/gpt-oss-20b
 // Deprecated: gemma2-9b-it, llama-3.2-*-preview
 
-// llama-3.3-70b TPM = 6K (too low for 5000-token system prompt — hits limit after 1 message)
-// llama-3.1-8b TPM = 131K — handles large system prompt fine
+// Free tier actual TPM limits (measured 2026-07):
+//   llama-4-scout = 30K TPM (highest available — primary for text+vision)
+//   gpt-oss-120b  = 8K TPM
+//   qwen3.6-27b   = 8K TPM
+//   llama-3.1-8b  = 6K TPM
+//   llama-3.3-70b = 6K TPM  ← too low, avoid as primary
+//   qwen3-32b     = 6K TPM
+// System prompt ~600 tokens → llama-4-scout handles comfortably
 const TEXT_CHAIN = [
-  'llama-3.1-8b-instant',      // Primary: 131K TPM, handles large system prompt
-  'llama-3.3-70b-versatile',   // Quality fallback (used when 8b fails)
-  'qwen/qwen3-32b',
-  'openai/gpt-oss-20b',
+  'meta-llama/llama-4-scout-17b-16e-instruct', // Primary: 30K TPM, multimodal, best free tier limit
+  'openai/gpt-oss-120b',                         // Fallback: 8K TPM
+  'qwen/qwen3.6-27b',                             // Fallback: 8K TPM
+  'llama-3.1-8b-instant',                         // Last resort: 6K TPM
 ] as const;
 
 const VISION_CHAIN = [
-  'meta-llama/llama-4-scout-17b-16e-instruct',
+  'meta-llama/llama-4-scout-17b-16e-instruct', // 30K TPM, native multimodal
 ] as const;
 
 // ─── Error classification ────────────────────────────────────────────────────
