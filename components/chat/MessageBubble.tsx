@@ -4,7 +4,7 @@ import { useState, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Copy, Check, ThumbsUp, ThumbsDown, Share2,
-  Download, RefreshCw, Pencil, ZoomIn,
+  Download, RefreshCw, Pencil, ZoomIn, FileText,
 } from 'lucide-react';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 import ImageLightbox from '@/components/chat/ImageLightbox';
@@ -273,6 +273,72 @@ function UserBubble({ message, onEditResend }: Props) {
   );
 }
 
+/* ─── PDF export helper ──────────────────────────────────── */
+function exportAsPdf(content: string, createdAt: string) {
+  const date = new Date(createdAt).toLocaleDateString('uz-UZ', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  // Convert basic markdown to HTML for print view
+  const html = content
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^```[\w]*\n([\s\S]*?)```$/gm, '<pre><code>$1</code></pre>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  const win = window.open('', '_blank');
+  if (!win) return;
+  win.document.write(`<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Montai — AI Javobi</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 14px; line-height: 1.8;
+         color: #1a1a1a; background: #fff; padding: 48px 64px; max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 24px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+  h2 { font-size: 18px; margin: 20px 0 10px; color: #374151; }
+  h3 { font-size: 15px; margin: 16px 0 8px; color: #4b5563; }
+  p { margin: 12px 0; }
+  ul { margin: 10px 0 10px 24px; }
+  li { margin: 4px 0; }
+  code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
+  pre { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 8px;
+        font-family: monospace; font-size: 12px; overflow-x: auto; margin: 12px 0; white-space: pre-wrap; }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  strong { font-weight: 700; }
+  em { font-style: italic; color: #4b5563; }
+  .header { border-bottom: 3px solid #f59e0b; padding-bottom: 16px; margin-bottom: 28px; }
+  .logo { font-size: 20px; font-weight: 800; color: #f59e0b; letter-spacing: -0.5px; }
+  .meta { font-size: 12px; color: #9ca3af; margin-top: 6px; }
+  .content { line-height: 1.9; }
+  @media print {
+    body { padding: 20px 32px; }
+    @page { margin: 20mm; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Montai AI</div>
+  <div class="meta">Yaratilgan: ${date}</div>
+</div>
+<div class="content"><p>${html}</p></div>
+<script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`);
+  win.document.close();
+}
+
 /* ─── AI MESSAGE ─────────────────────────────────────────── */
 function AIBubble({ message, onRegenerate }: Props) {
   const [copied, setCopied] = useState(false);
@@ -302,6 +368,11 @@ function AIBubble({ message, onRegenerate }: Props) {
       fn: () => navigator.share?.({ text: message.content }).catch(() => {}), title: 'Ulashish',
     },
     {
+      icon: <FileText size={14} strokeWidth={1.5} />,
+      fn: () => exportAsPdf(message.content, message.createdAt),
+      title: 'PDF sifatida saqlash',
+    },
+    {
       icon: <Download size={14} strokeWidth={1.5} />,
       fn: () => {
         const b = new Blob([message.content], { type: 'text/plain' });
@@ -310,7 +381,7 @@ function AIBubble({ message, onRegenerate }: Props) {
         a.href = u; a.download = 'montai-javob.txt'; a.click();
         URL.revokeObjectURL(u);
       },
-      title: 'Yuklab olish',
+      title: 'TXT yuklab olish',
     },
     {
       icon: <RefreshCw size={14} strokeWidth={1.5} />,

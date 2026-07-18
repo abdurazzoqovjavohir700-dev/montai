@@ -14,7 +14,8 @@ import QuickActionMenu from './QuickActionMenu';
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
 const ACCEPTED_TYPES = [...ACCEPTED_IMAGE_TYPES, 'application/pdf'];
 const MAX_IMAGES = 3;
-const MAX_PDF_SIZE_MB = 20;
+// Vercel/Netlify body limit ~4.5 MB → base64 blows to 133%, so max raw PDF = 3 MB
+const MAX_PDF_SIZE_MB = 3;
 
 const TYPO_FIXES: Record<string, string> = {
   'nma': 'nima', 'qalaysa': 'qalaysan', 'yxshi': 'yaxshi',
@@ -116,24 +117,48 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
       try {
         const dataUrl = ev.target?.result as string;
         const base64 = dataUrl.split(',')[1];
-        const res = await fetch('/api/parse-pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base64, name: file.name }),
-        });
+
+        let res: Response;
+        try {
+          res = await fetch('/api/parse-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64, name: file.name }),
+          });
+        } catch {
+          toast.error('Server bilan ulanishda xatolik — internet ulanishini tekshiring.');
+          return;
+        }
+
+        // Server HTML yoki boshqa format qaytarishi mumkin (413, 502 va h.k.)
+        const contentType = res.headers.get('content-type') ?? '';
+        if (!contentType.includes('application/json')) {
+          if (res.status === 413) {
+            toast.error(`PDF hajmi juda katta. Maksimum ${MAX_PDF_SIZE_MB}MB ruxsat etiladi.`);
+          } else {
+            toast.error(`Server xatosi (${res.status}). Keyinroq qaytadan urining.`);
+          }
+          return;
+        }
+
         const data = await res.json() as { text?: string; pages?: number; truncated?: boolean; error?: string };
         if (!res.ok || data.error) {
-          toast.error(data.error ?? 'PDF tahlil qilishda xatolik');
+          toast.error(data.error ?? 'PDF tahlil qilishda xatolik yuz berdi.');
           return;
         }
         setPdf({ name: file.name, size: file.size, text: data.text ?? '', pages: data.pages ?? 0, truncated: data.truncated });
         if (data.truncated) {
-          toast.success(`PDF yuklandi: ${data.pages} sahifa (katta hujjat, matn qisqartirildi)`);
+          toast.success(`PDF yuklandi: ${data.pages} sahifa (uzoq hujjat, dastlabki qism tahlil qilindi)`);
         } else {
           toast.success(`PDF yuklandi: ${data.pages} sahifa`);
         }
-      } catch {
-        toast.error('PDF o\'qishda xatolik yuz berdi');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (msg.includes('413') || msg.toLowerCase().includes('too large')) {
+          toast.error(`PDF juda katta — maksimum ${MAX_PDF_SIZE_MB}MB.`);
+        } else {
+          toast.error('PDF tahlil qilishda kutilmagan xatolik. Boshqa PDF sinab ko\'ring.');
+        }
       } finally {
         setIsReading(false);
       }
