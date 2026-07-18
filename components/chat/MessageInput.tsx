@@ -57,8 +57,9 @@ export interface AttachedImage {
 export interface AttachedPdf {
   name: string;
   size: number;
-  text: string;    // extracted text from server
+  text: string;
   pages: number;
+  truncated?: boolean;
 }
 
 interface MessageInputProps {
@@ -120,13 +121,17 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base64, name: file.name }),
         });
-        const data = await res.json() as { text?: string; pages?: number; error?: string };
+        const data = await res.json() as { text?: string; pages?: number; truncated?: boolean; error?: string };
         if (!res.ok || data.error) {
           toast.error(data.error ?? 'PDF tahlil qilishda xatolik');
           return;
         }
-        setPdf({ name: file.name, size: file.size, text: data.text ?? '', pages: data.pages ?? 0 });
-        toast.success(`PDF yuklandi: ${data.pages} sahifa`);
+        setPdf({ name: file.name, size: file.size, text: data.text ?? '', pages: data.pages ?? 0, truncated: data.truncated });
+        if (data.truncated) {
+          toast.success(`PDF yuklandi: ${data.pages} sahifa (katta hujjat, matn qisqartirildi)`);
+        } else {
+          toast.success(`PDF yuklandi: ${data.pages} sahifa`);
+        }
       } catch {
         toast.error('PDF o\'qishda xatolik yuz berdi');
       } finally {

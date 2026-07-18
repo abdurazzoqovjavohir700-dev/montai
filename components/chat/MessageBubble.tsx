@@ -91,9 +91,9 @@ function UserBubble({ message, onEditResend }: Props) {
   if (editing) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.18 }}
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 28 }}
         className="flex justify-end w-full"
         style={{ padding: '6px 0' }}
       >
@@ -155,9 +155,9 @@ function UserBubble({ message, onEditResend }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, x: 24, scale: 0.95 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 28, mass: 0.8 }}
       className="flex justify-end w-full group"
       style={{ padding: '6px 0' }}
     >
@@ -248,7 +248,7 @@ function UserBubble({ message, onEditResend }: Props) {
         </div>
 
         {/* Metadata row */}
-        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ height: 24 }}>
+        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ height: 24 }}>
           <span style={{ fontSize: 11, color: '#52525B', fontFamily: 'Inter, sans-serif', lineHeight: 1 }}>
             {formatTimestamp(message.createdAt)}
           </span>
@@ -320,24 +320,29 @@ function AIBubble({ message, onRegenerate }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, x: -16, scale: 0.97 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 340, damping: 26, mass: 0.85 }}
       className="flex items-start gap-3 w-full group"
       style={{ padding: '8px 0' }}
     >
       {/* Avatar */}
-      <div style={{
-        width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
-        background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 10, fontWeight: 700, color: '#0A0A0B',
-        fontFamily: 'Sora, sans-serif',
-        boxShadow: '0 2px 8px rgba(245,158,11,0.25)',
-        marginTop: 3,
-      }}>
+      <motion.div
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 22, delay: 0.06 }}
+        style={{
+          width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+          background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 11, fontWeight: 700, color: '#0A0A0B',
+          fontFamily: 'Sora, sans-serif',
+          boxShadow: '0 2px 12px rgba(245,158,11,0.3)',
+          marginTop: 2,
+        }}
+      >
         M
-      </div>
+      </motion.div>
 
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
         {/* Content */}
@@ -350,8 +355,11 @@ function AIBubble({ message, onRegenerate }: Props) {
 
         {/* Action bar */}
         {message.id !== 'streaming' && (
-          <div
-            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.2 }}
+            className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             style={{ height: 28 }}
           >
             {actionBtns.map((btn, i) => (
@@ -365,7 +373,7 @@ function AIBubble({ message, onRegenerate }: Props) {
             }}>
               {formatTimestamp(message.createdAt)}
             </span>
-          </div>
+          </motion.div>
         )}
       </div>
     </motion.div>

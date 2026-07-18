@@ -21,6 +21,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist'],
   typescript: { ignoreBuildErrors: true },
   async headers() {
     return [

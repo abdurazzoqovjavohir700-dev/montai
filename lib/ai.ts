@@ -161,10 +161,15 @@ Use their nickname naturally (not every message). Respond in their language. Ada
 
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
   const hasImage = lastUserMsg ? hasImageContent(lastUserMsg.content) : false;
+  const hasPdf = !hasImage && typeof lastUserMsg?.content === 'string' && lastUserMsg.content.startsWith('📄 PDF hujjat:');
 
   const safetyAddition = hasImage ? getImageSafetyPrompt() : '';
-  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + safetyAddition;
-  const maxTokens = hasImage ? 1500 : 1024;
+  const pdfAddition = hasPdf
+    ? '\n\n=== PDF TAHLIL ===\nFoydalanuvchi PDF hujjat yubordi. Chuqur tahlil qil: asosiy g\'oyalar, xulosalar, muhim faktlar, raqamlar va tuzilmani ajratib ko\'rsat. Markdown dan foydalanib tartibli yoz.'
+    : '';
+  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + safetyAddition + pdfAddition;
+  // 65% of free-tier TPM budget used for response; PDF needs more tokens for detailed analysis
+  const maxTokens = hasImage ? 2048 : hasPdf ? 2048 : 1536;
 
   const buildGroqMessages = (visionOk: boolean): Groq.Chat.ChatCompletionMessageParam[] => [
     { role: 'system', content: systemPrompt },

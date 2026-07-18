@@ -51,8 +51,12 @@ export default function ChatWindow({
   }, [chatId]); // initialMessages intentionally excluded — parent passes new [] on every render
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingContent]);
+    // Use requestAnimationFrame to avoid layout thrashing
+    const id = requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [messages.length, !!streamingContent]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -72,9 +76,9 @@ export default function ChatWindow({
 
       const imageUrls = images?.map(img => `data:${img.mime};base64,${img.base64}`);
 
-      // Prepend PDF text to content so AI gets full context
+      // Prepend PDF text — 65% token budget: text already truncated by server
       const contentWithPdf = pdf
-        ? `📄 **${pdf.name}** (${pdf.pages} sahifa) PDF mazmuni:\n\n${pdf.text}\n\n---\n\n${content || 'Yuqoridagi PDF hujjatini tahlil qil.'}`
+        ? `📄 PDF hujjat: **${pdf.name}** (${pdf.pages} sahifa${pdf.truncated ? ', matn qisqartirildi' : ''})\n\n${pdf.text}\n\n---\n\n${content || 'Yuqoridagi PDF hujjatini chuqur tahlil qil. Asosiy g\'oyalar, xulosalar va muhim faktlarni ajratib ko\'rsat.'}`
         : content;
 
       const userMessage: Message = {
@@ -464,9 +468,12 @@ export default function ChatWindow({
               />
             )}
 
-            {isLoading && !streamingContent && (
-              <TypingIndicator hasImage={messages.at(-1)?.imageUrls ? messages.at(-1)!.imageUrls!.length > 0 : !!messages.at(-1)?.imageUrl} />
-            )}
+            {isLoading && !streamingContent && (() => {
+              const lastMsg = messages.at(-1);
+              const hasImg = lastMsg?.imageUrls ? lastMsg.imageUrls.length > 0 : !!lastMsg?.imageUrl;
+              const hasPdf = !hasImg && !!(lastMsg?.content?.startsWith('📄 PDF hujjat:'));
+              return <TypingIndicator hasImage={hasImg} hasPdf={hasPdf} />;
+            })()}
             <div ref={bottomRef} />
           </div>
         )}
@@ -477,9 +484,10 @@ export default function ChatWindow({
         <AnimatePresence>
           {showScrollBtn && (
             <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.7, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.75, y: 6 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 24 }}
               onClick={scrollToBottom}
               style={{
                 position: 'absolute',
