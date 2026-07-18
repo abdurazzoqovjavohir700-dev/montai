@@ -11,6 +11,21 @@ import ImageLightbox from '@/components/chat/ImageLightbox';
 import { formatTimestamp } from '@/lib/utils';
 import type { Message } from '@/lib/types';
 
+/* ─── PDF message parser ─────────────────────────────────── */
+// Messages with PDF look like:
+// "📄 PDF hujjat: **name.pdf** (N sahifa)\n\n<pdf text>\n\n---\n\nuser question"
+// We extract the PDF meta and user text, hide the raw extracted text
+interface PdfParsed { name: string; pages: string; truncated: boolean; userText: string }
+function parsePdfMessage(content: string): PdfParsed | null {
+  if (!content.startsWith('📄 PDF hujjat:')) return null;
+  const sepIdx = content.indexOf('\n\n---\n\n');
+  const header = content.slice(0, content.indexOf('\n\n'));
+  const userText = sepIdx > -1 ? content.slice(sepIdx + 7).trim() : '';
+  const match = header.match(/\*\*(.+?)\*\*\s*\((\d+)\s*sahifa(,\s*matn qisqartirildi)?/);
+  if (!match) return null;
+  return { name: match[1], pages: match[2], truncated: !!match[3], userText };
+}
+
 interface Props {
   message: Message;
   onEditResend?: (id: string, newContent: string) => void;
@@ -85,7 +100,9 @@ function UserBubble({ message, onEditResend }: Props) {
 
   const imageUrls = message.imageUrls ?? (message.imageUrl ? [message.imageUrl] : []);
   const hasImage = imageUrls.length > 0;
-  const hasText  = !!message.content.trim();
+  const pdfParsed = !hasImage ? parsePdfMessage(message.content) : null;
+  const displayContent = pdfParsed ? pdfParsed.userText : message.content;
+  const hasText  = !!displayContent.trim();
 
   /* ── Edit mode ─── */
   if (editing) {
@@ -152,6 +169,8 @@ function UserBubble({ message, onEditResend }: Props) {
 
   /* ── Display mode ─── */
   const bubbleRadius = hasImage && !hasText ? '16px' : '18px 18px 4px 18px';
+  // If only PDF (no typed text, no images) don't render empty bubble
+  const showBubble = hasImage || hasText;
 
   return (
     <motion.div
@@ -163,89 +182,124 @@ function UserBubble({ message, onEditResend }: Props) {
     >
       <div style={{ maxWidth: 'var(--msg-bubble-max, 78%)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
 
-        {/* Unified bubble */}
-        <div className="message-user-bubble" style={{
-          background: 'rgba(255,255,255,0.09)',
-          borderRadius: bubbleRadius,
-          border: '1px solid rgba(255,255,255,0.07)',
-          overflow: 'hidden',
-        }}>
-          {/* Images — grid layout */}
-          {hasImage && (
+        {/* PDF attachment card — shown separately above the bubble */}
+        {pdfParsed && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '9px 14px',
+            background: 'rgba(245,158,11,0.07)',
+            border: '1px solid rgba(245,158,11,0.22)',
+            borderRadius: 12, marginBottom: hasText ? 6 : 0,
+            maxWidth: 260,
+          }}>
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: imageUrls.length === 1 ? '1fr' : imageUrls.length === 2 ? '1fr 1fr' : '1fr 1fr',
-              gap: 2,
-              background: 'rgba(0,0,0,0.2)',
+              width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+              background: 'rgba(245,158,11,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              {imageUrls.map((url, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setLightbox(true)}
-                  style={{ position: 'relative', cursor: 'pointer' }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={url}
-                    alt={`Rasm ${idx + 1}`}
-                    style={{
-                      display: 'block', width: '100%',
-                      maxWidth: imageUrls.length === 1 ? '320px' : '160px',
-                      maxHeight: imageUrls.length === 1 ? '260px' : '160px',
-                      height: 'auto', objectFit: 'cover',
-                    }}
-                  />
-                  {idx === imageUrls.length - 1 && imageUrls.length > 1 && (
-                    <div style={{
-                      position: 'absolute', top: 6, right: 6,
-                      fontSize: 10, fontWeight: 600, color: '#fff',
-                      background: 'rgba(0,0,0,0.55)', borderRadius: 6,
-                      padding: '2px 6px', fontFamily: 'Inter, sans-serif',
-                    }}>
-                      {imageUrls.length} rasm
-                    </div>
-                  )}
+              <FileText size={17} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                fontSize: 12.5, fontWeight: 600, color: '#F59E0B',
+                fontFamily: 'Inter, sans-serif',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                maxWidth: 170,
+              }}>
+                {pdfParsed.name}
+              </div>
+              <div style={{ fontSize: 11, color: '#71717A', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>
+                PDF · {pdfParsed.pages} sahifa{pdfParsed.truncated ? ' · qisqartirildi' : ''}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Unified bubble — hidden when only PDF (no typed text, no images) */}
+        {showBubble && (
+          <div className="message-user-bubble" style={{
+            background: 'rgba(255,255,255,0.09)',
+            borderRadius: bubbleRadius,
+            border: '1px solid rgba(255,255,255,0.07)',
+            overflow: 'hidden',
+          }}>
+            {/* Images — grid layout */}
+            {hasImage && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: imageUrls.length === 1 ? '1fr' : '1fr 1fr',
+                gap: 2,
+                background: 'rgba(0,0,0,0.2)',
+              }}>
+                {imageUrls.map((url, idx) => (
                   <div
-                    className="image-zoom-overlay"
-                    style={{
-                      position: 'absolute', inset: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: 'rgba(0,0,0,0)', transition: 'background 0.18s',
-                    }}
+                    key={idx}
+                    onClick={() => setLightbox(true)}
+                    style={{ position: 'relative', cursor: 'pointer' }}
                   >
-                    <div className="image-zoom-icon" style={{
-                      width: 30, height: 30, borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'rgba(255,255,255,0)', background: 'rgba(0,0,0,0)',
-                      transition: 'all 0.18s',
-                    }}>
-                      <ZoomIn size={16} strokeWidth={1.5} />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt={`Rasm ${idx + 1}`}
+                      style={{
+                        display: 'block', width: '100%',
+                        maxWidth: imageUrls.length === 1 ? '320px' : '160px',
+                        maxHeight: imageUrls.length === 1 ? '260px' : '160px',
+                        height: 'auto', objectFit: 'cover',
+                      }}
+                    />
+                    {idx === imageUrls.length - 1 && imageUrls.length > 1 && (
+                      <div style={{
+                        position: 'absolute', top: 6, right: 6,
+                        fontSize: 10, fontWeight: 600, color: '#fff',
+                        background: 'rgba(0,0,0,0.55)', borderRadius: 6,
+                        padding: '2px 6px', fontFamily: 'Inter, sans-serif',
+                      }}>
+                        {imageUrls.length} rasm
+                      </div>
+                    )}
+                    <div
+                      className="image-zoom-overlay"
+                      style={{
+                        position: 'absolute', inset: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(0,0,0,0)', transition: 'background 0.18s',
+                      }}
+                    >
+                      <div className="image-zoom-icon" style={{
+                        width: 30, height: 30, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'rgba(255,255,255,0)', background: 'rgba(0,0,0,0)',
+                        transition: 'all 0.18s',
+                      }}>
+                        <ZoomIn size={16} strokeWidth={1.5} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          {/* Text content */}
-          {hasText && (
-            <div
-              onClick={!hasImage ? startEdit : undefined}
-              style={{
-                padding: hasImage ? '10px 14px' : '12px 16px',
-                fontSize: 15, lineHeight: 1.65,
-                letterSpacing: '-0.005em',
-                color: '#F4F4F5',
-                wordBreak: 'break-word', whiteSpace: 'pre-wrap',
-                cursor: hasImage ? 'default' : 'pointer',
-                fontFamily: 'Inter, sans-serif',
-              }}
-              title={!hasImage ? 'Tahrirlash uchun bosing' : undefined}
-            >
-              {message.content}
-            </div>
-          )}
-        </div>
+            {/* Text content — PDF messages show only user question */}
+            {hasText && (
+              <div
+                onClick={(!hasImage && !pdfParsed) ? startEdit : undefined}
+                style={{
+                  padding: hasImage ? '10px 14px' : '12px 16px',
+                  fontSize: 15, lineHeight: 1.65,
+                  letterSpacing: '-0.005em',
+                  color: '#F4F4F5',
+                  wordBreak: 'break-word', whiteSpace: 'pre-wrap',
+                  cursor: (!hasImage && !pdfParsed) ? 'pointer' : 'default',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+                title={(!hasImage && !pdfParsed) ? 'Tahrirlash uchun bosing' : undefined}
+              >
+                {displayContent}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Metadata row */}
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ height: 24 }}>
