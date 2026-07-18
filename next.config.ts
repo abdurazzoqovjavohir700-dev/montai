@@ -21,8 +21,14 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['pdf-parse'],
+  serverExternalPackages: ['pdf-parse', 'pdfjs-dist'],
   typescript: { ignoreBuildErrors: true },
+  experimental: {
+    // Include pdfjs-dist worker files in Vercel deployment bundle
+    outputFileTracingIncludes: {
+      '/api/parse-pdf': ['./node_modules/pdfjs-dist/**/*'],
+    },
+  },
   async headers() {
     return [
       {
