@@ -17,6 +17,33 @@ const MAX_IMAGES = 3;
 // Vercel/Netlify body limit ~4.5 MB → base64 blows to 133%, so max raw PDF = 3 MB
 const MAX_PDF_SIZE_MB = 3;
 
+const ALLOWED_IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif']);
+
+// Magic byte signatures to verify actual file content (prevent .JpG extension tricks)
+async function verifyMagicBytes(file: File, mime: string): Promise<boolean> {
+  try {
+    const buf = await file.slice(0, 12).arrayBuffer();
+    const b = new Uint8Array(buf);
+    if (mime === 'image/jpeg' || mime === 'image/jpg') {
+      return b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF;
+    }
+    if (mime === 'image/png') {
+      return b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47;
+    }
+    if (mime === 'image/gif') {
+      return b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38;
+    }
+    if (mime === 'image/webp') {
+      return b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46
+        && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50;
+    }
+    if (mime === 'application/pdf') {
+      return b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
+    }
+    return false;
+  } catch { return false; }
+}
+
 const TYPO_FIXES: Record<string, string> = {
   'nma': 'nima', 'qalaysa': 'qalaysan', 'yxshi': 'yaxshi',
   'slm': 'salom', 'rahma': 'rahmat', 'kk': 'kerak',
@@ -107,11 +134,28 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
       toast.error('Bir vaqtda faqat 1 ta PDF biriktiriladi. Avvalgisini o\'chiring.');
       return;
     }
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (ext !== 'pdf') {
+      toast.error('Faqat .pdf fayllar qabul qilinadi.');
+      return;
+    }
     if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
       toast.error(`PDF hajmi ${MAX_PDF_SIZE_MB}MB dan kichik bo'lishi kerak`);
       return;
     }
     setIsReading(true);
+    // Magic bytes check before reading full file
+    verifyMagicBytes(file, 'application/pdf').then(valid => {
+      if (!valid) {
+        toast.error('Bu haqiqiy PDF fayl emas. Fayl ichidagi ma\'lumotlar mos kelmadi.');
+        setIsReading(false);
+        return;
+      }
+      startPdfRead(file);
+    });
+  }, [pdf]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startPdfRead = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
@@ -168,15 +212,18 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
       setIsReading(false);
     };
     reader.readAsDataURL(file);
-  }, [pdf]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const processFile = useCallback((file: File) => {
     const mime = file.type.toLowerCase();
-    if (mime === 'application/pdf') {
+    // Extension normalization (catches .JpG .JPG tricks)
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+
+    if (mime === 'application/pdf' || ext === 'pdf') {
       processPdf(file);
       return;
     }
-    if (!ACCEPTED_IMAGE_TYPES.includes(mime)) {
+    if (!ACCEPTED_IMAGE_TYPES.includes(mime) || !ALLOWED_IMAGE_EXTS.has(ext)) {
       toast.error('Faqat PNG, JPG, WEBP, GIF va PDF formatlari qabul qilinadi');
       return;
     }
@@ -188,24 +235,32 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
       toast.error(`Maksimal ${MAX_IMAGES} ta rasm biriktiriladi`);
       return;
     }
-    setIsReading(true);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const result = ev.target?.result as string;
-      setImages(prev => prev.length < MAX_IMAGES ? [...prev, {
-        preview: result,
-        base64: result.split(',')[1],
-        name: file.name,
-        size: file.size,
-        mime,
-      }] : prev);
-      setIsReading(false);
-    };
-    reader.onerror = () => {
-      toast.error('Rasmni o\'qishda xatolik yuz berdi');
-      setIsReading(false);
-    };
-    reader.readAsDataURL(file);
+
+    // Verify actual image content via magic bytes
+    verifyMagicBytes(file, mime).then(valid => {
+      if (!valid) {
+        toast.error('Fayl formati mos kelmadi. Haqiqiy rasm fayli yuklang.');
+        return;
+      }
+      setIsReading(true);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const result = ev.target?.result as string;
+        setImages(prev => prev.length < MAX_IMAGES ? [...prev, {
+          preview: result,
+          base64: result.split(',')[1],
+          name: file.name,
+          size: file.size,
+          mime,
+        }] : prev);
+        setIsReading(false);
+      };
+      reader.onerror = () => {
+        toast.error('Rasmni o\'qishda xatolik yuz berdi');
+        setIsReading(false);
+      };
+      reader.readAsDataURL(file);
+    });
   }, [images, processPdf]);
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {

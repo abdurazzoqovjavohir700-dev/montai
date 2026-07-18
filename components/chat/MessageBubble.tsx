@@ -274,25 +274,59 @@ function UserBubble({ message, onEditResend }: Props) {
 }
 
 /* ─── PDF export helper ──────────────────────────────────── */
-function exportAsPdf(content: string, createdAt: string) {
+function mdToHtml(md: string): string {
+  // Code blocks first (multi-line), before inline transforms
+  let html = md.replace(/```([\w]*)\n([\s\S]*?)```/gm, (_, lang, code) => {
+    const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<pre class="code-block"${lang ? ` data-lang="${lang}"` : ''}><code>${escaped}</code></pre>`;
+  });
+
+  // Headings
+  html = html
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Inline formatting
+  html = html
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Ordered lists
+  html = html.replace(/((?:^\d+\. .+\n?)+)/gm, (block) => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // Unordered lists
+  html = html.replace(/((?:^[-*] .+\n?)+)/gm, (block) => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^[-*] /, '')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Horizontal rule
+  html = html.replace(/^---+$/gm, '<hr>');
+
+  // Paragraphs
+  html = html.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
+
+  return html;
+}
+
+function exportAsPdf(content: string, createdAt: string, extraImages?: string[]) {
   const date = new Date(createdAt).toLocaleDateString('uz-UZ', {
     year: 'numeric', month: 'long', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
 
-  // Convert basic markdown to HTML for print view
-  const html = content
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/^```[\w]*\n([\s\S]*?)```$/gm, '<pre><code>$1</code></pre>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>');
+  const bodyHtml = mdToHtml(content);
+
+  // Inline images (data URLs) the user appended
+  const imgSection = extraImages && extraImages.length > 0
+    ? extraImages.map(src => `<figure class="export-img"><img src="${src}" alt="Rasm"></figure>`).join('')
+    : '';
 
   const win = window.open('', '_blank');
   if (!win) return;
@@ -300,40 +334,74 @@ function exportAsPdf(content: string, createdAt: string) {
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<title>Montai — AI Javobi</title>
+<title>Montai AI — Javob</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Georgia', serif; font-size: 14px; line-height: 1.8;
-         color: #1a1a1a; background: #fff; padding: 48px 64px; max-width: 800px; margin: 0 auto; }
-  h1 { font-size: 22px; margin: 24px 0 12px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
-  h2 { font-size: 18px; margin: 20px 0 10px; color: #374151; }
-  h3 { font-size: 15px; margin: 16px 0 8px; color: #4b5563; }
-  p { margin: 12px 0; }
-  ul { margin: 10px 0 10px 24px; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-size: 14px; line-height: 1.85; color: #111827;
+    background: #fff; padding: 52px 72px; max-width: 820px; margin: 0 auto;
+  }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid #F59E0B; padding-bottom: 18px; margin-bottom: 32px;
+  }
+  .logo { font-size: 22px; font-weight: 800; color: #F59E0B; letter-spacing: -0.5px; }
+  .meta { font-size: 12px; color: #9CA3AF; text-align: right; }
+  h1 { font-size: 22px; font-weight: 700; margin: 28px 0 12px; color: #111827;
+       border-bottom: 1px solid #E5E7EB; padding-bottom: 8px; }
+  h2 { font-size: 18px; font-weight: 600; margin: 22px 0 10px; color: #1F2937; }
+  h3 { font-size: 15px; font-weight: 600; margin: 18px 0 8px; color: #374151; }
+  p { margin: 10px 0; }
+  ul, ol { margin: 10px 0 10px 26px; }
   li { margin: 4px 0; }
-  code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
-  pre { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 8px;
-        font-family: monospace; font-size: 12px; overflow-x: auto; margin: 12px 0; white-space: pre-wrap; }
-  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  code {
+    background: #F3F4F6; padding: 2px 7px; border-radius: 5px;
+    font-family: 'Courier New', monospace; font-size: 12.5px; color: #DC2626;
+  }
+  .code-block {
+    background: #1E293B; color: #E2E8F0; padding: 18px 20px; border-radius: 10px;
+    font-family: 'Courier New', monospace; font-size: 12px;
+    overflow-x: auto; margin: 14px 0; white-space: pre-wrap; line-height: 1.7;
+    border-left: 3px solid #F59E0B;
+  }
+  .code-block code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  .code-block::before {
+    content: attr(data-lang); display: block; color: #94A3B8;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 10px; font-family: 'Inter', sans-serif;
+  }
   strong { font-weight: 700; }
-  em { font-style: italic; color: #4b5563; }
-  .header { border-bottom: 3px solid #f59e0b; padding-bottom: 16px; margin-bottom: 28px; }
-  .logo { font-size: 20px; font-weight: 800; color: #f59e0b; letter-spacing: -0.5px; }
-  .meta { font-size: 12px; color: #9ca3af; margin-top: 6px; }
-  .content { line-height: 1.9; }
+  em { font-style: italic; color: #4B5563; }
+  hr { border: none; border-top: 1px solid #E5E7EB; margin: 20px 0; }
+  .export-img { margin: 18px 0; text-align: center; }
+  .export-img img { max-width: 100%; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
+  .footer { margin-top: 44px; padding-top: 16px; border-top: 1px solid #E5E7EB;
+            font-size: 11px; color: #9CA3AF; text-align: center; }
   @media print {
-    body { padding: 20px 32px; }
-    @page { margin: 20mm; }
+    body { padding: 18px 28px; }
+    @page { margin: 18mm 20mm; size: A4; }
+    .code-block { break-inside: avoid; }
   }
 </style>
 </head>
 <body>
 <div class="header">
   <div class="logo">Montai AI</div>
-  <div class="meta">Yaratilgan: ${date}</div>
+  <div class="meta">Yaratilgan: ${date}<br>montai-plum.vercel.app</div>
 </div>
-<div class="content"><p>${html}</p></div>
-<script>window.onload = function() { window.print(); }</script>
+<div class="content"><p>${bodyHtml}</p></div>
+${imgSection}
+<div class="footer">Bu hujjat Montai AI tomonidan yaratildi · montai-plum.vercel.app</div>
+<script>
+  window.onload = function() {
+    document.querySelectorAll('.code-block').forEach(el => {
+      if (!el.getAttribute('data-lang')) el.style.paddingTop = '12px';
+    });
+    setTimeout(() => window.print(), 400);
+  };
+</script>
 </body>
 </html>`);
   win.document.close();
