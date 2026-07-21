@@ -40,7 +40,8 @@ const TEXT_CHAIN = [
 ] as const;
 
 const VISION_CHAIN = [
-  'meta-llama/llama-4-scout-17b-16e-instruct', // 30K TPM, native multimodal
+  'meta-llama/llama-4-scout-17b-16e-instruct',    // 30K TPM, primary vision
+  'meta-llama/llama-4-maverick-17b-128e-instruct', // Fallback vision
 ] as const;
 
 // ─── Error classification ────────────────────────────────────────────────────
@@ -85,12 +86,19 @@ function toGroqContent(
   });
 }
 
-function sanitizeForTextModel(content: ChatMessage['content']): string {
+function sanitizeForTextModel(content: ChatMessage['content'], imageFailedReason?: string): string {
   if (typeof content === 'string') return content;
-  return content
+  const text = content
     .filter(b => b.type === 'text')
     .map(b => (b as { type: string; text?: string }).text ?? '')
-    .join(' ') || '[rasm]';
+    .join(' ');
+  const imgCount = content.filter(b => b.type === 'image' || b.type === 'image_url').length;
+  if (imgCount > 0 && imageFailedReason) {
+    const note = `[Foydalanuvchi ${imgCount > 1 ? `${imgCount} ta rasm` : 'rasm'} yubordi — ${imageFailedReason}]`;
+    return text ? `${note}\n${text}` : note;
+  }
+  if (imgCount > 0) return text ? `[rasm]\n${text}` : '[rasm]';
+  return text;
 }
 
 // ─── Core: try models in order ───────────────────────────────────────────────
@@ -113,10 +121,10 @@ async function tryModelsInOrder(
   let highPriorityErr: unknown;
 
   for (const model of models) {
-    // Per-model: 1 quick server-side retry on rate_limit (800ms wait)
-    // Catches transient blips without keeping serverless function busy too long
-    for (let attempt = 0; attempt <= 1; attempt++) {
-      if (attempt === 1) await new Promise(r => setTimeout(r, 800));
+    // Retry strategy: rate_limit gets 2 retries (1s, 2s); other errors skip immediately
+    const delays = [0, 1000, 2000];
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+      if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
       try {
         const stream = await groq.chat.completions.create({
           ...buildParams(model),
@@ -127,11 +135,11 @@ async function tryModelsInOrder(
         const cls = classifyError(err);
         lastErr = err;
         if (cls === 'rate_limit' || cls === 'auth') highPriorityErr = err;
-        if (!shouldTryNext(cls)) { break; }
-        if (cls !== 'rate_limit') break; // only retry rate_limit per model
+        if (!shouldTryNext(cls)) break; // auth → stop all
+        if (cls !== 'rate_limit') break; // non-rate-limit → next model
+        // rate_limit → retry with next delay
       }
     }
-    // If auth error, stop immediately
     if (highPriorityErr && classifyError(highPriorityErr) === 'auth') break;
   }
 
@@ -175,12 +183,12 @@ Use their nickname naturally (not every message). Respond in their language. Ada
   // 65% of free-tier TPM budget used for response; PDF needs more tokens for detailed analysis
   const maxTokens = hasImage ? 2048 : hasPdf ? 2048 : 1536;
 
-  const buildGroqMessages = (visionOk: boolean): Groq.Chat.ChatCompletionMessageParam[] => [
+  const buildGroqMessages = (visionOk: boolean, imgFailReason?: string): Groq.Chat.ChatCompletionMessageParam[] => [
     { role: 'system', content: systemPrompt },
     ...messages.map((msg) => {
       const hasImgInMsg = typeof msg.content !== 'string' && hasImageContent(msg.content);
       const content = (!visionOk && hasImgInMsg)
-        ? sanitizeForTextModel(msg.content)
+        ? sanitizeForTextModel(msg.content, imgFailReason)
         : toGroqContent(msg.content);
       return { role: msg.role as 'user' | 'assistant', content } as Groq.Chat.ChatCompletionMessageParam;
     }),
@@ -203,12 +211,14 @@ Use their nickname naturally (not every message). Respond in their language. Ada
     activeModel = result.model;
   } catch (visionErr) {
     if (!hasImage) throw visionErr;
+    const visionErrMsg = (visionErr instanceof Error ? visionErr.message : String(visionErr)).slice(0, 80);
     logModerationEvent({ type: 'image', category: 'safe', confidence: 'low', timestamp: new Date().toISOString() });
     usingVision = false;
 
+    // Fall back to text but include a note that image was sent (so AI doesn't say "please send image")
     const result = await tryModelsInOrder(TEXT_CHAIN, (model) => ({
       model,
-      messages: buildGroqMessages(false),
+      messages: buildGroqMessages(false, `vision model unavailable: ${visionErrMsg}`),
       max_tokens: 1024,
       temperature: 0.65,
     }));

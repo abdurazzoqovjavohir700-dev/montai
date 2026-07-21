@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 
 android {
     namespace "com.montai.app"
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
         applicationId "com.montai.app"
-        minSdk 29       // Android 10+
-        targetSdk 35
+        minSdk 29
+        targetSdk 36
         versionCode 1
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -31,11 +31,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
     packagingOptions {
         jniLibs {
@@ -57,16 +57,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation project(':capacitor-android')
     implementation project(':capacitor-cordova-android-plugins')
-    // Capacitor plugins
-    implementation 'com.capacitorjs.plugins.camera:camera:7.+'
-    implementation 'com.capacitorjs.plugins.clipboard:clipboard:7.+'
-    implementation 'com.capacitorjs.plugins.filesystem:filesystem:7.+'
-    implementation 'com.capacitorjs.plugins.haptics:haptics:7.+'
-    implementation 'com.capacitorjs.plugins.localnotifications:local-notifications:7.+'
-    implementation 'com.capacitorjs.plugins.share:share:7.+'
-    implementation 'com.capacitorjs.plugins.statusbar:status-bar:7.+'
-    implementation 'com.capacitorjs.plugins.splashscreen:splash-screen:7.+'
-    implementation 'com.capacitorjs.plugins.keyboard:keyboard:7.+'
+    // Capacitor plugins are included via capacitor.build.gradle below
     // AndroidX
     implementation 'androidx.core:core-splashscreen:1.0.1'
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'

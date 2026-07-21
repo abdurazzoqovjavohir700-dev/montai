@@ -1,17 +1,17 @@
 // Root build.gradle
 buildscript {
     ext {
-        kotlin_version = '1.9.25'
-        compileSdkVersion = 35
+        kotlin_version = '2.0.21'
+        compileSdkVersion = 36
         minSdkVersion = 29
-        targetSdkVersion = 35
+        targetSdkVersion = 36
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.3'
+        classpath 'com.android.tools.build:gradle:8.9.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }

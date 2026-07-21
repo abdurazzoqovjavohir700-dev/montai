@@ -1,17 +1,8 @@
 include ':app'
 
-def capacitorModules = [
-    ':capacitor-android',
-    ':capacitor-cordova-android-plugins'
-]
+// capacitor cordova plugins wrapper (local dir, not in capacitor.settings.gradle)
+include ':capacitor-cordova-android-plugins'
+project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins')
 
-capacitorModules.each { module ->
-    def path = rootProject.projectDir.absolutePath + '/node_modules/@capacitor/android'
-    if (module == ':capacitor-android') {
-        include module
-        project(module).projectDir = new File(path)
-    }
-}
-
-// Include local capacitor plugins from node_modules
+// All Capacitor plugins (including :capacitor-android) defined here
 apply from: 'capacitor.settings.gradle'
