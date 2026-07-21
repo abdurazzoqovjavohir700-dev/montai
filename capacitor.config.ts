@@ -1,24 +1,15 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-const isProd = process.env.NODE_ENV === 'production';
-
 const config: CapacitorConfig = {
   appId: 'com.montai.app',
   appName: 'Montai',
   webDir: 'out',
 
-  // In production: load from Vercel. In dev: use local Next.js server.
-  server: isProd
-    ? {
-        url: 'https://montai-plum.vercel.app',
-        cleartext: false,
-        androidScheme: 'https',
-      }
-    : {
-        url: 'http://localhost:3000',
-        cleartext: true,
-        androidScheme: 'http',
-      },
+  server: {
+    url: 'https://montai-plum.vercel.app',
+    cleartext: false,
+    androidScheme: 'https',
+  },
 
   android: {
     allowMixedContent: false,

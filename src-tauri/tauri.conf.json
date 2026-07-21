@@ -7,7 +7,7 @@
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "node -e \"require('fs').mkdirSync('out',{recursive:true})\""
+    "beforeBuildCommand": "node -e \"var fs=require('fs');fs.mkdirSync('out',{recursive:true});fs.writeFileSync('out/index.html','<!DOCTYPE html><html><head><meta http-equiv=refresh content=0;url=https://montai-plum.vercel.app></head></html>')\""
   },
   "app": {
     "windows": [

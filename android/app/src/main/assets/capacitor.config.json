@@ -3,9 +3,9 @@
 	"appName": "Montai",
 	"webDir": "out",
 	"server": {
-		"url": "http://localhost:3000",
-		"cleartext": true,
-		"androidScheme": "http"
+		"url": "https://montai-plum.vercel.app",
+		"cleartext": false,
+		"androidScheme": "https"
 	},
 	"android": {
 		"allowMixedContent": false,
