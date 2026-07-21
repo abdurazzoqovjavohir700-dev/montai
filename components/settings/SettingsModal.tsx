@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { signOut } from 'next-auth/react';
 import { toast } from '@/components/ui/Toast';
 import {
@@ -34,7 +35,7 @@ const CATEGORIES: Category[] = [
   { id: 'chatbg',     label: 'Chat foni',        icon: <ImageIcon size={15} strokeWidth={1.5} />, group: "Ko'rinish",  desc: 'Rasm, gradient, naqsh fon', keywords: ['fon','wallpaper','rasm','gradient','background','cover'] },
   { id: 'accessibility', label: 'Accessibility', icon: <Eye       size={15} strokeWidth={1.5} />, group: "Ko'rinish",  desc: 'Shrift kattaligi, kontrast', keywords: ['accessibility','shrift','font size','kontrast','accessibility'] },
   // AI
-  { id: 'editing',    label: 'AI & Montaj',      icon: <Film      size={15} strokeWidth={1.5} />, group: 'AI',         desc: 'AI modeli, dasturlar, maqsad', keywords: ['ai','montaj','editing','model','llama','groq','software','davinci'] },
+  { id: 'editing',    label: 'AI & Montaj',      icon: <Film      size={15} strokeWidth={1.5} />, group: 'AI',         desc: 'AI sozlamalari, dasturlar, maqsad', keywords: ['ai','montaj','editing','model','software','davinci','premiere'] },
   { id: 'memory',     label: "AI xotira",        icon: <Zap       size={15} strokeWidth={1.5} />, group: 'AI',         desc: 'Kontekst, chat tarixi', keywords: ['memory','xotira','context','tarix','history'] },
   // Tizim
   { id: 'notifs',     label: 'Bildirishnomalar', icon: <Bell      size={15} strokeWidth={1.5} />, group: 'Tizim',      desc: 'Push, email bildirishnomalar', keywords: ['notif','bildirishnoma','push','email','alert'] },
@@ -462,7 +463,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <SectionTitle title="Maxfiylik" desc="Ma'lumot siyosati va cookie sozlamalari" />
         <Row label="Foydalanish tahlili" desc="Anonim statistika (ilovani yaxshilash uchun)" right={<Badge text="O'chirilgan" color="#52525B" />} />
         <Row label="Chat loglar" desc="Suhbatlar xavfsiz serverda shifrlangan holda saqlanadi" right={<Badge text="Shifrlangan" color="#22C55E" />} />
-        <Row label="Rasm saqlash" desc="Yuklagan rasmlaringiz Supabase'da saqlanadi" right={<Badge text="Xavfsiz" color="#22C55E" />} />
+        <Row label="Rasm saqlash" desc="Yuklangan rasmlar xavfsiz serverda saqlanadi" right={<Badge text="Xavfsiz" color="#22C55E" />} />
         <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
           <a href="/privacy" style={{ flex: 1, padding: '9px 0', textAlign: 'center', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', textDecoration: 'none', fontSize: 13, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
             Maxfiylik siyosati <ChevronRight size={11} />
@@ -578,33 +579,95 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     ),
 
     about: (
-      <div>
-        <SectionTitle title="Montai haqida" desc="Versiya, yaratuvchi, litsenziya" />
-        <div style={{ padding: '18px 20px', background: 'rgba(96,165,250,0.05)', borderRadius: 12, border: '1px solid rgba(96,165,250,0.12)', marginBottom: 22, textAlign: 'center' }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: '#0A0A0B', margin: '0 auto 10px', fontFamily: 'Inter, sans-serif' }}>M</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#FAFAFA', fontFamily: 'var(--font-display, Manrope, sans-serif)', letterSpacing: '-0.5px', marginBottom: 3 }}>Montai</div>
-          <div style={{ fontSize: 12, color: '#52525B', fontFamily: 'Inter, sans-serif' }}>AI Video Editing Mentor · v1.0.0</div>
-        </div>
-        {[
-          { label: 'Yaratuvchi', value: 'jvh' },
-          { label: 'Maqsad', value: 'Video montaj va editing o\'rgatish' },
-          { label: 'AI Engine', value: 'Groq — Llama 3.3 / Llama 4 Scout' },
-          { label: 'Tillar', value: '13 ta til' },
-          { label: 'Database', value: 'Supabase (PostgreSQL)' },
-          { label: 'Deploy', value: 'Vercel Edge Network' },
-          { label: 'Versiya', value: 'v1.0.0 · 2025' },
-        ].map(({ label, value }) => (
-          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={{ fontSize: 12.5, color: '#71717A', fontFamily: 'Inter, sans-serif' }}>{label}</span>
-            <span style={{ fontSize: 12.5, color: '#A1A1AA', fontFamily: 'Inter, sans-serif' }}>{value}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {/* App identity */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28 }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '20px 20px 18px',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            marginBottom: 4,
+          }}
+        >
+          <div style={{
+            width: 46, height: 46, borderRadius: 13, flexShrink: 0,
+            background: 'linear-gradient(135deg, #60A5FA, #3B82F6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20, fontWeight: 800, color: '#FFFFFF',
+            fontFamily: 'var(--font-display, Manrope, sans-serif)',
+            boxShadow: '0 4px 16px rgba(96,165,250,0.2)',
+          }}>M</div>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#FAFAFA', fontFamily: 'var(--font-display, Manrope, sans-serif)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>Montai AI</div>
+            <div style={{ fontSize: 12, color: '#52525B', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>v1.0.0</div>
           </div>
+        </motion.div>
+
+        {/* Info rows */}
+        {[
+          { label: 'Yaratuvchi',       value: 'jvh'                         },
+          { label: 'Missiya',          value: 'Professional video editing, color grading va ijodiy workflow\'larni AI orqali o\'rgatish' },
+          { label: 'Platformalar',     value: 'Web · Android · Windows'     },
+          { label: 'Tillar',           value: '13 ta til qo\'llab-quvvatlanadi'  },
+          { label: 'Versiya',          value: 'v1.0.0'                      },
+        ].map(({ label, value }, i) => (
+          <motion.div
+            key={label}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04, duration: 0.22 }}
+            style={{
+              display: 'flex', gap: 16, padding: '12px 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.04)',
+              alignItems: 'flex-start',
+            }}
+          >
+            <span style={{ fontSize: 12, color: '#52525B', fontFamily: 'Inter, sans-serif', minWidth: 100, flexShrink: 0, lineHeight: 1.55, paddingTop: 1 }}>{label}</span>
+            <span style={{ fontSize: 13, color: '#A1A1AA', fontFamily: 'Inter, sans-serif', lineHeight: 1.55 }}>{value}</span>
+          </motion.div>
         ))}
-        <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-          <a href="/privacy" style={{ flex: 1, padding: '8px 0', textAlign: 'center', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', textDecoration: 'none', fontSize: 12.5, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            Maxfiylik <ChevronRight size={11} />
+
+        {/* Privacy section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.22, duration: 0.28 }}
+          style={{
+            margin: '14px 20px 0',
+            padding: '14px 16px',
+            background: 'rgba(255,255,255,0.025)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: 11,
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#52525B', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'Inter, sans-serif', marginBottom: 8 }}>Maxfiylik</div>
+          {[
+            'Suhbatlaringiz shaxsiy va xavfsiz.',
+            'Fayllar faqat siz so\'ragan xususiyatlar uchun qayta ishlanadi.',
+            'Montai suhbatlaringizni ommaga oshkor etmaydi.',
+          ].map((text, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: i < 2 ? 6 : 0 }}>
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#3F3F46', marginTop: 6, flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5, color: '#71717A', fontFamily: 'Inter, sans-serif', lineHeight: 1.5 }}>{text}</span>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Updates note */}
+        <div style={{ padding: '12px 20px 4px', fontSize: 11.5, color: '#3F3F46', fontFamily: 'Inter, sans-serif', lineHeight: 1.55 }}>
+          Ilova yangi AI imkoniyatlari, editing vositalari va ishlash yaxshilanishlari bilan doimiy takomillashtirilmoqda.
+        </div>
+
+        {/* Legal links */}
+        <div style={{ display: 'flex', gap: 8, margin: '10px 20px 4px' }}>
+          <a href="/privacy" style={{ flex: 1, padding: '8px 0', textAlign: 'center', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)', color: '#71717A', textDecoration: 'none', fontSize: 12, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            Maxfiylik <ChevronRight size={10} />
           </a>
-          <a href="/terms" style={{ flex: 1, padding: '8px 0', textAlign: 'center', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', color: '#A1A1AA', textDecoration: 'none', fontSize: 12.5, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            Shartlar <ChevronRight size={11} />
+          <a href="/terms" style={{ flex: 1, padding: '8px 0', textAlign: 'center', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)', color: '#71717A', textDecoration: 'none', fontSize: 12, fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            Shartlar <ChevronRight size={10} />
           </a>
         </div>
       </div>
