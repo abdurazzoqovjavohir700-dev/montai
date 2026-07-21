@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { useSession } from 'next-auth/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import AuthModal from '@/components/auth/AuthModal';
 import MontaiLogo from '@/components/shared/MontaiLogo';
 import AuroraBackground from '@/components/ui/AuroraBackground';
@@ -52,15 +53,26 @@ function FloatingBadge({ value, label, icon }: { value: string; label: string; i
 ════════════════════════════════════════════════════════════ */
 export default function HomePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [authOpen, setAuthOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  // Already signed in → go straight to /chat
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      router.replace('/chat');
+    }
+  }, [status, session, router]);
 
-  if (!mounted) {
+  // Show spinner while session is loading or redirecting
+  if (status === 'loading' || status === 'authenticated') {
     return (
-      <div style={{ minHeight: '100vh', background: '#05060A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <MontaiLogo size={48} />
+      <div style={{ minHeight: '100dvh', background: '#04050A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <motion.div
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <MontaiLogo size={52} />
+        </motion.div>
       </div>
     );
   }
