@@ -8,3 +8,15 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 .DS_Store
+out/
+
+# Android build artifacts — keep source, ignore generated
+android/.gradle/
+android/app/build/
+android/build/
+android/captures/
+android/local.properties
+android/.idea/
+
+# Tauri build
+src-tauri/target/

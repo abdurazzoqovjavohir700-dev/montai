@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://montai.vercel.app',
+    url: 'https://montai-plum.vercel.app',
     siteName: 'Montai',
     title: 'Montai — Your AI Montage Mentor',
     description: 'Master the art of video montage with AI-powered mentorship.',

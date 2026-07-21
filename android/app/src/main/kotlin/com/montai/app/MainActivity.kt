@@ -1,14 +1,14 @@
 package com.montai.app
 
+import android.os.Build
 import android.os.Bundle
-import android.view.View
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.getcapacitor.BridgeActivity
 
 class MainActivity : BridgeActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Enable edge-to-edge display
         registerPlugin(com.capacitorjs.plugins.camera.CameraPlugin::class.java)
         registerPlugin(com.capacitorjs.plugins.clipboard.ClipboardPlugin::class.java)
         registerPlugin(com.capacitorjs.plugins.filesystem.FilesystemPlugin::class.java)
@@ -21,11 +21,13 @@ class MainActivity : BridgeActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // Edge-to-edge
+        // Edge-to-edge: modern API (API 30+), no deprecated systemUiVisibility
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsControllerCompat(window, window.decorView).also { ctrl ->
+                ctrl.isAppearanceLightStatusBars = false
+                ctrl.isAppearanceLightNavigationBars = false
+            }
+        }
     }
 }

@@ -36,8 +36,14 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
+      - name: Create out/ stub (cap sync needs webDir to exist)
+        run: mkdir -p out
+
       - name: Sync Capacitor
         run: npx cap sync android
+
+      - name: Write local.properties
+        run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
 
       - name: Build debug APK
         run: |
