@@ -240,9 +240,12 @@ export default function GuestChatWindow() {
       <div className="chat-bg-overlay" />
       <ToastContainer />
 
-      {/* Guest header bar */}
+      {/* Guest header bar — safe-area-aware for Android notch */}
       <div style={{
-        position: 'absolute', top: 12, right: 12, zIndex: 20,
+        position: 'absolute',
+        top: 'max(12px, env(safe-area-inset-top, 12px))',
+        right: 'max(12px, env(safe-area-inset-right, 12px))',
+        zIndex: 20,
         display: 'flex', alignItems: 'center', gap: 8,
       }}>
         <div style={{
