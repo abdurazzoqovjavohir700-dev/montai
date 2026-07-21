@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Montai",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "identifier": "com.montai.app",
   "build": {
     "frontendDist": "../out",
@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Montai",
         "width": 1280,
         "height": 800,
@@ -22,12 +23,14 @@
         "decorations": true,
         "center": true,
         "url": "https://montai-plum.vercel.app",
-        "userAgent": "Montai/1.0 (Windows; Tauri)",
-        "backgroundColor": "#08090D"
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Montai/1.2.0",
+        "backgroundColor": "#07080D",
+        "titleBarStyle": "Visible",
+        "hiddenTitle": false
       }
     ],
     "security": {
-      "csp": "default-src 'self' https://montai-plum.vercel.app https://*.supabase.co https://api.groq.com wss://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com"
+      "csp": null
     },
     "trayIcon": {
       "iconPath": "icons/icon.png",
@@ -43,11 +46,26 @@
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
       "icons/icon.ico"
     ],
     "category": "Productivity",
-    "shortDescription": "AI-powered video editing mentor"
+    "shortDescription": "Your AI video editing mentor",
+    "longDescription": "Montai is an AI-powered video editing mentor. Ask questions about color grading, cuts, audio mixing, storytelling, and more.",
+    "publisher": "Montai",
+    "copyright": "Copyright © 2026 Montai",
+    "nsis": {
+      "displayLanguageSelector": false,
+      "installMode": "currentUser",
+      "installerIcon": "icons/icon.ico",
+      "headerImage": null,
+      "sidebarImage": null,
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
+      "shortcutName": "Montai",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "plugins": {
     "clipboard-manager": {},
