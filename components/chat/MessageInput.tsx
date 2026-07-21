@@ -452,6 +452,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
             ref={plusBtnRef}
             onClick={() => setMenuOpen(v => !v)}
             disabled={disabled}
+            className="chat-action-btn"
             animate={{ rotate: menuOpen ? 45 : 0 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             whileHover={{ scale: 1.06 }}
@@ -518,6 +519,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
           {isLoading ? (
             <motion.button
               onClick={onStop}
+              className="chat-action-btn"
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.90, transition: { type: 'spring', stiffness: 600, damping: 28 } }}
               style={{
@@ -536,6 +538,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
             <motion.button
               onClick={handleSend}
               disabled={!canSend}
+              className="chat-action-btn"
               animate={{
                 background: canSend ? '#FFFFFF' : 'rgba(255,255,255,0.06)',
                 scale: 1,

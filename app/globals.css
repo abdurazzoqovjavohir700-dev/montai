@@ -591,6 +591,29 @@ body[data-platform="windows"] {
   --safe-bottom: 0px;
 }
 
+/* ─── Mobile chat input — expanded touch targets ─────────── */
+@media (pointer: coarse) {
+  .chat-action-btn {
+    position: relative;
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .chat-action-btn::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+  }
+}
+
+/* ─── Mobile scroll — avoid janky smooth on low-end ─────── */
+@media (pointer: coarse) {
+  .chat-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto;
+  }
+}
+
 /* ─── Reduced motion accessibility ──────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

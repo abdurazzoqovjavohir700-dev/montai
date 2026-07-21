@@ -468,6 +468,7 @@ export default function ChatWindow({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
+        className="chat-scroll"
         style={{ flex: 1, minHeight: 0, overflowY: 'auto', zIndex: 2, display: 'flex', flexDirection: 'column' }}
       >
         <AnimatePresence mode="wait">
