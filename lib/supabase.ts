@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
   nickname TEXT NOT NULL DEFAULT 'Editor',
-  avatar TEXT NOT NULL DEFAULT '🎬',
+  avatar TEXT NOT NULL DEFAULT 'M',
   language TEXT NOT NULL DEFAULT 'en',
   experience_level TEXT NOT NULL DEFAULT 'beginner',
   primary_software TEXT[] NOT NULL DEFAULT '{}',

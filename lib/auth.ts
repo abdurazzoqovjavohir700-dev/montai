@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
         await supabase.from('users').insert({
           email: user.email,
           nickname,
-          avatar: '🎬',
+          avatar: 'M',
           language: 'en',
           experience_level: 'beginner',
           primary_software: [],

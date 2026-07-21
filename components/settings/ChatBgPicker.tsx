@@ -283,7 +283,7 @@ export default function ChatBgPicker({ onClose }: Props) {
       <input
         type="range" min={min} max={max} step={step} value={value}
         onChange={e => onChange(parseFloat(e.target.value))}
-        style={{ width: '100%', accentColor: '#F59E0B', cursor: 'pointer', height: 4 }}
+        style={{ width: '100%', accentColor: '#60A5FA', cursor: 'pointer', height: 4 }}
       />
     </div>
   );
@@ -296,7 +296,7 @@ export default function ChatBgPicker({ onClose }: Props) {
       onClick={onClick}
       style={{
         width: '100%', aspectRatio: '16/9', borderRadius: 8, border: 'none', cursor: 'pointer', overflow: 'hidden', position: 'relative',
-        outline: selected ? '2px solid #F59E0B' : '2px solid transparent', transition: 'outline 0.15s',
+        outline: selected ? '2px solid #60A5FA' : '2px solid transparent', transition: 'outline 0.15s',
         background:
           mode === 'solid'    ? (value ?? '#111113') :
           mode === 'gradient' ? 'transparent' :
@@ -309,9 +309,9 @@ export default function ChatBgPicker({ onClose }: Props) {
         return pat ? <div style={{ position: 'absolute', inset: 0, background: '#0D0D0D' }}><div style={{ position: 'absolute', inset: 0, backgroundImage: pat.css, backgroundSize: PATTERN_SIZES[value!] }} /></div> : null;
       })()}
       {mode === 'image' && value && <img src={value} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
-      {mode === 'default' && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 18 }}>🎬</span></div>}
+      {mode === 'default' && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: 10, color: '#3F3F46', fontFamily: 'Inter, sans-serif', fontWeight: 600, letterSpacing: '-0.5px' }}>M</span></div>}
       {selected && (
-        <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', background: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: '50%', background: '#60A5FA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Check size={10} strokeWidth={2.5} style={{ color: '#0A0A0B' }} />
         </div>
       )}
@@ -329,9 +329,9 @@ export default function ChatBgPicker({ onClose }: Props) {
             onClick={() => setBg(prev => ({ ...prev, mode: m, value: m === 'default' ? undefined : prev.value }))}
             style={{
               padding: '5px 12px', borderRadius: 20, fontSize: 12.5, fontWeight: 500, border: 'none',
-              background: bg.mode === m ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)',
-              outline: bg.mode === m ? '1px solid #F59E0B' : '1px solid rgba(255,255,255,0.08)',
-              color: bg.mode === m ? '#F59E0B' : '#71717A', cursor: 'pointer',
+              background: bg.mode === m ? 'rgba(96,165,250,0.15)' : 'rgba(255,255,255,0.05)',
+              outline: bg.mode === m ? '1px solid #60A5FA' : '1px solid rgba(255,255,255,0.08)',
+              color: bg.mode === m ? '#60A5FA' : '#71717A', cursor: 'pointer',
               fontFamily: 'Inter, sans-serif', transition: 'all 0.12s', textTransform: 'capitalize',
             }}
           >
@@ -343,7 +343,7 @@ export default function ChatBgPicker({ onClose }: Props) {
       {/* Mode content */}
       {bg.mode === 'default' && (
         <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', marginBottom: 16 }}>
-          <span style={{ fontSize: 28, display: 'block', marginBottom: 6 }}>🎬</span>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: 16, fontWeight: 800, color: '#60A5FA', fontFamily: 'Inter, sans-serif' }}>M</div>
           <p style={{ fontSize: 13, color: '#52525B', fontFamily: 'Inter, sans-serif', margin: 0 }}>
             Standart qorong'u fon. Chat toza va professional ko'rinadi.
           </p>
@@ -360,7 +360,7 @@ export default function ChatBgPicker({ onClose }: Props) {
                 onClick={() => set('value', c)}
                 style={{
                   width: 36, height: 36, borderRadius: 8, background: c, border: 'none', cursor: 'pointer',
-                  outline: bg.value === c ? '2px solid #F59E0B' : '2px solid transparent', transition: 'outline 0.12s',
+                  outline: bg.value === c ? '2px solid #60A5FA' : '2px solid transparent', transition: 'outline 0.12s',
                 }}
               />
             ))}
@@ -440,7 +440,7 @@ export default function ChatBgPicker({ onClose }: Props) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5, marginBottom: 14 }}>
             {([
-              { id: 'smart-cover',  label: 'Smart Cover',  desc: 'Aqlli markazlash ✦' },
+              { id: 'smart-cover',  label: 'Smart Cover',  desc: 'Aqlli markazlash' },
               { id: 'cover',        label: 'Cover',         desc: 'To\'ldirish (markazda)' },
               { id: 'contain',      label: 'Contain',       desc: 'Butun rasm ko\'rinadi' },
               { id: 'fill-width',   label: 'Fill Width',    desc: 'Kenglikni to\'ldirish' },
@@ -455,12 +455,12 @@ export default function ChatBgPicker({ onClose }: Props) {
                   style={{
                     padding: '8px 8px', borderRadius: 8, border: 'none', cursor: 'pointer',
                     textAlign: 'left', fontFamily: 'Inter, sans-serif',
-                    background: active ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)',
-                    outline: active ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                    background: active ? 'rgba(96,165,250,0.12)' : 'rgba(255,255,255,0.04)',
+                    outline: active ? '1px solid rgba(96,165,250,0.4)' : '1px solid rgba(255,255,255,0.07)',
                     transition: 'all 0.12s',
                   }}
                 >
-                  <div style={{ fontSize: 11.5, fontWeight: 600, color: active ? '#F59E0B' : '#A1A1AA', marginBottom: 2 }}>{m.label}</div>
+                  <div style={{ fontSize: 11.5, fontWeight: 600, color: active ? '#60A5FA' : '#A1A1AA', marginBottom: 2 }}>{m.label}</div>
                   <div style={{ fontSize: 9.5, color: '#52525B', lineHeight: 1.3 }}>{m.desc}</div>
                 </button>
               );
@@ -482,9 +482,9 @@ export default function ChatBgPicker({ onClose }: Props) {
                     style={{
                       flex: 1, padding: '5px 0', borderRadius: 7, fontSize: 10.5, fontWeight: 500,
                       border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                      background: active ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.04)',
-                      color: active ? '#F59E0B' : '#71717A',
-                      outline: active ? '1px solid rgba(245,158,11,0.35)' : '1px solid transparent',
+                      background: active ? 'rgba(96,165,250,0.15)' : 'rgba(255,255,255,0.04)',
+                      color: active ? '#60A5FA' : '#71717A',
+                      outline: active ? '1px solid rgba(96,165,250,0.35)' : '1px solid transparent',
                       transition: 'all 0.12s', textTransform: 'capitalize',
                     }}
                   >
@@ -499,9 +499,9 @@ export default function ChatBgPicker({ onClose }: Props) {
 
       {/* Adaptive Focus Mode section */}
       {bg.mode === 'image' && (
-        <div style={{ padding: '14px 16px', background: 'rgba(245,158,11,0.04)', borderRadius: 10, border: '1px solid rgba(245,158,11,0.12)', marginBottom: 12 }}>
+        <div style={{ padding: '14px 16px', background: 'rgba(96,165,250,0.04)', borderRadius: 10, border: '1px solid rgba(96,165,250,0.12)', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
-            <Zap size={13} style={{ color: '#F59E0B' }} strokeWidth={2} />
+            <Zap size={13} style={{ color: '#60A5FA' }} strokeWidth={2} />
             <span style={{ fontSize: 12, color: '#A1A1AA', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Inter, sans-serif' }}>
               Adaptive Focus Mode
             </span>
@@ -521,12 +521,12 @@ export default function ChatBgPicker({ onClose }: Props) {
                   style={{
                     padding: '10px 10px', borderRadius: 9, border: 'none', cursor: 'pointer',
                     textAlign: 'left', fontFamily: 'Inter, sans-serif',
-                    background: active ? 'rgba(245,158,11,0.14)' : 'rgba(255,255,255,0.04)',
-                    outline: active ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                    background: active ? 'rgba(96,165,250,0.14)' : 'rgba(255,255,255,0.04)',
+                    outline: active ? '1px solid rgba(96,165,250,0.4)' : '1px solid rgba(255,255,255,0.07)',
                     transition: 'all 0.12s',
                   }}
                 >
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: active ? '#F59E0B' : '#A1A1AA', marginBottom: 2 }}>{m.label}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: active ? '#60A5FA' : '#A1A1AA', marginBottom: 2 }}>{m.label}</div>
                   <div style={{ fontSize: 10.5, color: '#52525B', lineHeight: 1.3 }}>{m.desc}</div>
                 </button>
               );
@@ -551,9 +551,9 @@ export default function ChatBgPicker({ onClose }: Props) {
                   style={{
                     flex: 1, padding: '5px 0', borderRadius: 7, fontSize: 11.5, fontWeight: 500,
                     border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                    background: (bg.overlayMode ?? 'auto') === m ? 'rgba(245,158,11,0.18)' : 'rgba(255,255,255,0.05)',
-                    color: (bg.overlayMode ?? 'auto') === m ? '#F59E0B' : '#71717A',
-                    outline: (bg.overlayMode ?? 'auto') === m ? '1px solid rgba(245,158,11,0.4)' : '1px solid transparent',
+                    background: (bg.overlayMode ?? 'auto') === m ? 'rgba(96,165,250,0.18)' : 'rgba(255,255,255,0.05)',
+                    color: (bg.overlayMode ?? 'auto') === m ? '#60A5FA' : '#71717A',
+                    outline: (bg.overlayMode ?? 'auto') === m ? '1px solid rgba(96,165,250,0.4)' : '1px solid transparent',
                     transition: 'all 0.12s',
                   }}
                 >
@@ -590,7 +590,7 @@ export default function ChatBgPicker({ onClose }: Props) {
         </button>
         <button
           onClick={handleApply}
-          style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg, #F59E0B, #F97316)', color: '#0A0A0B', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', boxShadow: '0 2px 12px rgba(245,158,11,0.3)' }}
+          style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg, #60A5FA, #60A5FA)', color: '#0A0A0B', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', boxShadow: '0 2px 12px rgba(96,165,250,0.3)' }}
           onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
           onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
         >

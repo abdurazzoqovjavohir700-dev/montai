@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { getSessionUser, checkRateLimit } from '@/lib/session';
+import { getSessionUser } from '@/lib/session';
 import { streamChatResponse, type ChatMessage } from '@/lib/ai';
 import { moderateText, logModerationEvent } from '@/lib/moderation';
 
@@ -10,15 +10,6 @@ export async function POST(req: NextRequest) {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
     });
-  }
-
-  // Rate limiting
-  const rateLimit = await checkRateLimit(user.id);
-  if (!rateLimit.allowed) {
-    return new Response(
-      JSON.stringify({ error: 'Rate limit exceeded. You can send 30 messages per hour.' }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
-    );
   }
 
   const body = await req.json() as {
@@ -56,9 +47,10 @@ export async function POST(req: NextRequest) {
         confidence: modResult.confidence, timestamp: new Date().toISOString(),
         userId: user.id,
       });
+      // 422 = unprocessable content (not retryable by client)
       return new Response(
         JSON.stringify({ error: modResult.message }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 422, headers: { 'Content-Type': 'application/json' } }
       );
     }
   }
@@ -76,27 +68,18 @@ export async function POST(req: NextRequest) {
     });
 
     return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'X-Rate-Limit-Remaining': String(rateLimit.remaining),
-      },
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    const msgLow = msg.toLowerCase();
-    console.error('[Stream Error]', msg);
-    const is429 = msg.includes('429') || msgLow.includes('rate limit') || msgLow.includes('rate_limit') || msgLow.includes('too many requests');
-    const isAuth = msg.includes('401') || msgLow.includes('api key') || msgLow.includes('unauthorized') || msgLow.includes('invalid_api_key');
-    const isExhausted = msgLow.includes('exhausted');
-    const isImage = msgLow.includes('image') || msgLow.includes('vision') || msgLow.includes('multimodal');
-    const errText = is429       ? 'AI so\'rovlar limiti — 1 daqiqa kuting va qaytadan yuboring.'
-      : isAuth     ? 'AI ulanishida muammo — iltimos keyinroq urinib ko\'ring.'
-      : isExhausted ? 'AI xizmati vaqtincha yukli — bir daqiqada qaytadan urinib ko\'ring.'
-      : isImage    ? 'Rasm tahlil qilishda xatolik — rasm formatini tekshiring.'
-      : 'AI xizmati hozir band. Qaytadan urinib ko\'ring.';
+    const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+    const is429 = msg.includes('429') || msg.includes('rate limit') || msg.includes('rate_limit') || msg.includes('too many requests');
+    const isAuth = msg.includes('401') || msg.includes('api key') || msg.includes('unauthorized');
+
+    // Return 429/503 so client request-manager retries automatically
+    const status = is429 ? 429 : isAuth ? 503 : 503;
     return new Response(
-      JSON.stringify({ error: errText }),
-      { status: is429 ? 429 : isAuth ? 401 : 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'AI provider busy. Retrying automatically.' }),
+      { status, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }

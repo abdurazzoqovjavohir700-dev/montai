@@ -5,8 +5,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Image as ImageIcon, Settings, MessageSquarePlus, Clipboard,
-  Mic, Globe, Zap, Search, X, Clock, ChevronRight,
-  FileText, Film, Music, Code2, BookOpen,
+  Search, X, Clock, ChevronRight,
+  FileText,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -152,16 +152,6 @@ export default function QuickActionMenu({
       onSelect: onUploadPdf,
     },
     {
-      id: 'upload-video', label: 'Upload Video', labelUz: 'Video yuklash',
-      icon: <Film size={16} strokeWidth={1.5} />, group: 'Fayllar',
-      keywords: ['video', 'mp4'], available: false, badge: 'Tez kunda',
-    },
-    {
-      id: 'upload-audio', label: 'Upload Audio', labelUz: 'Audio yuklash',
-      icon: <Music size={16} strokeWidth={1.5} />, group: 'Fayllar',
-      keywords: ['audio', 'ovoz', 'mp3'], available: false, badge: 'Tez kunda',
-    },
-    {
       id: 'paste-clipboard', label: 'Paste from Clipboard', labelUz: 'Clipboard dan joylashtirish',
       icon: <Clipboard size={16} strokeWidth={1.5} />, group: 'Fayllar',
       keywords: ['paste', 'clipboard', 'ctrl+v'],
@@ -192,40 +182,17 @@ export default function QuickActionMenu({
       keywords: ['sozlamalar', 'settings', 'profil'],
       available: true, onSelect: () => router.push('/settings'),
     },
-    {
-      id: 'voice-record', label: 'Voice Recording', labelUz: 'Ovoz yozish',
-      icon: <Mic size={16} strokeWidth={1.5} />, group: 'AI Vositalar',
-      keywords: ['ovoz', 'voice', 'mic'], available: false, badge: 'Tez kunda',
-    },
-    {
-      id: 'web-search', label: 'Web Search', labelUz: 'Internet qidirish',
-      icon: <Globe size={16} strokeWidth={1.5} />, group: 'AI Vositalar',
-      keywords: ['search', 'internet'], available: false, badge: 'Tez kunda',
-    },
-    {
-      id: 'deep-search', label: 'Deep Search', labelUz: 'Chuqur qidiruv',
-      icon: <Zap size={16} strokeWidth={1.5} />, group: 'AI Vositalar',
-      keywords: ['deep', 'research'], available: false, badge: 'Beta',
-    },
-    {
-      id: 'analyze-code', label: 'Analyze Code', labelUz: 'Kod tahlil',
-      icon: <Code2 size={16} strokeWidth={1.5} />, group: 'AI Vositalar',
-      keywords: ['code', 'kod', 'debug'], available: false, badge: 'Tez kunda',
-    },
-    {
-      id: 'study-mode', label: 'Study Mode', labelUz: "O'rganish rejimi",
-      icon: <BookOpen size={16} strokeWidth={1.5} />, group: 'AI Vositalar',
-      keywords: ['study', 'learn'], available: false, badge: 'Tez kunda',
-    },
   ];
 
+  const availableActions = actions.filter(a => a.available !== false);
+
   const filtered = query.trim()
-    ? actions.filter(a =>
+    ? availableActions.filter(a =>
         a.labelUz.toLowerCase().includes(query.toLowerCase()) ||
         a.label.toLowerCase().includes(query.toLowerCase()) ||
         a.keywords.some(k => k.includes(query.toLowerCase()))
       )
-    : actions;
+    : availableActions;
 
   const groups = filtered.reduce<Record<string, Action[]>>((acc, a) => {
     if (!acc[a.group]) acc[a.group] = [];
@@ -307,7 +274,7 @@ export default function QuickActionMenu({
               style={{
                 flex: 1, background: 'transparent', border: 'none', outline: 'none',
                 color: '#FAFAFA', fontSize: 13.5, fontFamily: 'Inter, sans-serif',
-                caretColor: '#F59E0B',
+                caretColor: '#60A5FA',
               }}
             />
             {query && (
@@ -428,7 +395,7 @@ function ActionRow({
       style={{
         width: '100%', padding: '9px 14px',
         display: 'flex', alignItems: 'center', gap: 10,
-        background: isFocused && action.available ? 'rgba(245,158,11,0.08)' : 'transparent',
+        background: isFocused && action.available ? 'rgba(96,165,250,0.08)' : 'transparent',
         border: 'none', cursor: action.available ? 'pointer' : 'default',
         textAlign: 'left', transition: 'background 0.1s',
         opacity: action.available ? 1 : 0.45,
@@ -437,8 +404,8 @@ function ActionRow({
       <span style={{
         width: 30, height: 30, borderRadius: 8, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: isFocused && action.available ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.06)',
-        color: isFocused && action.available ? '#F59E0B' : '#71717A',
+        background: isFocused && action.available ? 'rgba(96,165,250,0.15)' : 'rgba(255,255,255,0.06)',
+        color: isFocused && action.available ? '#60A5FA' : '#71717A',
         transition: 'all 0.1s',
       }}>
         {action.icon}
@@ -447,7 +414,7 @@ function ActionRow({
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{
           display: 'block', fontSize: 13.5, fontWeight: 500,
-          color: isFocused && action.available ? '#F59E0B' : '#D4D4D8',
+          color: isFocused && action.available ? '#60A5FA' : '#D4D4D8',
           fontFamily: 'Inter, sans-serif',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
@@ -467,7 +434,7 @@ function ActionRow({
       )}
 
       {action.available && isFocused && (
-        <ChevronRight size={12} strokeWidth={1.5} style={{ color: '#F59E0B', flexShrink: 0 }} />
+        <ChevronRight size={12} strokeWidth={1.5} style={{ color: '#60A5FA', flexShrink: 0 }} />
       )}
     </button>
   );

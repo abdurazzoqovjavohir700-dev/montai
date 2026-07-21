@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Montai",
+  "version": "1.0.0",
+  "identifier": "com.montai.app",
+  "build": {
+    "frontendDist": "../out",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build:static"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Montai",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "center": true,
+        "url": "https://montai-plum.vercel.app",
+        "userAgent": "Montai/1.0 (Windows; Tauri)",
+        "backgroundColor": "#08090D"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' https://montai-plum.vercel.app https://*.supabase.co https://api.groq.com wss://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com",
+      "dangerousDisableAssetCspModification": false
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": false,
+      "menuOnLeftClick": false,
+      "title": "Montai"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "category": "Productivity",
+    "copyright": "2025 Montai",
+    "shortDescription": "AI-powered video editing mentor",
+    "longDescription": "Montai is an AI-powered video editing mentor that helps you master color grading, cuts, audio mixing, and more."
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "",
+      "endpoints": ["https://montai-plum.vercel.app/api/tauri/update"]
+    },
+    "deep-link": {
+      "protocols": [
+        {
+          "name": "Montai",
+          "schemes": ["montai"]
+        }
+      ]
+    },
+    "clipboard-manager": {},
+    "notification": {},
+    "dialog": {},
+    "fs": {
+      "scope": ["$DOCUMENT/**", "$DOWNLOAD/**", "$DESKTOP/**", "$TEMP/**"]
+    },
+    "shell": {
+      "open": true
+    }
+  }
+}

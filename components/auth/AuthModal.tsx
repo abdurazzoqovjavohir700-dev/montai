@@ -81,7 +81,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               }}
               aria-label="Close"
             >
-              ✕
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>
             </button>
 
             {/* Logo */}
@@ -143,11 +143,11 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               lineHeight: 1.6, fontFamily: 'Inter, sans-serif',
             }}>
               By continuing, you agree to our{' '}
-              <Link href="/privacy" onClick={onClose} style={{ color: '#F59E0B', textDecoration: 'none' }}>
+              <Link href="/privacy" onClick={onClose} style={{ color: '#60A5FA', textDecoration: 'none' }}>
                 Privacy Policy
               </Link>
               {' '}and{' '}
-              <Link href="/terms" onClick={onClose} style={{ color: '#F59E0B', textDecoration: 'none' }}>
+              <Link href="/terms" onClick={onClose} style={{ color: '#60A5FA', textDecoration: 'none' }}>
                 Terms of Service
               </Link>
             </p>

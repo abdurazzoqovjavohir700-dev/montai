@@ -110,25 +110,29 @@ async function tryModelsInOrder(
 ): Promise<{ stream: GroqStream; model: string }> {
   const groq = getGroq();
   let lastErr: unknown;
-  let highPriorityErr: unknown; // preserve rate_limit/auth over model_unavailable
+  let highPriorityErr: unknown;
 
   for (const model of models) {
-    try {
-      console.log(`[AI] Trying model: ${model}`);
-      const stream = await groq.chat.completions.create({
-        ...buildParams(model),
-        stream: true,
-      }) as GroqStream;
-      console.log(`[AI] Model OK: ${model}`);
-      return { stream, model };
-    } catch (err) {
-      const cls = classifyError(err);
-      console.warn(`[AI] ${model} failed (${cls}):`, err instanceof Error ? err.message : String(err));
-      lastErr = err;
-      // Keep the highest-priority error (rate_limit/auth > model_unavailable/unknown)
-      if (cls === 'rate_limit' || cls === 'auth') highPriorityErr = err;
-      if (!shouldTryNext(cls)) break;
+    // Per-model: 1 quick server-side retry on rate_limit (800ms wait)
+    // Catches transient blips without keeping serverless function busy too long
+    for (let attempt = 0; attempt <= 1; attempt++) {
+      if (attempt === 1) await new Promise(r => setTimeout(r, 800));
+      try {
+        const stream = await groq.chat.completions.create({
+          ...buildParams(model),
+          stream: true,
+        }) as GroqStream;
+        return { stream, model };
+      } catch (err) {
+        const cls = classifyError(err);
+        lastErr = err;
+        if (cls === 'rate_limit' || cls === 'auth') highPriorityErr = err;
+        if (!shouldTryNext(cls)) { break; }
+        if (cls !== 'rate_limit') break; // only retry rate_limit per model
+      }
     }
+    // If auth error, stop immediately
+    if (highPriorityErr && classifyError(highPriorityErr) === 'auth') break;
   }
 
   throw highPriorityErr ?? lastErr;
@@ -161,7 +165,7 @@ Use their nickname naturally (not every message). Respond in their language. Ada
 
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
   const hasImage = lastUserMsg ? hasImageContent(lastUserMsg.content) : false;
-  const hasPdf = !hasImage && typeof lastUserMsg?.content === 'string' && lastUserMsg.content.startsWith('📄 PDF hujjat:');
+  const hasPdf = !hasImage && typeof lastUserMsg?.content === 'string' && lastUserMsg.content.startsWith('[PDF_ATTACH]:');
 
   const safetyAddition = hasImage ? getImageSafetyPrompt() : '';
   const pdfAddition = hasPdf
@@ -183,7 +187,6 @@ Use their nickname naturally (not every message). Respond in their language. Ada
   ];
 
   const modelChain = hasImage ? VISION_CHAIN : TEXT_CHAIN;
-  console.log(`[AI] hasImage=${hasImage} chain=[${modelChain.join(', ')}]`);
 
   let activeStream: GroqStream;
   let activeModel: string;
@@ -200,8 +203,6 @@ Use their nickname naturally (not every message). Respond in their language. Ada
     activeModel = result.model;
   } catch (visionErr) {
     if (!hasImage) throw visionErr;
-
-    console.warn('[AI] All vision models failed, degrading to text chain');
     logModerationEvent({ type: 'image', category: 'safe', confidence: 'low', timestamp: new Date().toISOString() });
     usingVision = false;
 
@@ -214,8 +215,6 @@ Use their nickname naturally (not every message). Respond in their language. Ada
     activeStream = result.stream;
     activeModel = result.model;
   }
-
-  console.log(`[AI] Streaming model=${activeModel} vision=${usingVision}`);
   const encoder = new TextEncoder();
 
   const drainStream = async (
@@ -235,7 +234,6 @@ Use their nickname naturally (not every message). Respond in their language. Ada
         controller.close();
       } catch (streamErr) {
         const cls = classifyError(streamErr);
-        console.warn(`[AI] Stream error (${cls}) on ${activeModel}`);
 
         if (!shouldTryNext(cls)) {
           controller.error(streamErr);
@@ -256,7 +254,6 @@ Use their nickname naturally (not every message). Respond in their language. Ada
         let recovered = false;
         for (const fallbackModel of remaining) {
           try {
-            console.log(`[AI] Stream recovery: trying ${fallbackModel}`);
             const visionOk = (VISION_CHAIN as readonly string[]).includes(fallbackModel);
             const fallback = await groq.chat.completions.create({
               model: fallbackModel,
@@ -266,7 +263,6 @@ Use their nickname naturally (not every message). Respond in their language. Ada
               stream: true,
             }) as GroqStream;
             await drainStream(fallback, controller);
-            console.log(`[AI] Recovered with ${fallbackModel}`);
             recovered = true;
             break;
           } catch (fbErr) {

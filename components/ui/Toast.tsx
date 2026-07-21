@@ -59,7 +59,7 @@ const PALETTE: Record<ToastType, { icon: string; border: string; bg: string }> =
   success: { icon: '#22C55E', border: 'rgba(34,197,94,0.22)',   bg: 'rgba(34,197,94,0.07)'   },
   error:   { icon: '#EF4444', border: 'rgba(239,68,68,0.22)',   bg: 'rgba(239,68,68,0.07)'   },
   info:    { icon: '#60A5FA', border: 'rgba(96,165,250,0.22)',  bg: 'rgba(96,165,250,0.07)'  },
-  warning: { icon: '#F59E0B', border: 'rgba(245,158,11,0.22)',  bg: 'rgba(245,158,11,0.07)'  },
+  warning: { icon: '#FBBF24', border: 'rgba(251,191,36,0.22)',  bg: 'rgba(251,191,36,0.07)'  },
 };
 
 /* ─── Single toast card ──────────────────────────────────── */

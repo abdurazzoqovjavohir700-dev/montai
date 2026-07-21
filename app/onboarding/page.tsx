@@ -99,8 +99,8 @@ export default function OnboardingPage() {
               onClick={() => setData((p) => ({ ...p, experienceLevel: level.value as typeof data.experienceLevel }))}
               className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-150 ${
                 data.experienceLevel === level.value
-                  ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.06)]'
-                  : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] hover:border-[rgba(245,158,11,0.3)]'
+                  ? 'border-[var(--accent-primary)] bg-[rgba(96,165,250,0.06)]'
+                  : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] hover:border-[rgba(96,165,250,0.3)]'
               }`}
             >
               <div
@@ -135,8 +135,8 @@ export default function OnboardingPage() {
                 onClick={() => toggleSoftware(sw)}
                 className={`px-3 py-3 rounded-xl border text-sm font-medium text-left transition-all duration-150 ${
                   selected
-                    ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.08)] text-[var(--accent-primary)]'
-                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[rgba(245,158,11,0.3)]'
+                    ? 'border-[var(--accent-primary)] bg-[rgba(96,165,250,0.08)] text-[var(--accent-primary)]'
+                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[rgba(96,165,250,0.3)]'
                 }`}
               >
                 {selected && <Check size={12} className="inline mr-1.5 mb-0.5" />}
@@ -161,8 +161,8 @@ export default function OnboardingPage() {
                 onClick={() => setData((p) => ({ ...p, language: lang.value }))}
                 className={`px-3 py-3 rounded-xl border text-sm text-left transition-all duration-150 ${
                   selected
-                    ? 'border-[var(--accent-primary)] bg-[rgba(245,158,11,0.08)] text-[var(--accent-primary)] font-semibold'
-                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[rgba(245,158,11,0.3)]'
+                    ? 'border-[var(--accent-primary)] bg-[rgba(96,165,250,0.08)] text-[var(--accent-primary)] font-semibold'
+                    : 'border-[var(--border-subtle)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:border-[rgba(96,165,250,0.3)]'
                 }`}
               >
                 <span className="block font-semibold">{lang.nativeLabel}</span>
@@ -191,9 +191,9 @@ export default function OnboardingPage() {
         <div
           className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold text-[#0A0A0B]"
           style={{
-            background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-            boxShadow: '0 8px 24px rgba(245,158,11,0.2)',
-            fontFamily: 'Sora, sans-serif',
+            background: 'linear-gradient(135deg, #60A5FA, #3B82F6)',
+            boxShadow: '0 8px 24px rgba(96,165,250,0.2)',
+            fontFamily: 'var(--font-display, Manrope, sans-serif)',
           }}
         >
           M
@@ -241,7 +241,7 @@ export default function OnboardingPage() {
             <div className="mb-6">
               <h1
                 className="text-xl font-bold text-[var(--text-primary)] mb-1.5"
-                style={{ fontFamily: 'Sora, sans-serif' }}
+                style={{ fontFamily: 'var(--font-display, Manrope, sans-serif)' }}
               >
                 {currentStep.title}
               </h1>

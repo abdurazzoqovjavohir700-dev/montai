@@ -34,7 +34,7 @@ export default function TermsPage() {
         <div style={{ marginBottom: 48 }}>
           <span style={{
             fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
-            fontSize: 11, color: '#F59E0B',
+            fontSize: 11, color: '#60A5FA',
             textTransform: 'uppercase', letterSpacing: '3px',
           }}>
             Legal
@@ -54,14 +54,14 @@ export default function TermsPage() {
         {/* Summary card */}
         <div style={{
           padding: '20px 24px', borderRadius: 16, marginBottom: 48,
-          background: 'rgba(245,158,11,0.05)',
-          border: '1px solid rgba(245,158,11,0.2)',
+          background: 'rgba(96,165,250,0.05)',
+          border: '1px solid rgba(96,165,250,0.2)',
         }}>
           <p style={{
             fontFamily: 'var(--font-inter), Inter, sans-serif',
             fontSize: 15, lineHeight: 1.75, color: '#A1A1AA',
           }}>
-            <strong style={{ color: '#F59E0B' }}>Plain language. No tricks.</strong>{' '}
+            <strong style={{ color: '#60A5FA' }}>Plain language. No tricks.</strong>{' '}
             By using Montai you agree to these terms. If you don&apos;t agree, please don&apos;t use the service.
             These terms exist to protect both you and us — we&apos;ve kept them as simple as possible.
           </p>
@@ -107,7 +107,7 @@ export default function TermsPage() {
                   borderRadius: 10, background: 'rgba(239,68,68,0.05)',
                   border: '1px solid rgba(239,68,68,0.14)',
                 }}>
-                  <span style={{ color: '#EF4444', flexShrink: 0, marginTop: 1 }}>✗</span>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: '#EF4444', flexShrink: 0, marginTop: 2 }}><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                   <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14, color: '#A1A1AA', lineHeight: 1.5 }}>
                     {item}
                   </span>
@@ -211,7 +211,7 @@ export default function TermsPage() {
             <p>
               We may terminate or suspend your access immediately, without notice, if you violate these
               terms. Upon termination, your data will be handled as described in our{' '}
-              <Link href="/privacy" style={{ color: '#F59E0B', textDecoration: 'none' }}>Privacy Policy</Link>.
+              <Link href="/privacy" style={{ color: '#60A5FA', textDecoration: 'none' }}>Privacy Policy</Link>.
             </p>
           </Section>
 
@@ -237,7 +237,7 @@ export default function TermsPage() {
           <Section title="12. Contact">
             <p>
               Questions about these terms? Contact us at:{' '}
-              <span style={{ color: '#F59E0B' }}>legal@montai.app</span>
+              <span style={{ color: '#60A5FA' }}>legal@montai.app</span>
             </p>
           </Section>
 
@@ -250,7 +250,7 @@ export default function TermsPage() {
           display: 'flex', gap: 24,
           fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
         }}>
-          <Link href="/privacy" style={{ color: '#F59E0B', textDecoration: 'none' }}>Privacy Policy →</Link>
+          <Link href="/privacy" style={{ color: '#60A5FA', textDecoration: 'none' }}>Privacy Policy →</Link>
           <Link href="/" style={{ color: '#52525B', textDecoration: 'none' }}>← Back to Home</Link>
         </div>
       </main>
@@ -262,7 +262,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section>
       <h2 style={{
-        fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+        fontFamily: 'var(--font-display, Manrope, sans-serif)',
         fontWeight: 700, fontSize: 20, color: '#FAFAFA',
         marginBottom: 16, letterSpacing: '-0.5px',
       }}>

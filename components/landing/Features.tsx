@@ -6,8 +6,8 @@ import { Palette, Scissors, Volume2, BookOpen, Monitor, Rocket } from 'lucide-re
 const features = [
   {
     icon: <Palette size={22} strokeWidth={1.5} />,
-    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(249,115,22,0.10) 100%)',
-    glow: 'rgba(245,158,11,0.2)',
+    gradient: 'linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(96,165,250,0.10) 100%)',
+    glow: 'rgba(96,165,250,0.2)',
     title: 'Color Grading',
     desc: 'Master cinematic color science — LOG footage, LUTs, DaVinci Resolve nodes to Lumetri panels. Create any look from teal & orange to vintage film.',
     tags: ['DaVinci Resolve', 'Lumetri', 'LUTs'],
@@ -46,7 +46,7 @@ const features = [
   },
   {
     icon: <Rocket size={22} strokeWidth={1.5} />,
-    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(239,68,68,0.10) 100%)',
+    gradient: 'linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(239,68,68,0.10) 100%)',
     glow: 'rgba(239,68,68,0.2)',
     title: 'Platform Optimization',
     desc: 'Edit for YouTube retention, TikTok virality, cinema standards, music videos, corporate content, and wedding cinematography.',
@@ -87,7 +87,7 @@ export default function Features() {
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
         <span style={{
           fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
-          fontSize: 12, color: '#F59E0B',
+          fontSize: 12, color: '#60A5FA',
           textTransform: 'uppercase', letterSpacing: '3px',
         }}>
           WHAT MONTAI TEACHES
@@ -156,7 +156,7 @@ function FeatureCard({ feature, delay, visible }: {
         background: feature.gradient,
         border: `1px solid ${feature.glow}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#F59E0B',
+        color: '#60A5FA',
         boxShadow: hovered ? `0 8px 24px ${feature.glow}` : 'none',
         transition: 'box-shadow 0.3s ease',
       }}>
@@ -164,7 +164,7 @@ function FeatureCard({ feature, delay, visible }: {
       </div>
 
       <h3 style={{
-        fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+        fontFamily: 'var(--font-display, Manrope, sans-serif)',
         fontWeight: 600, fontSize: 18, color: '#FAFAFA', marginBottom: 10,
       }}>
         {feature.title}
@@ -182,7 +182,7 @@ function FeatureCard({ feature, delay, visible }: {
           <span key={tag} style={{
             fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
             fontSize: 11, padding: '4px 10px', borderRadius: 6,
-            background: 'rgba(245,158,11,0.08)', color: '#F59E0B',
+            background: 'rgba(96,165,250,0.08)', color: '#60A5FA',
           }}>
             {tag}
           </span>

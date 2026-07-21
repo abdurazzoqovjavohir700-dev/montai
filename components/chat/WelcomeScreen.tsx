@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Palette, Scissors, Volume2, BookOpen, Zap, Monitor, Download, Wand2, Play } from 'lucide-react';
 import { DYNAMIC_GREETINGS } from '@/lib/constants';
 import type { Language } from '@/lib/types';
 import MontaiLogo from '@/components/shared/MontaiLogo';
@@ -10,7 +9,7 @@ import MontaiLogo from '@/components/shared/MontaiLogo';
 const SUBTITLES: Record<Language, string> = {
   uz: 'Video montaj, color grading, sound design — istalgan savol bering',
   en: 'Video editing, color grading, sound design — ask me anything',
-  ru: 'Видеомонтаж, цветокоррекция, звуковой дизайн — спрашивайте',
+  ru: 'Видеомонтаж, цветокоррекция, звуковой дизайн — задайте вопрос',
   tr: 'Video kurgu, renk düzeltme, ses tasarımı — ne istersen sor',
   ja: '映像編集、カラーグレーディング、サウンドデザイン — 何でも聞いて',
   ko: '영상 편집, 색보정, 사운드 디자인 — 무엇이든 물어보세요',
@@ -23,128 +22,164 @@ const SUBTITLES: Record<Language, string> = {
   hi: 'वीडियो एडिटिंग, कलर ग्रेडिंग, साउंड डिज़ाइन — कुछ भी पूछें',
 };
 
-const SUGGESTION_CARDS = [
-  {
-    icon: <Palette size={16} strokeWidth={1.5} />,
-    accent: 'rgba(245,158,11,0.9)',
-    bg: 'rgba(245,158,11,0.08)',
-    title: 'Color Grading Basics',
-    description: 'LUT, Curves, Color Wheels asoslari',
-    prompt: 'Color grading nima va qanday qilinadi? Eng oddiy usuldan boshlab o\'rgat',
-  },
-  {
-    icon: <Scissors size={16} strokeWidth={1.5} />,
-    accent: 'rgba(139,92,246,0.9)',
-    bg: 'rgba(139,92,246,0.08)',
-    title: 'Cut Types Masterclass',
-    description: 'J-cut, L-cut, Match cut, Jump cut',
-    prompt: 'Barcha professional montaj turlari: J-cut, L-cut, match cut, jump cut. Har birini misollar bilan tushuntir',
-  },
-  {
-    icon: <Volume2 size={16} strokeWidth={1.5} />,
-    accent: 'rgba(34,197,94,0.9)',
-    bg: 'rgba(34,197,94,0.08)',
-    title: 'Audio & Sound Design',
-    description: 'Dialogue, music, SFX miksing',
-    prompt: 'Professional audio mixing qanday qilinadi? Dialogue, musiqa va SFX qanday darajalarda bo\'lishi kerak?',
-  },
-  {
-    icon: <Play size={16} strokeWidth={1.5} />,
-    accent: 'rgba(239,68,68,0.9)',
-    bg: 'rgba(239,68,68,0.08)',
-    title: 'YouTube uchun montaj',
-    description: 'Hook, retention, pacing texnikasi',
-    prompt: 'YouTube video uchun professional montaj qanday qilinadi? Birinchi 5 sekundda qanday hook qilaman?',
-  },
-  {
-    icon: <Monitor size={16} strokeWidth={1.5} />,
-    accent: 'rgba(14,165,233,0.9)',
-    bg: 'rgba(14,165,233,0.08)',
-    title: 'Kompyuter talablari',
-    description: 'GPU, RAM, CPU — nimalar kerak?',
-    prompt: 'Video montaj uchun kompyuter qanday bo\'lishi kerak? GPU, RAM, CPU talablari nima? Budget variant bormi?',
-  },
-  {
-    icon: <Zap size={16} strokeWidth={1.5} />,
-    accent: 'rgba(249,115,22,0.9)',
-    bg: 'rgba(249,115,22,0.08)',
-    title: 'Tez maslahatlar',
-    description: 'Pro editorlar siri — workflow',
-    prompt: 'Montajda tezroq ishlash uchun 5 ta professional maslahat ber. Keyboard shortcuts ham qo\'sh',
-  },
-];
-
-const QUICK_ACTIONS = [
-  { icon: <Download size={13} strokeWidth={1.5} />, label: "Dastur o'rnatish", prompt: "After Effects yoki DaVinci Resolve ni qanday o'rnataman? System requirements nima?" },
-  { icon: <Wand2 size={13} strokeWidth={1.5} />, label: 'Plugin tavsiya', prompt: "Video montaj uchun eng yaxshi pluginlar qaysilar? Bepul va pullik variantlar" },
-  { icon: <Play size={13} strokeWidth={1.5} />, label: 'Birinchi loyiha', prompt: "Men yangi boshlovchiman. Birinchi video loyihamni qanday boshlashim kerak? Step by step ko'rsat" },
-  { icon: <BookOpen size={13} strokeWidth={1.5} />, label: 'Storytelling', prompt: "Editing orqali kuchli hikoya qilish qanday? Pacing, rhythm, emotional arc tushuntir" },
-];
+const SUGGESTIONS: Record<Language, Array<{ label: string; prompt: string }>> = {
+  en: [
+    { label: 'Color grading basics', prompt: 'Teach me color grading fundamentals — workflow, white balance, contrast, cinematic look.' },
+    { label: 'Cut types masterclass', prompt: 'Explain J-cut, L-cut, match cut, jump cut with real film examples.' },
+    { label: 'Audio mixing guide', prompt: 'Professional audio mixing for video — dialogue levels, music, SFX balance.' },
+    { label: 'Storytelling through cuts', prompt: 'How to tell compelling stories through editing — pacing, rhythm, emotional arc.' },
+  ],
+  uz: [
+    { label: 'Color grading asoslari', prompt: 'Color grading nima va qanday qilinadi? Workflow, white balance, kontrast, cinematic look.' },
+    { label: 'Montaj turlari', prompt: 'J-cut, L-cut, match cut, jump cut — har birini real misollar bilan tushuntir.' },
+    { label: 'Audio miksing', prompt: 'Video uchun professional audio mixing — dialogue, musiqa, SFX darajalari.' },
+    { label: 'Storytelling', prompt: 'Montaj orqali kuchli hikoya qilish — pacing, rhythm, emotional arc.' },
+  ],
+  ru: [
+    { label: 'Цветокоррекция', prompt: 'Основы цветокоррекции — workflow, баланс белого, контраст, кинематографический вид.' },
+    { label: 'Типы монтажа', prompt: 'J-cut, L-cut, match cut, jump cut с примерами из реальных фильмов.' },
+    { label: 'Аудио микширование', prompt: 'Профессиональное аудио для видео — уровни диалогов, музыки, SFX.' },
+    { label: 'Сторителлинг', prompt: 'Как рассказывать истории через монтаж — темп, ритм, эмоциональная дуга.' },
+  ],
+  tr: [
+    { label: 'Renk düzeltme', prompt: 'Renk düzeltme temelleri — workflow, beyaz dengesi, kontrast, sinematik görünüm.' },
+    { label: 'Kurgu türleri', prompt: 'J-cut, L-cut, match cut, jump cut — gerçek film örnekleriyle açıkla.' },
+    { label: 'Ses miksaj', prompt: 'Video için profesyonel ses miksajı — diyalog, müzik, SFX seviyeleri.' },
+    { label: 'Hikaye anlatımı', prompt: 'Kurgu yoluyla etkileyici hikayeler — tempo, ritim, duygusal ark.' },
+  ],
+  ja: [
+    { label: 'カラーグレーディング', prompt: 'カラーグレーディングの基礎 — ワークフロー、ホワイトバランス、コントラスト。' },
+    { label: 'カット技法', prompt: 'J-cut、L-cut、マッチカット、ジャンプカットを映画の例で説明して。' },
+    { label: 'オーディオミキシング', prompt: '動画のプロ音声ミキシング — セリフ、音楽、SFXのレベル設定。' },
+    { label: 'ストーリーテリング', prompt: '編集でどのように物語を語るか — ペーシング、リズム、感情的な流れ。' },
+  ],
+  ko: [
+    { label: '색 보정', prompt: '색 보정 기초 — 워크플로우, 화이트 밸런스, 콘트라스트, 시네마틱 룩.' },
+    { label: '편집 기법', prompt: 'J-cut, L-cut, 매치 컷, 점프 컷 — 실제 영화 예제로 설명해줘.' },
+    { label: '오디오 믹싱', prompt: '영상 전문 오디오 믹싱 — 대화, 음악, SFX 레벨 설정.' },
+    { label: '스토리텔링', prompt: '편집을 통한 스토리텔링 — 페이싱, 리듬, 감정적 흐름.' },
+  ],
+  ar: [
+    { label: 'تصحيح الألوان', prompt: 'أساسيات تصحيح الألوان — سير العمل، توازن الأبيض، التباين، المظهر السينمائي.' },
+    { label: 'أنواع المقاطع', prompt: 'J-cut وL-cut والمطابقة والقفز — مع أمثلة من أفلام حقيقية.' },
+    { label: 'مزج الصوت', prompt: 'المزج الصوتي الاحترافي للفيديو — مستويات الحوار والموسيقى والمؤثرات.' },
+    { label: 'سرد القصص', prompt: 'كيف تروي قصصاً مؤثرة عبر المونتاج — الإيقاع والتوقيت والقوس العاطفي.' },
+  ],
+  fr: [
+    { label: 'Étalonnage', prompt: 'Bases de l\'étalonnage — workflow, balance des blancs, contraste, look cinématique.' },
+    { label: 'Types de coupes', prompt: 'J-cut, L-cut, match cut, jump cut avec des exemples de vrais films.' },
+    { label: 'Mixage audio', prompt: 'Mixage audio professionnel pour vidéo — niveaux dialogue, musique, SFX.' },
+    { label: 'Storytelling', prompt: 'Raconter des histoires à travers le montage — rythme, tempo, arc émotionnel.' },
+  ],
+  es: [
+    { label: 'Color grading', prompt: 'Fundamentos del color grading — flujo de trabajo, balance de blancos, contraste, aspecto cinematográfico.' },
+    { label: 'Tipos de cortes', prompt: 'J-cut, L-cut, match cut, jump cut con ejemplos de películas reales.' },
+    { label: 'Mezcla de audio', prompt: 'Mezcla de audio profesional para vídeo — niveles de diálogo, música y SFX.' },
+    { label: 'Narrativa visual', prompt: 'Cómo contar historias atractivas a través del montaje — ritmo, tempo, arco emocional.' },
+  ],
+  de: [
+    { label: 'Farbkorrektur', prompt: 'Farbkorrektur-Grundlagen — Workflow, Weißabgleich, Kontrast, Filmoptik.' },
+    { label: 'Schnittarten', prompt: 'J-cut, L-cut, Match-cut, Jump-cut mit realen Filmbeispielen erklärt.' },
+    { label: 'Audio-Mixing', prompt: 'Professionelles Audio-Mixing für Video — Dialog, Musik, SFX-Pegel.' },
+    { label: 'Storytelling', prompt: 'Geschichten durch Schnitt erzählen — Pacing, Rhythmus, emotionaler Bogen.' },
+  ],
+  zh: [
+    { label: '调色基础', prompt: '调色基础 — 工作流程、白平衡、对比度、电影感。' },
+    { label: '剪辑技巧', prompt: 'J-cut、L-cut、匹配剪辑、跳接 — 用真实电影例子讲解。' },
+    { label: '音频混音', prompt: '视频专业音频混音 — 对话、音乐、音效电平设置。' },
+    { label: '叙事技巧', prompt: '通过剪辑讲故事 — 节奏、韵律、情感弧线。' },
+  ],
+  pt: [
+    { label: 'Gradação de cor', prompt: 'Fundamentos de color grading — fluxo de trabalho, balanço de branco, contraste, visual cinematográfico.' },
+    { label: 'Tipos de corte', prompt: 'J-cut, L-cut, match cut, jump cut com exemplos de filmes reais.' },
+    { label: 'Mixagem de áudio', prompt: 'Mixagem de áudio profissional para vídeo — diálogo, música, SFX.' },
+    { label: 'Narrativa visual', prompt: 'Como contar histórias através da edição — ritmo, cadência, arco emocional.' },
+  ],
+  hi: [
+    { label: 'कलर ग्रेडिंग', prompt: 'कलर ग्रेडिंग की मूल बातें — वर्कफ़्लो, व्हाइट बैलेंस, कंट्रास्ट, सिनेमाई लुक।' },
+    { label: 'कट प्रकार', prompt: 'J-cut, L-cut, मैच कट, जंप कट — असली फिल्म उदाहरणों के साथ।' },
+    { label: 'ऑडियो मिक्सिंग', prompt: 'वीडियो के लिए प्रोफेशनल ऑडियो मिक्सिंग — डायलॉग, म्यूजिक, SFX स्तर।' },
+    { label: 'स्टोरीटेलिंग', prompt: 'एडिटिंग के जरिए कहानी कहना — पेसिंग, रिदम, भावनात्मक चाप।' },
+  ],
+};
 
 interface WelcomeScreenProps {
   nickname: string;
   language: Language;
   onSelectSuggestion: (prompt: string) => void;
+  inputSlot?: React.ReactNode;
 }
 
-export default function WelcomeScreen({ nickname, language, onSelectSuggestion }: WelcomeScreenProps) {
+export default function WelcomeScreen({ nickname, language, onSelectSuggestion, inputSlot }: WelcomeScreenProps) {
   const greeting = useMemo(() => {
     const list = DYNAMIC_GREETINGS[language] ?? DYNAMIC_GREETINGS.en;
     return list[Math.floor(Math.random() * list.length)](nickname || 'Editor');
   }, [nickname, language]);
 
   const subtitle = SUBTITLES[language] ?? SUBTITLES.en;
+  const suggestions = SUGGESTIONS[language] ?? SUGGESTIONS.en;
 
   return (
-    <div
-      style={{
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: 1,
+      minHeight: 0,
+      padding: 'clamp(20px, 5vh, 48px) clamp(16px, 5vw, 32px) 20px',
+      overflowY: 'auto',
+    }}>
+      <div style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100%',
-        padding: 'clamp(20px, 5vw, 40px) clamp(12px, 4vw, 24px) 24px',
-        overflowY: 'auto',
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          textAlign: 'center', width: '100%', maxWidth: 680,
-        }}
-      >
-        {/* Logo with float animation */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-          <div
-            style={{
-              position: 'absolute', width: 96, height: 96,
-              background: 'rgba(245,158,11,0.12)', filter: 'blur(24px)', borderRadius: '50%',
-            }}
-          />
+        textAlign: 'center',
+        width: '100%',
+        maxWidth: 640,
+      }}>
+        {/* Logo */}
+        <motion.div
+          initial={{ scale: 0.85, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          style={{ marginBottom: 22, position: 'relative' }}
+        >
+          <div style={{
+            position: 'absolute',
+            inset: -20,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(96,165,250,0.1) 0%, transparent 70%)',
+            filter: 'blur(12px)',
+            pointerEvents: 'none',
+          }} />
           <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ filter: 'drop-shadow(0 6px 20px rgba(245,158,11,0.35))' }}
+            animate={{
+              y: [0, -4, 0],
+              filter: [
+                'drop-shadow(0 4px 16px rgba(96,165,250,0.25))',
+                'drop-shadow(0 6px 24px rgba(96,165,250,0.42))',
+                'drop-shadow(0 4px 16px rgba(96,165,250,0.25))',
+              ],
+            }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <MontaiLogo size={64} />
+            <MontaiLogo size={52} />
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Greeting */}
         <motion.h1
-          initial={{ opacity: 0, y: 6 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12, duration: 0.35 }}
-          className="welcome-heading"
+          transition={{ delay: 0.1, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            fontFamily: 'Sora, sans-serif',
-            color: '#FAFAFA',
-            fontSize: 'clamp(20px, 5.5vw, 28px)',
+            fontFamily: 'var(--font-display, Manrope, sans-serif)',
+            fontSize: 'clamp(20px, 4.5vw, 26px)',
             fontWeight: 700,
-            lineHeight: 1.3,
+            color: '#EEEEF0',
+            letterSpacing: '-0.03em',
+            lineHeight: 1.25,
             marginBottom: 8,
           }}
         >
@@ -154,87 +189,79 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion }
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.35 }}
-          style={{ color: '#52525B', fontSize: '14px', marginBottom: 24 }}
+          transition={{ delay: 0.17, duration: 0.4 }}
+          style={{
+            fontSize: 13.5,
+            color: '#5A6272',
+            fontFamily: 'Inter, sans-serif',
+            letterSpacing: '-0.005em',
+            marginBottom: 28,
+            lineHeight: 1.55,
+          }}
         >
           {subtitle}
         </motion.p>
 
-        {/* Quick action pills */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.28, duration: 0.35 }}
-          style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}
-        >
-          {QUICK_ACTIONS.map((action) => (
-            <button
-              key={action.label}
-              onClick={() => onSelectSuggestion(action.prompt)}
-              className="welcome-quick-pill"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 13px', borderRadius: 20,
-                background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
-                color: '#71717A', fontSize: 13, cursor: 'pointer',
-                transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.background = '#1A1A1A';
-                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)';
-                (e.currentTarget as HTMLElement).style.color = '#FAFAFA';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.background = '#141414';
-                (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)';
-                (e.currentTarget as HTMLElement).style.color = '#71717A';
-              }}
-            >
-              <span style={{ color: '#F59E0B' }}>{action.icon}</span>
-              {action.label}
-            </button>
-          ))}
-        </motion.div>
+        {/* Input slot */}
+        {inputSlot && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{ width: '100%', marginBottom: 20 }}
+          >
+            {inputSlot}
+          </motion.div>
+        )}
 
-        {/* 6 suggestion cards — 2-column on wider screens, 1-column on mobile */}
-        <div className="welcome-cards-grid">
-          {SUGGESTION_CARDS.map((card, i) => (
+        {/* Suggestion pills */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.28, duration: 0.38 }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 8,
+            width: '100%',
+          }}
+        >
+          {suggestions.map((s, i) => (
             <motion.button
-              key={card.title}
-              initial={{ opacity: 0, y: 10 }}
+              key={s.label}
+              onClick={() => onSelectSuggestion(s.prompt)}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.32 + i * 0.05, duration: 0.3 }}
-              onClick={() => onSelectSuggestion(card.prompt)}
+              transition={{ delay: 0.28 + i * 0.05, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -2, borderColor: 'rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)' }}
+              whileTap={{ scale: 0.975 }}
               style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                textAlign: 'left', padding: 16, borderRadius: 12,
-                background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
-                cursor: 'pointer', transition: 'all 0.2s',
+                padding: '12px 16px',
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                cursor: 'pointer',
+                textAlign: 'left',
                 fontFamily: 'Inter, sans-serif',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                transition: 'all 0.18s ease',
               }}
-              whileHover={{
-                y: -2,
-                borderColor: 'rgba(245,158,11,0.3)',
-                boxShadow: '0 4px 20px rgba(245,158,11,0.08)',
-                background: '#1A1A1A',
-              }}
-              whileTap={{ scale: 0.97 }}
             >
-              <div style={{
-                width: 32, height: 32, borderRadius: 8, marginBottom: 10,
-                background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: card.accent,
-              }}>{card.icon}</div>
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#E4E4E7', marginBottom: 4, display: 'block' }}>
-                {card.title}
-              </span>
-              <span className="welcome-card-desc" style={{ fontSize: 12, color: '#71717A', lineHeight: 1.4 }}>
-                {card.description}
+              <span style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: '#8B93A4',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.3,
+              }}>
+                {s.label}
               </span>
             </motion.button>
           ))}
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

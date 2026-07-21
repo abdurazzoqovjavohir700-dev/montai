@@ -36,9 +36,9 @@ export default function Hero({ onGetStarted }: HeroProps) {
         <div className="animate-filmstrip" style={{ display: 'flex', width: '200%' }}>
           {Array.from({ length: 28 }).map((_, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', flexShrink: 0, margin: '0 4px' }}>
-              <div style={{ height: 8, width: 64, borderRadius: 4, background: '#F59E0B', marginBottom: 2 }} />
+              <div style={{ height: 8, width: 64, borderRadius: 4, background: '#60A5FA', marginBottom: 2 }} />
               <div style={{ height: 40, width: 64, borderRadius: 4, border: '1px solid #27272A' }} />
-              <div style={{ height: 8, width: 64, borderRadius: 4, background: '#F59E0B', marginTop: 2 }} />
+              <div style={{ height: 8, width: 64, borderRadius: 4, background: '#60A5FA', marginTop: 2 }} />
             </div>
           ))}
         </div>
@@ -48,13 +48,13 @@ export default function Hero({ onGetStarted }: HeroProps) {
       <div style={{
         position: 'absolute', top: '15%', left: '25%',
         width: 500, height: 500,
-        background: 'radial-gradient(circle, rgba(245,158,11,0.07) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(96,165,250,0.07) 0%, transparent 70%)',
         borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none',
       }} />
       <div style={{
         position: 'absolute', bottom: '5%', right: '15%',
         width: 350, height: 350,
-        background: 'radial-gradient(circle, rgba(249,115,22,0.05) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(96,165,250,0.05) 0%, transparent 70%)',
         borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none',
       }} />
 
@@ -62,16 +62,16 @@ export default function Hero({ onGetStarted }: HeroProps) {
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: 1100, width: '100%' }}>
 
         {/* Badge */}
-        <div style={{ ...fadeUp(0.1), display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, border: '1px solid rgba(245,158,11,0.2)', background: 'rgba(245,158,11,0.05)', marginBottom: 32 }}>
+        <div style={{ ...fadeUp(0.1), display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, border: '1px solid rgba(96,165,250,0.2)', background: 'rgba(96,165,250,0.05)', marginBottom: 32 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
-          <span style={{ fontSize: 13, color: '#F59E0B', fontFamily: 'var(--font-space), Space Grotesk, sans-serif', fontWeight: 500 }}>
+          <span style={{ fontSize: 13, color: '#60A5FA', fontFamily: 'var(--font-display, Manrope, sans-serif)', fontWeight: 500 }}>
             <Sparkles size={11} style={{ display: 'inline', marginRight: 4 }} />
             AI-Powered Video Editing Mentorship
           </span>
         </div>
 
         {/* Logo */}
-        <div style={{ ...fadeUp(0.2), marginBottom: 36, filter: 'drop-shadow(0 12px 32px rgba(245,158,11,0.4))' }}>
+        <div style={{ ...fadeUp(0.2), marginBottom: 36, filter: 'drop-shadow(0 12px 32px rgba(96,165,250,0.4))' }}>
           <MontaiLogo size={96} />
         </div>
 
@@ -89,7 +89,7 @@ export default function Hero({ onGetStarted }: HeroProps) {
           Master the Art of
           <br />
           <span style={{
-            background: 'linear-gradient(135deg, #F59E0B 0%, #F97316 60%, #EF4444 100%)',
+            background: 'linear-gradient(135deg, #60A5FA 0%, #818CF8 60%, #A78BFA 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
@@ -118,20 +118,20 @@ export default function Hero({ onGetStarted }: HeroProps) {
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '15px 36px', borderRadius: 14,
-              background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+              background: 'linear-gradient(135deg, #60A5FA, #3B82F6)',
               color: '#0A0A0B', fontSize: 16, fontWeight: 700,
-              fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+              fontFamily: 'var(--font-display, Manrope, sans-serif)',
               border: 'none', cursor: 'pointer',
-              boxShadow: '0 4px 24px rgba(245,158,11,0.35)',
+              boxShadow: '0 4px 24px rgba(96,165,250,0.35)',
               transition: 'all 0.25s ease',
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 36px rgba(245,158,11,0.5)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 36px rgba(96,165,250,0.5)';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(245,158,11,0.35)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 24px rgba(96,165,250,0.35)';
             }}
           >
             Get Started Free
@@ -145,12 +145,12 @@ export default function Hero({ onGetStarted }: HeroProps) {
               padding: '15px 32px', borderRadius: 14,
               border: '1px solid #27272A',
               color: '#A0A0A0', fontSize: 16, fontWeight: 500,
-              fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+              fontFamily: 'var(--font-display, Manrope, sans-serif)',
               textDecoration: 'none', background: 'transparent',
               transition: 'all 0.25s ease',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,158,11,0.4)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(96,165,250,0.4)';
               (e.currentTarget as HTMLElement).style.color = '#FAFAFA';
             }}
             onMouseLeave={e => {
@@ -173,7 +173,7 @@ export default function Hero({ onGetStarted }: HeroProps) {
               <div style={{
                 fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
                 fontWeight: 700, fontSize: 32,
-                background: 'linear-gradient(135deg, #F59E0B, #F97316)',
+                background: 'linear-gradient(135deg, #60A5FA, #3B82F6)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>{stat.num}</div>
               <div style={{

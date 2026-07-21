@@ -18,7 +18,7 @@ export default function SuggestionCard({ card, index, onSelect }: SuggestionCard
       whileHover={{ y: -2, transition: { duration: 0.15 } }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onSelect(card.prompt)}
-      className="text-left p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] w-full transition-colors duration-150 hover:border-[rgba(245,158,11,0.35)] hover:bg-[rgba(245,158,11,0.03)]"
+      className="text-left p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-secondary)] w-full transition-colors duration-150 hover:border-[rgba(96,165,250,0.35)] hover:bg-[rgba(96,165,250,0.03)]"
     >
       <div className="flex items-start gap-3">
         <span className="text-xl leading-none mt-0.5 flex-shrink-0">{card.icon}</span>

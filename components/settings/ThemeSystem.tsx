@@ -17,8 +17,8 @@ export interface ThemePrefs {
 const STORAGE_KEY = 'montai_theme_prefs';
 
 const DEFAULTS: ThemePrefs = {
-  accent:  '#F59E0B',
-  accent2: '#F97316',
+  accent:  '#60A5FA',
+  accent2: '#3B82F6',
   theme:   'default',
   font:    'Inter, sans-serif',
   density: 'normal',
@@ -193,7 +193,7 @@ function saveThemePrefs(p: ThemePrefs) {
 /* ─── Component ──────────────────────────────────────────── */
 export default function ThemeSystem() {
   const [prefs, setPrefs] = useState<ThemePrefs>(() => loadThemePrefs());
-  const [customHex, setCustomHex] = useState('#F59E0B');
+  const [customHex, setCustomHex] = useState('#60A5FA');
   const [section, setSection] = useState<'accent'|'theme'|'font'|'motion'>('accent');
 
   // Live preview on any change

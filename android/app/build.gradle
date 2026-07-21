@@ -1,0 +1,80 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace "com.montai.app"
+    compileSdk 35
+    defaultConfig {
+        applicationId "com.montai.app"
+        minSdk 29       // Android 10+
+        targetSdk 35
+        versionCode 1
+        versionName "1.0.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and directories to omit from the packaged assets dir, should not contain
+             // a file path separator
+             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug  // Replace with release signing config
+        }
+        debug {
+            debuggable true
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+    // Capacitor plugins
+    implementation 'com.capacitorjs.plugins.camera:camera:7.+'
+    implementation 'com.capacitorjs.plugins.clipboard:clipboard:7.+'
+    implementation 'com.capacitorjs.plugins.filesystem:filesystem:7.+'
+    implementation 'com.capacitorjs.plugins.haptics:haptics:7.+'
+    implementation 'com.capacitorjs.plugins.localnotifications:local-notifications:7.+'
+    implementation 'com.capacitorjs.plugins.share:share:7.+'
+    implementation 'com.capacitorjs.plugins.statusbar:status-bar:7.+'
+    implementation 'com.capacitorjs.plugins.splashscreen:splash-screen:7.+'
+    implementation 'com.capacitorjs.plugins.keyboard:keyboard:7.+'
+    // AndroidX
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+    implementation 'androidx.biometric:biometric:1.1.0'
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+}
+
+apply from: 'capacitor.build.gradle'

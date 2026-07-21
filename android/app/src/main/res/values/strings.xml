@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Montai</string>
+    <string name="title_activity_main">Montai</string>
+    <string name="package_name">com.montai.app</string>
+    <string name="custom_url_scheme">montai</string>
+</resources>

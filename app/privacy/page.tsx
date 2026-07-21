@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         <div style={{ marginBottom: 48 }}>
           <span style={{
             fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
-            fontSize: 11, color: '#F59E0B',
+            fontSize: 11, color: '#60A5FA',
             textTransform: 'uppercase', letterSpacing: '3px',
           }}>
             Legal
@@ -57,14 +57,14 @@ export default function PrivacyPage() {
         {/* Promise card */}
         <div style={{
           padding: '20px 24px', borderRadius: 16, marginBottom: 48,
-          background: 'rgba(245,158,11,0.05)',
-          border: '1px solid rgba(245,158,11,0.2)',
+          background: 'rgba(96,165,250,0.05)',
+          border: '1px solid rgba(96,165,250,0.2)',
         }}>
           <p style={{
             fontFamily: 'var(--font-inter), Inter, sans-serif',
             fontSize: 15, lineHeight: 1.75, color: '#A1A1AA',
           }}>
-            <strong style={{ color: '#F59E0B' }}>Montai is committed to your privacy.</strong>{' '}
+            <strong style={{ color: '#60A5FA' }}>Montai is committed to your privacy.</strong>{' '}
             We built this app with a simple promise: we help you learn video editing, we don&apos;t spy on you,
             sell your data, or use your conversations to train AI models. This document explains exactly what
             we collect and why.
@@ -131,7 +131,7 @@ export default function PrivacyPage() {
                   borderRadius: 10, background: 'rgba(34,197,94,0.05)',
                   border: '1px solid rgba(34,197,94,0.15)',
                 }}>
-                  <span style={{ color: '#22C55E', flexShrink: 0, marginTop: 1 }}>✓</span>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: '#22C55E', flexShrink: 0, marginTop: 2 }}><polyline points="2,7 6,11 12,3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   <span style={{
                     fontFamily: 'var(--font-inter), Inter, sans-serif',
                     fontSize: 14, color: '#A1A1AA', lineHeight: 1.5,
@@ -199,7 +199,7 @@ export default function PrivacyPage() {
           <Section title="10. Contact">
             <p>
               For privacy questions or data requests, contact us at:{' '}
-              <span style={{ color: '#F59E0B' }}>privacy@montai.app</span>
+              <span style={{ color: '#60A5FA' }}>privacy@montai.app</span>
             </p>
           </Section>
         </div>
@@ -211,7 +211,7 @@ export default function PrivacyPage() {
           display: 'flex', gap: 24,
           fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 14,
         }}>
-          <Link href="/terms" style={{ color: '#F59E0B', textDecoration: 'none' }}>Terms of Service →</Link>
+          <Link href="/terms" style={{ color: '#60A5FA', textDecoration: 'none' }}>Terms of Service →</Link>
           <Link href="/" style={{ color: '#52525B', textDecoration: 'none' }}>← Back to Home</Link>
         </div>
       </main>
@@ -223,7 +223,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section>
       <h2 style={{
-        fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+        fontFamily: 'var(--font-display, Manrope, sans-serif)',
         fontWeight: 700, fontSize: 20, color: '#FAFAFA',
         marginBottom: 16, letterSpacing: '-0.5px',
       }}>
@@ -244,7 +244,7 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
   return (
     <div>
       <h3 style={{
-        fontFamily: 'var(--font-space), Space Grotesk, sans-serif',
+        fontFamily: 'var(--font-display, Manrope, sans-serif)',
         fontWeight: 600, fontSize: 15, color: '#A1A1AA', marginBottom: 8,
       }}>
         {title}

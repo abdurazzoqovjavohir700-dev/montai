@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Menu, PanelLeftOpen } from 'lucide-react';
 import MontaiLogo from '@/components/shared/MontaiLogo';
 import ChatWindow from '@/components/chat/ChatWindow';
+import GuestChatWindow from '@/components/chat/GuestChatWindow';
 import Sidebar from '@/components/layout/Sidebar';
 import type { Chat, User, Language } from '@/lib/types';
 
@@ -25,17 +26,22 @@ export function clearInitCache() {
   try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
 }
 
-export default function ChatPage() {
+function ChatPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isGuest = searchParams.get('guest') === '1';
+
   const [user, setUser] = useState<User | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebarVisible, setDesktopSidebarVisible] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isGuest);
   const [chatKey, setChatKey] = useState(0);
 
   useEffect(() => {
-    // 1. Show cached data immediately — eliminates visible loading spinner on refresh
+    if (isGuest) return; // Guest mode — skip auth check
+
+    // 1. Show cached data immediately
     const cached = readCache();
     if (cached?.user?.onboardingCompleted) {
       setUser(cached.user);
@@ -43,7 +49,7 @@ export default function ChatPage() {
       setLoading(false);
     }
 
-    // 2. Fetch fresh data in background (single request: user + chats)
+    // 2. Fetch fresh data in background
     fetch('/api/init')
       .then((r) => {
         if (r.status === 401) { clearInitCache(); router.push('/'); return null; }
@@ -64,7 +70,7 @@ export default function ChatPage() {
       .catch(() => {
         if (!cached) router.push('/');
       });
-  }, [router]);
+  }, [router, isGuest]);
 
   const handleNewChat = useCallback(() => {
     setChatKey((k) => k + 1);
@@ -82,6 +88,17 @@ export default function ChatPage() {
     });
     window.history.replaceState(null, '', `/chat/${chatId}`);
   }, [user]);
+
+  // Guest mode — render guest chat directly
+  if (isGuest) {
+    return (
+      <div className="h-screen flex overflow-hidden" style={{ background: '#0D0D0D' }}>
+        <div className="flex flex-col flex-1 min-w-0 h-full relative">
+          <GuestChatWindow key={chatKey} />
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -177,5 +194,17 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0B' }}>
+        <MontaiLogo size={56} />
+      </div>
+    }>
+      <ChatPageInner />
+    </Suspense>
   );
 }

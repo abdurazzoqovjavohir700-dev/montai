@@ -13,7 +13,7 @@ import ThemeSystem from './ThemeSystem';
 import { LANGUAGES, SOFTWARE_OPTIONS, FOCUS_AREAS, EXPERIENCE_LEVELS } from '@/lib/constants';
 import type { User as UserType, Language } from '@/lib/types';
 
-const AVATAR_OPTIONS = ['🎬', '✂️', '🎨', '🔊', '📹', '🎞️', '🎭', '🎪', '🎥', '🏆', '🎯', '⚡'];
+const AVATAR_OPTIONS = ['M', 'V', 'E', 'A', 'C', 'D', 'P', 'R', 'J', 'K', 'S', 'T'];
 
 interface Category {
   id: string;
@@ -84,7 +84,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   }, []);
 
   const [form, setForm] = useState({
-    nickname: '', avatar: '🎬', language: 'en' as Language,
+    nickname: '', avatar: 'M', language: 'en' as Language,
     experienceLevel: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
     primarySoftware: [] as string[], focusAreas: [] as string[],
     skillGoal: '', fontSize: 'md' as 'sm' | 'md' | 'lg',
@@ -243,13 +243,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   );
 
   const Toggle = ({ on, onToggle }: { on: boolean; onToggle: () => void }) => (
-    <button onClick={onToggle} style={{ width: 40, height: 22, borderRadius: 11, flexShrink: 0, background: on ? 'linear-gradient(135deg, #F59E0B, #F97316)' : '#3F3F46', border: 'none', cursor: 'pointer', position: 'relative', boxShadow: on ? '0 0 8px rgba(245,158,11,0.3)' : 'none', transition: 'background 0.2s, box-shadow 0.2s' }}>
-      <div style={{ width: 17, height: 17, borderRadius: '50%', background: '#FAFAFA', position: 'absolute', top: 2.5, left: on ? 20.5 : 2.5, transition: 'left 0.18s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+    <button onClick={onToggle} style={{ width: 40, height: 22, borderRadius: 11, flexShrink: 0, background: on ? 'rgba(96,165,250,0.85)' : 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', position: 'relative', boxShadow: on ? '0 0 12px rgba(96,165,250,0.3)' : 'none', transition: 'background 0.2s, box-shadow 0.2s', backdropFilter: 'blur(4px)' }}>
+      <div style={{ width: 17, height: 17, borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: 2.5, left: on ? 20.5 : 2.5, transition: 'left 0.18s cubic-bezier(0.16,1,0.3,1)', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }} />
     </button>
   );
 
   const Chip = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
-    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, fontSize: 12, fontWeight: selected ? 600 : 400, background: selected ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${selected ? '#F59E0B' : 'rgba(255,255,255,0.08)'}`, color: selected ? '#F59E0B' : '#A1A1AA', cursor: 'pointer', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s' }}>
+    <button onClick={onClick} style={{ padding: '5px 11px', borderRadius: 20, fontSize: 12, fontWeight: selected ? 600 : 400, background: selected ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${selected ? '#60A5FA' : 'rgba(255,255,255,0.08)'}`, color: selected ? '#60A5FA' : '#A1A1AA', cursor: 'pointer', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s' }}>
       {selected && <Check size={9} strokeWidth={2.5} />}{label}
     </button>
   );
@@ -270,12 +270,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       </div>
       <button onClick={save} disabled={saving || !hasUnsaved} style={{
         padding: '8px 20px',
-        background: hasUnsaved ? 'linear-gradient(135deg, #F59E0B, #F97316)' : 'rgba(255,255,255,0.05)',
+        background: hasUnsaved ? '#FFFFFF' : 'rgba(255,255,255,0.05)',
         color: hasUnsaved ? '#0A0A0B' : '#3F3F46',
         border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
         cursor: hasUnsaved ? 'pointer' : 'not-allowed',
         fontFamily: 'Inter, sans-serif', transition: 'all 0.2s',
-        boxShadow: hasUnsaved ? '0 2px 10px rgba(245,158,11,0.3)' : 'none',
+        boxShadow: hasUnsaved ? '0 2px 10px rgba(96,165,250,0.2)' : 'none',
       }}>
         {saving ? 'Saqlanmoqda…' : 'Saqlash'}
       </button>
@@ -292,10 +292,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           right={<Toggle on={autocorrect} onToggle={() => { const n = !autocorrect; setAutocorrect(n); localStorage.setItem('autocorrectEnabled', String(n)); }} />}
         />
         <Row label="Streaming javob" desc="AI javobini yozilganda real-time ko'rsatish"
-          right={<Badge text="Har doim yoqiq" color="#F59E0B" />}
+          right={<Badge text="Har doim yoqiq" color="#60A5FA" />}
         />
         <Row label="Markdown ko'rsatish" desc="Bold, code, list, headers formatlar"
-          right={<Badge text="Har doim yoqiq" color="#F59E0B" />}
+          right={<Badge text="Har doim yoqiq" color="#60A5FA" />}
         />
         <Row label="Chat tarixi" desc="Barcha suhbatlar serverda saqlanadi"
           right={<Badge text="Yoqiq" color="#22C55E" />}
@@ -316,7 +316,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <Label>Avatar</Label>
           <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
             {AVATAR_OPTIONS.map(e => (
-              <button key={e} onClick={() => setForm(p => ({ ...p, avatar: e }))} style={{ width: 42, height: 42, borderRadius: 9, fontSize: 20, border: 'none', background: form.avatar === e ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)', outline: form.avatar === e ? '2px solid #F59E0B' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>{e}</button>
+              <button key={e} onClick={() => setForm(p => ({ ...p, avatar: e }))} style={{ width: 42, height: 42, borderRadius: 9, fontSize: 20, border: 'none', background: form.avatar === e ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.04)', outline: form.avatar === e ? '2px solid #60A5FA' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.15s' }}>{e}</button>
             ))}
           </div>
         </div>
@@ -324,7 +324,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <Label>Tajriba darajasi</Label>
           <div style={{ display: 'flex', gap: 7 }}>
             {EXPERIENCE_LEVELS.map(l => (
-              <button key={l.value} onClick={() => setForm(p => ({ ...p, experienceLevel: l.value as typeof form.experienceLevel }))} style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', background: form.experienceLevel === l.value ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)', outline: form.experienceLevel === l.value ? '1px solid #F59E0B' : '1px solid rgba(255,255,255,0.08)', color: form.experienceLevel === l.value ? '#F59E0B' : '#A1A1AA', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              <button key={l.value} onClick={() => setForm(p => ({ ...p, experienceLevel: l.value as typeof form.experienceLevel }))} style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', background: form.experienceLevel === l.value ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.04)', outline: form.experienceLevel === l.value ? '1px solid #60A5FA' : '1px solid rgba(255,255,255,0.08)', color: form.experienceLevel === l.value ? '#60A5FA' : '#A1A1AA', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                 {l.label}
               </button>
             ))}
@@ -348,12 +348,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 7 }}>
           {LANGUAGES.map(lang => (
-            <button key={lang.value} onClick={() => setForm(p => ({ ...p, language: lang.value }))} style={{ padding: '11px 13px', borderRadius: 9, border: 'none', textAlign: 'left', background: form.language === lang.value ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.04)', outline: form.language === lang.value ? '1px solid #F59E0B' : '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.15s' }}>
+            <button key={lang.value} onClick={() => setForm(p => ({ ...p, language: lang.value }))} style={{ padding: '11px 13px', borderRadius: 9, border: 'none', textAlign: 'left', background: form.language === lang.value ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.04)', outline: form.language === lang.value ? '1px solid #60A5FA' : '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.15s' }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: form.language === lang.value ? '#F59E0B' : '#D4D4D8', fontFamily: 'Inter, sans-serif' }}>{lang.nativeLabel}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: form.language === lang.value ? '#60A5FA' : '#D4D4D8', fontFamily: 'Inter, sans-serif' }}>{lang.nativeLabel}</div>
                 <div style={{ fontSize: 11, color: '#52525B', fontFamily: 'Inter, sans-serif' }}>{lang.label}</div>
               </div>
-              {form.language === lang.value && <Check size={13} strokeWidth={2} style={{ color: '#F59E0B', flexShrink: 0 }} />}
+              {form.language === lang.value && <Check size={13} strokeWidth={2} style={{ color: '#60A5FA', flexShrink: 0 }} />}
             </button>
           ))}
         </div>
@@ -385,14 +385,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <Label>Shrift kattaligi</Label>
           <div style={{ display: 'flex', gap: 7 }}>
             {(['sm','md','lg'] as const).map(s => (
-              <button key={s} onClick={() => setForm(p => ({ ...p, fontSize: s }))} style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', background: form.fontSize === s ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.04)', outline: form.fontSize === s ? '1px solid #F59E0B' : '1px solid rgba(255,255,255,0.08)', color: form.fontSize === s ? '#F59E0B' : '#A1A1AA', fontSize: s === 'sm' ? 11 : s === 'md' ? 13 : 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              <button key={s} onClick={() => setForm(p => ({ ...p, fontSize: s }))} style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', background: form.fontSize === s ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.04)', outline: form.fontSize === s ? '1px solid #60A5FA' : '1px solid rgba(255,255,255,0.08)', color: form.fontSize === s ? '#60A5FA' : '#A1A1AA', fontSize: s === 'sm' ? 11 : s === 'md' ? 13 : 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                 {s === 'sm' ? 'Kichik' : s === 'md' ? "O'rta" : 'Katta'}
               </button>
             ))}
           </div>
         </div>
-        <Row label="Animatsiyalarni kamaytirish" desc="Motion sensitivity uchun" right={<Badge text="Tez kunda" color="#52525B" />} />
-        <Row label="Yuqori kontrast" desc="Matn ko'rinishini yaxshilash" right={<Badge text="Tez kunda" color="#52525B" />} />
         <SaveBar />
       </div>
     ),
@@ -416,10 +414,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <Label>Shaxsiy maqsad</Label>
           <textarea value={form.skillGoal} onChange={e => setForm(p => ({ ...p, skillGoal: e.target.value }))} placeholder="Masalan: YouTube uchun cinematic montaj o'rganmoqchiman…" maxLength={500} rows={3} style={{ ...inputStyle, resize: 'none' as const }} />
         </div>
-        <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,0.05)', borderRadius: 9, border: '1px solid rgba(245,158,11,0.15)', marginBottom: 14 }}>
+        <div style={{ padding: '12px 14px', background: 'rgba(96,165,250,0.05)', borderRadius: 9, border: '1px solid rgba(96,165,250,0.12)', marginBottom: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
-            <Zap size={13} strokeWidth={1.5} style={{ color: '#F59E0B' }} />
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: '#F59E0B', fontFamily: 'Inter, sans-serif' }}>Faol AI modeli</span>
+            <Zap size={13} strokeWidth={1.5} style={{ color: '#60A5FA' }} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: '#60A5FA', fontFamily: 'Inter, sans-serif' }}>Faol AI modeli</span>
           </div>
           <p style={{ fontSize: 12, color: '#71717A', fontFamily: 'Inter, sans-serif', margin: 0, lineHeight: 1.5 }}>
             Matn: <strong style={{ color: '#A1A1AA' }}>Llama 3.3 70B</strong> · Rasm: <strong style={{ color: '#A1A1AA' }}>Llama 4 Scout 17B</strong> · Zaxira: <strong style={{ color: '#A1A1AA' }}>Gemma 2 9B</strong>
@@ -433,9 +431,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       <div>
         <SectionTitle title="AI xotira" desc="Kontekst va chat tarixi sozlamalari" />
         <Row label="Chat tarixi" desc="Barcha suhbatlar saqlanadi va davom ettiriladi" right={<Badge text="Yoqiq" color="#22C55E" />} />
-        <Row label="Conversation kontekst" desc="AI oldingi xabarlarni hisobga oladi" right={<Badge text="Har doim" color="#F59E0B" />} />
-        <Row label="Cross-chat xotira" desc="Turli chatlar orasida ma'lumot saqlash" right={<Badge text="Tez kunda" color="#52525B" />} />
-        <Row label="Shaxsiy xotira" desc="AI siz haqingizda ma'lumot eslab qoladi" right={<Badge text="Tez kunda" color="#52525B" />} />
+        <Row label="Conversation kontekst" desc="AI oldingi xabarlarni hisobga oladi" right={<Badge text="Har doim" color="#60A5FA" />} />
       </div>
     ),
 
@@ -445,10 +441,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <Row label="AI javob bildiroshna" desc="AI javob berganda (boshqa tabda bo'lsangiz)"
           right={
             notifPerm === 'granted'
-              ? <span style={{ fontSize: 12, color: '#22C55E', fontFamily: 'Inter, sans-serif' }}>Yoqiq ✓</span>
+              ? <span style={{ fontSize: 12, color: '#22C55E', fontFamily: 'Inter, sans-serif' }}>Yoqiq</span>
               : notifPerm === 'denied'
               ? <span style={{ fontSize: 12, color: '#EF4444', fontFamily: 'Inter, sans-serif' }}>Bloklangan</span>
-              : <button onClick={requestNotif} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid #F59E0B', background: 'rgba(245,158,11,0.1)', color: '#F59E0B', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Yoqish</button>
+              : <button onClick={requestNotif} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid #60A5FA', background: 'rgba(96,165,250,0.1)', color: '#60A5FA', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Yoqish</button>
           }
         />
         {notifPerm === 'denied' && (
@@ -458,15 +454,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </p>
           </div>
         )}
-        <Row label="Email bildirishnomalar" desc="Yangiliklar va xavfsizlik xabarlari" right={<Badge text="Tez kunda" color="#52525B" />} />
-        <Row label="Mahsulot yangiliklari" desc="Yangi funksiyalar haqida" right={<Badge text="Tez kunda" color="#52525B" />} />
       </div>
     ),
 
     privacy: (
       <div>
         <SectionTitle title="Maxfiylik" desc="Ma'lumot siyosati va cookie sozlamalari" />
-        <Row label="Foydalanish tahlili" desc="Anonim statistika (ilovani yaxshilash uchun)" right={<Badge text="Tez kunda" color="#52525B" />} />
+        <Row label="Foydalanish tahlili" desc="Anonim statistika (ilovani yaxshilash uchun)" right={<Badge text="O'chirilgan" color="#52525B" />} />
         <Row label="Chat loglar" desc="Suhbatlar xavfsiz serverda shifrlangan holda saqlanadi" right={<Badge text="Shifrlangan" color="#22C55E" />} />
         <Row label="Rasm saqlash" desc="Yuklagan rasmlaringiz Supabase'da saqlanadi" right={<Badge text="Xavfsiz" color="#22C55E" />} />
         <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
@@ -487,15 +481,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           ['Enter',                   'Xabar yuborish'],
           ['Shift + Enter',           'Yangi qator'],
           ['Escape',                  'Modal yopish'],
-          ['Ctrl / ⌘ + K',           'Sozlamalar qidiruv'],
-          ['Ctrl / ⌘ + V',           "Rasmni joylash"],
+          ['Ctrl / Cmd + K',          'Sozlamalar qidiruv'],
+          ['Ctrl / Cmd + V',          "Rasmni joylash"],
           ['Click on message',        "Xabarni nusxalash"],
           ['Double-click image',      'Lightbox zoom toggle'],
           ['Scroll on lightbox',      'Zoom in/out'],
         ].map(([key, action]) => (
           <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <span style={{ fontSize: 13, color: '#71717A', fontFamily: 'Inter, sans-serif' }}>{action}</span>
-            <code style={{ fontSize: 11, color: '#F59E0B', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 5, padding: '3px 7px', fontFamily: 'JetBrains Mono, monospace' }}>{key}</code>
+            <code style={{ fontSize: 11, color: '#60A5FA', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.15)', borderRadius: 5, padding: '3px 7px', fontFamily: 'JetBrains Mono, monospace' }}>{key}</code>
           </div>
         ))}
       </div>
@@ -506,19 +500,19 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <SectionTitle title="Statistika" desc="Foydalanish ma'lumotlari" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 22 }}>
           {[
-            { label: 'Jami chatlar', value: chatCount !== null ? String(chatCount) : '…', color: '#F59E0B' },
+            { label: 'Jami chatlar', value: chatCount !== null ? String(chatCount) : '…', color: '#60A5FA' },
             { label: 'Soatlik limit', value: '30',        color: '#60A5FA' },
             { label: 'AI modeli',     value: 'Llama 3.3', color: '#22C55E' },
             { label: 'Tarif',         value: 'Bepul',     color: '#A78BFA' },
           ].map(s => (
             <div key={s.label} style={{ padding: '16px 18px', background: 'rgba(255,255,255,0.04)', borderRadius: 11, border: '1px solid rgba(255,255,255,0.07)' }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: 'Sora, sans-serif', letterSpacing: '-0.5px', marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: 'var(--font-display, Manrope, sans-serif)', letterSpacing: '-0.5px', marginBottom: 4 }}>{s.value}</div>
               <div style={{ fontSize: 11.5, color: '#52525B', fontFamily: 'Inter, sans-serif' }}>{s.label}</div>
             </div>
           ))}
         </div>
-        <div style={{ padding: '14px 16px', background: 'rgba(245,158,11,0.05)', borderRadius: 10, border: '1px solid rgba(245,158,11,0.15)' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#F59E0B', fontFamily: 'Inter, sans-serif', marginBottom: 5 }}>Bepul tarif imkoniyatlari</div>
+        <div style={{ padding: '14px 16px', background: 'rgba(96,165,250,0.05)', borderRadius: 10, border: '1px solid rgba(96,165,250,0.12)' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#60A5FA', fontFamily: 'Inter, sans-serif', marginBottom: 5 }}>Bepul tarif imkoniyatlari</div>
           <p style={{ fontSize: 12.5, color: '#71717A', fontFamily: 'Inter, sans-serif', margin: 0, lineHeight: 1.6 }}>
             Soatiga 30 ta xabar · Rasm yuklash va tahlil · Barcha AI imkoniyatlar · Chat tarixi · 13 ta til
           </p>
@@ -532,7 +526,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {user && (
           <div style={{ padding: '13px 15px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.07)', marginBottom: 18 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #F59E0B, #F97316)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#0A0A0B', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#0A0A0B', flexShrink: 0 }}>
                 {user.nickname.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -586,9 +580,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     about: (
       <div>
         <SectionTitle title="Montai haqida" desc="Versiya, yaratuvchi, litsenziya" />
-        <div style={{ padding: '18px 20px', background: 'rgba(245,158,11,0.05)', borderRadius: 12, border: '1px solid rgba(245,158,11,0.15)', marginBottom: 22, textAlign: 'center' }}>
-          <div style={{ fontSize: 30, marginBottom: 7 }}>🎬</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#FAFAFA', fontFamily: 'Sora, sans-serif', letterSpacing: '-0.5px', marginBottom: 3 }}>Montai</div>
+        <div style={{ padding: '18px 20px', background: 'rgba(96,165,250,0.05)', borderRadius: 12, border: '1px solid rgba(96,165,250,0.12)', marginBottom: 22, textAlign: 'center' }}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: '#0A0A0B', margin: '0 auto 10px', fontFamily: 'Inter, sans-serif' }}>M</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#FAFAFA', fontFamily: 'var(--font-display, Manrope, sans-serif)', letterSpacing: '-0.5px', marginBottom: 3 }}>Montai</div>
           <div style={{ fontSize: 12, color: '#52525B', fontFamily: 'Inter, sans-serif' }}>AI Video Editing Mentor · v1.0.0</div>
         </div>
         {[
@@ -672,7 +666,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   ref={searchRef}
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
-                  placeholder="Qidirish… (⌘K)"
+                  placeholder="Qidirish… (Ctrl+K)"
                   style={{ width: '100%', padding: '7px 10px 7px 30px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#D4D4D8', fontSize: 12.5, outline: 'none', fontFamily: 'Inter, sans-serif', boxSizing: 'border-box' }}
                 />
               </div>
@@ -687,12 +681,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <div key={group} style={{ marginBottom: 10 }}>
                       <p style={{ fontSize: 10, color: '#3F3F46', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 4px', marginBottom: 4, fontFamily: 'Inter, sans-serif' }}>{group}</p>
                       {cats.map(cat => (
-                        <button key={cat.id} onClick={() => { setTab(cat.id); setShowSidebar(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '11px 12px', borderRadius: 10, border: 'none', background: tab === cat.id ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)', color: tab === cat.id ? '#F59E0B' : '#D4D4D8', fontSize: 14, fontWeight: tab === cat.id ? 600 : 400, cursor: 'pointer', fontFamily: 'Inter, sans-serif', textAlign: 'left', marginBottom: 2 }}>
+                        <button key={cat.id} onClick={() => { setTab(cat.id); setShowSidebar(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '11px 12px', borderRadius: 10, border: 'none', background: tab === cat.id ? 'rgba(96,165,250,0.1)' : 'rgba(255,255,255,0.03)', color: tab === cat.id ? '#60A5FA' : '#D4D4D8', fontSize: 14, fontWeight: tab === cat.id ? 600 : 400, cursor: 'pointer', fontFamily: 'Inter, sans-serif', textAlign: 'left', marginBottom: 2 }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <span style={{ opacity: tab === cat.id ? 1 : 0.6 }}>{cat.icon}</span>
                             {cat.label}
                           </span>
-                          <ChevronRight size={14} strokeWidth={1.5} style={{ color: tab === cat.id ? '#F59E0B' : '#52525B', flexShrink: 0 }} />
+                          <ChevronRight size={14} strokeWidth={1.5} style={{ color: tab === cat.id ? '#60A5FA' : '#52525B', flexShrink: 0 }} />
                         </button>
                       ))}
                     </div>
@@ -706,13 +700,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       {group}
                     </p>
                     {cats.map(cat => (
-                      <button key={cat.id} onClick={() => setTab(cat.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px', borderRadius: 8, width: '100%', border: 'none', background: tab === cat.id ? 'rgba(245,158,11,0.1)' : 'transparent', color: tab === cat.id ? '#F59E0B' : '#71717A', fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: tab === cat.id ? 500 : 400, textAlign: 'left', transition: 'all 0.1s' }}
+                      <button key={cat.id} onClick={() => setTab(cat.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px', borderRadius: 8, width: '100%', border: 'none', background: tab === cat.id ? 'rgba(96,165,250,0.1)' : 'transparent', color: tab === cat.id ? '#60A5FA' : '#71717A', fontSize: 13, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: tab === cat.id ? 500 : 400, textAlign: 'left', transition: 'all 0.1s' }}
                         onMouseEnter={e => { if (tab !== cat.id) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA'; } }}
                         onMouseLeave={e => { if (tab !== cat.id) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#71717A'; } }}
                       >
                         <span style={{ opacity: tab === cat.id ? 1 : 0.7, flexShrink: 0 }}>{cat.icon}</span>
                         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.label}</span>
-                        {tab === cat.id && <div style={{ width: 3, height: 14, borderRadius: 2, background: '#F59E0B', flexShrink: 0 }} />}
+                        {tab === cat.id && <div style={{ width: 3, height: 14, borderRadius: 2, background: '#60A5FA', flexShrink: 0 }} />}
                       </button>
                     ))}
                   </div>
@@ -740,11 +734,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             {/* Scrollable content */}
             <div style={{ flex: 1, padding: isMobile ? '20px 16px' : '26px 30px', overflowY: 'auto' }}>
-              {contents[tab] ?? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: '#3F3F46', fontFamily: 'Inter, sans-serif', fontSize: 13 }}>
-                  Bu bo&apos;lim tez kunda qo&apos;shiladi
-                </div>
-              )}
+              {contents[tab]}
             </div>
           </div>
         )}

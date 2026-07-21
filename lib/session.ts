@@ -32,34 +32,42 @@ export async function getSessionUser(): Promise<User | null> {
   };
 }
 
+// Soft rate limit — 500 requests/hour per user (Groq provider limits are the real bottleneck).
+// Never hard-blocks users. Returns remaining count for informational logging only.
 export async function checkRateLimit(userId: string): Promise<{ allowed: boolean; remaining: number }> {
+  const HOURLY_LIMIT = 500;
   const supabase = createServerSupabase();
-  const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // 1 hour ago
+  const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await supabase
-    .from('rate_limits')
-    .select('count, window_start')
-    .eq('user_id', userId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('rate_limits')
+      .select('count, window_start')
+      .eq('user_id', userId)
+      .single();
 
-  if (error || !data || new Date(data.window_start) < new Date(windowStart)) {
-    // Reset window
-    await supabase.from('rate_limits').upsert({
-      user_id: userId,
-      count: 1,
-      window_start: new Date().toISOString(),
-    });
-    return { allowed: true, remaining: 29 };
+    if (error || !data || new Date(data.window_start) < new Date(windowStart)) {
+      await supabase.from('rate_limits').upsert({
+        user_id: userId,
+        count: 1,
+        window_start: new Date().toISOString(),
+      });
+      return { allowed: true, remaining: HOURLY_LIMIT - 1 };
+    }
+
+    if (data.count >= HOURLY_LIMIT) {
+      // Even at hard limit: still allow but log it
+      return { allowed: true, remaining: 0 };
+    }
+
+    await supabase
+      .from('rate_limits')
+      .update({ count: data.count + 1 })
+      .eq('user_id', userId);
+
+    return { allowed: true, remaining: HOURLY_LIMIT - data.count - 1 };
+  } catch {
+    // Never block on DB error
+    return { allowed: true, remaining: HOURLY_LIMIT };
   }
-
-  if (data.count >= 30) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  await supabase
-    .from('rate_limits')
-    .update({ count: data.count + 1 })
-    .eq('user_id', userId);
-
-  return { allowed: true, remaining: 30 - data.count - 1 };
 }

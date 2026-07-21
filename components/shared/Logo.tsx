@@ -27,7 +27,7 @@ export default function Logo({ size = 'md', showTagline = false, className, href
       <div className="flex flex-col">
         <span
           className={cn('font-bold gradient-text leading-none', text)}
-          style={{ fontFamily: 'Sora, sans-serif' }}
+          style={{ fontFamily: 'var(--font-display, Manrope, sans-serif)' }}
         >
           Montai
         </span>

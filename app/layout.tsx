@@ -1,18 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import { Sora, Inter, JetBrains_Mono, Outfit, Space_Grotesk } from 'next/font/google';
+import { Inter, JetBrains_Mono, Manrope } from 'next/font/google';
 import ThemeInit from '@/components/settings/ThemeInit';
+import PlatformProvider from '@/components/ui/PlatformProvider';
 import './globals.css';
 
-const sora = Sora({
+const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-sora',
+  weight: ['500', '600', '700', '800'],
+  variable: '--font-display',
   display: 'swap',
 });
 
 const inter = Inter({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-inter',
   display: 'swap',
 });
@@ -21,20 +22,6 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-mono',
-  display: 'swap',
-});
-
-const outfit = Outfit({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--font-outfit',
-  display: 'swap',
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-space',
   display: 'swap',
 });
 
@@ -74,25 +61,22 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0A0A0B',
+  themeColor: '#08090D',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${sora.variable} ${inter.variable} ${jetbrainsMono.variable} ${outfit.variable} ${spaceGrotesk.variable}`}
+      className={`${manrope.variable} ${inter.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen antialiased">
         <ThemeInit />
+        <PlatformProvider />
         {children}
       </body>
     </html>

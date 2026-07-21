@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionUser } from '@/lib/session';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -29,6 +30,11 @@ const PDF_CHAR_LIMIT = 8_000;
 const MAX_RAW_BYTES = 3 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json() as { base64?: string; name?: string };
     const { base64, name } = body;

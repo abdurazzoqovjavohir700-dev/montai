@@ -13,8 +13,8 @@ export default function MontaiLogo({ size = 40 }: MontaiLogoProps) {
     >
       <defs>
         <linearGradient id="montaiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#F59E0B" />
-          <stop offset="100%" stopColor="#F97316" />
+          <stop offset="0%" stopColor="#60A5FA" />
+          <stop offset="100%" stopColor="#3B82F6" />
         </linearGradient>
       </defs>
 

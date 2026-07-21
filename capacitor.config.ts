@@ -1,0 +1,67 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const isProd = process.env.NODE_ENV === 'production';
+
+const config: CapacitorConfig = {
+  appId: 'com.montai.app',
+  appName: 'Montai',
+  webDir: 'out',
+
+  // In production: load from Vercel. In dev: use local Next.js server.
+  server: isProd
+    ? {
+        url: 'https://montai-plum.vercel.app',
+        cleartext: false,
+        androidScheme: 'https',
+      }
+    : {
+        url: 'http://localhost:3000',
+        cleartext: true,
+        androidScheme: 'http',
+      },
+
+  android: {
+    allowMixedContent: false,
+    captureInput: true,
+    webContentsDebuggingEnabled: false,
+    backgroundColor: '#08090D',
+    useLegacyBridge: false,
+    initialFocus: true,
+    loggingBehavior: 'none',
+  },
+
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 1800,
+      launchAutoHide: true,
+      backgroundColor: '#08090D',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      androidSpinnerStyle: 'large',
+      iosSpinnerStyle: 'small',
+      spinnerColor: '#FFFFFF',
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    StatusBar: {
+      style: 'Dark',
+      backgroundColor: '#08090D',
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true,
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon_config_sample',
+      iconColor: '#60A5FA',
+      sound: 'beep.wav',
+    },
+    Camera: {
+      presentationStyle: 'popover',
+    },
+  },
+};
+
+export default config;
