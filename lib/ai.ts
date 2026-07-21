@@ -77,10 +77,20 @@ function toGroqContent(
   return content.map(block => {
     if (block.type === 'image') {
       const src = block.source as { type: string; media_type: string; data: string };
-      return { type: 'image_url' as const, image_url: { url: `data:${src.media_type};base64,${src.data}` } };
+      // Validate base64 data exists and has reasonable length (min ~100 chars)
+      if (!src?.data || src.data.length < 100) {
+        console.error('[VISION] Invalid image block — data missing or too short:', src?.data?.length ?? 0);
+        return { type: 'text' as const, text: '[Image failed to load — please re-upload]' };
+      }
+      const mime = src.media_type || 'image/jpeg';
+      const url = `data:${mime};base64,${src.data}`;
+      console.log('[VISION] Image block OK — mime:', mime, 'base64 length:', src.data.length);
+      return { type: 'image_url' as const, image_url: { url } };
     }
     if (block.type === 'image_url') {
-      return block as { type: 'image_url'; image_url: { url: string } };
+      const b = block as { type: 'image_url'; image_url: { url: string } };
+      console.log('[VISION] image_url block — url length:', b.image_url?.url?.length ?? 0);
+      return b;
     }
     return { type: 'text' as const, text: (block as { type: string; text: string }).text ?? '' };
   });
@@ -175,24 +185,48 @@ Use their nickname naturally (not every message). Respond in their language. Ada
   const hasImage = lastUserMsg ? hasImageContent(lastUserMsg.content) : false;
   const hasPdf = !hasImage && typeof lastUserMsg?.content === 'string' && lastUserMsg.content.startsWith('[PDF_ATTACH]:');
 
+  const imageContextAddition = hasImage
+    ? `\n\n=== IMAGE ANALYSIS MODE — MANDATORY ===
+CRITICAL: The user has uploaded an image. You MUST analyze ONLY the attached image.
+DO NOT reference previous conversation topics. DO NOT continue any previous subject.
+The attached image is your PRIMARY and ONLY focus for this response.
+
+Analyze what is ACTUALLY in the image:
+- If it is a PERSON or SELFIE: describe the person, their appearance, expression, background, lighting
+- If it is a PHOTO: describe the scene, subjects, composition, colors, mood
+- If it is a SCREENSHOT/UI: perform a full UX/UI audit with specific fixes
+- If it is CODE: identify bugs, errors, improvements
+- If it is a DOCUMENT: extract and summarize the content
+- If it is an ERROR MESSAGE: diagnose the root cause and provide the fix
+
+NEVER say "I see you uploaded an image" — just analyze it directly.
+NEVER describe previous chat topics — focus 100% on the image.`
+    : '';
+
   const safetyAddition = hasImage ? getImageSafetyPrompt() : '';
   const pdfAddition = hasPdf
     ? '\n\n=== PDF TAHLIL ===\nFoydalanuvchi PDF hujjat yubordi. Chuqur tahlil qil: asosiy g\'oyalar, xulosalar, muhim faktlar, raqamlar va tuzilmani ajratib ko\'rsat. Markdown dan foydalanib tartibli yoz.'
     : '';
-  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + safetyAddition + pdfAddition;
+  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + imageContextAddition + safetyAddition + pdfAddition;
   // 65% of free-tier TPM budget used for response; PDF needs more tokens for detailed analysis
   const maxTokens = hasImage ? 2048 : hasPdf ? 2048 : 1536;
 
-  const buildGroqMessages = (visionOk: boolean, imgFailReason?: string): Groq.Chat.ChatCompletionMessageParam[] => [
-    { role: 'system', content: systemPrompt },
-    ...messages.map((msg) => {
-      const hasImgInMsg = typeof msg.content !== 'string' && hasImageContent(msg.content);
-      const content = (!visionOk && hasImgInMsg)
-        ? sanitizeForTextModel(msg.content, imgFailReason)
-        : toGroqContent(msg.content);
-      return { role: msg.role as 'user' | 'assistant', content } as Groq.Chat.ChatCompletionMessageParam;
-    }),
-  ];
+  const buildGroqMessages = (visionOk: boolean, imgFailReason?: string): Groq.Chat.ChatCompletionMessageParam[] => {
+    // When image is present, use only the last 4 messages (2 exchanges).
+    // Sending the full history of an unrelated conversation (e.g., 20 AE messages)
+    // causes the model to ignore the image and continue the old topic instead.
+    const effectiveMessages = hasImage ? messages.slice(-4) : messages;
+    return [
+      { role: 'system', content: systemPrompt },
+      ...effectiveMessages.map((msg) => {
+        const hasImgInMsg = typeof msg.content !== 'string' && hasImageContent(msg.content);
+        const content = (!visionOk && hasImgInMsg)
+          ? sanitizeForTextModel(msg.content, imgFailReason)
+          : toGroqContent(msg.content);
+        return { role: msg.role as 'user' | 'assistant', content } as Groq.Chat.ChatCompletionMessageParam;
+      }),
+    ];
+  };
 
   const modelChain = hasImage ? VISION_CHAIN : TEXT_CHAIN;
 

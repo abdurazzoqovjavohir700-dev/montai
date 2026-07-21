@@ -166,7 +166,10 @@ export default function ChatWindow({
             };
 
             const blocks: unknown[] = urls.map(toBlock);
-            if (m.content.trim()) blocks.push({ type: 'text', text: m.content });
+            // Always add text block — model MUST have explicit instruction alongside image.
+            // Without text, model ignores the image and continues previous conversation context.
+            const userText = m.content.trim();
+            blocks.push({ type: 'text', text: userText || 'Analyze this image in detail.' });
             return { role: m.role, content: blocks };
           }),
           userContext: { nickname, language, experienceLevel, primarySoftware, focusAreas },
@@ -394,7 +397,10 @@ export default function ChatWindow({
               return { type: 'image_url' as const, image_url: { url } };
             };
             const blocks: unknown[] = urls.map(toBlock);
-            if (m.content.trim()) blocks.push({ type: 'text', text: m.content });
+            // Always add text block — model MUST have explicit instruction alongside image.
+            // Without text, model ignores the image and continues previous conversation context.
+            const userText = m.content.trim();
+            blocks.push({ type: 'text', text: userText || 'Analyze this image in detail.' });
             return { role: m.role, content: blocks };
           }),
           userContext: { nickname, language, experienceLevel, primarySoftware, focusAreas },

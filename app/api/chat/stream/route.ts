@@ -60,6 +60,28 @@ export async function POST(req: NextRequest) {
   // Limit message history to last 20 messages
   const messages = body.messages.slice(-20);
 
+  // Audit log — verify image payload is received correctly before processing
+  const lastMsgForLog = messages.at(-1);
+  if (lastMsgForLog && Array.isArray(lastMsgForLog.content)) {
+    const imgBlocks = (lastMsgForLog.content as Array<{ type: string; source?: { data?: string; media_type?: string }; image_url?: { url?: string } }>)
+      .filter(b => b.type === 'image' || b.type === 'image_url');
+    if (imgBlocks.length > 0) {
+      const b = imgBlocks[0];
+      const dataLen = b.type === 'image'
+        ? (b.source?.data?.length ?? 0)
+        : (b.image_url?.url?.length ?? 0);
+      const mime = b.type === 'image' ? b.source?.media_type : 'image_url';
+      console.log('[API/stream] Image received —', {
+        userId: user.id,
+        msgCount: messages.length,
+        imgBlockCount: imgBlocks.length,
+        mime,
+        dataLen,
+        valid: dataLen > 100,
+      });
+    }
+  }
+
   try {
     const stream = await streamChatResponse(messages, body.userContext ?? {
       nickname: user.nickname,
