@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp, Plus, X, FileText, Zap, Search, Languages, AlignLeft, Wand2, Code2, Lightbulb } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { isImageFile, formatFileSize } from '@/lib/utils';
+import { hapticLight, hapticMedium } from '@/lib/native-bridge';
 import { MAX_IMAGE_SIZE_MB, MAX_MESSAGE_LENGTH } from '@/lib/constants';
 import { moderateText } from '@/lib/moderation';
 import QuickActionMenu from './QuickActionMenu';
@@ -248,6 +249,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
     const modResult = moderateText(corrected);
     if (modResult.blocked) { toast.error(modResult.message ?? 'Content not allowed.'); return; }
     if (trimmed) pushHistory(trimmed);
+    void hapticMedium();
     onSend(corrected, images.length > 0 ? images : undefined, pdf ?? undefined);
     setMessage('');
     setImages([]);
@@ -450,7 +452,7 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
           {/* Plus / attachment button */}
           <motion.button
             ref={plusBtnRef}
-            onClick={() => setMenuOpen(v => !v)}
+            onClick={() => { void hapticLight(); setMenuOpen(v => !v); }}
             disabled={disabled}
             className="chat-action-btn"
             animate={{ rotate: menuOpen ? 45 : 0 }}
