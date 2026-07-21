@@ -535,6 +535,29 @@ h1, h2, h3, h4, h5, h6 {
 }
 [data-wp-device="ultrawide"] .chat-bg-layer { background-attachment: fixed; }
 
+/* ─── Mobile performance: reduce blur on touch screens ─────── */
+@media (pointer: coarse) {
+  :root {
+    --glass-blur:        blur(8px)  saturate(1.15);
+    --glass-blur-md:     blur(14px) saturate(1.25);
+    --glass-blur-heavy:  blur(18px) saturate(1.30);
+    --glass-blur-xs:     blur(4px)  saturate(1.10);
+  }
+}
+
+/* ─── Touch interaction improvements ────────────────────────── */
+@media (pointer: coarse) {
+  button, a, [role="button"], label, input, textarea, select {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  button, [role="button"], label {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
 /* ─── Platform-specific: Capacitor (Android/iOS) ──────────── */
 body[data-platform="android"],
 body[data-platform="ios"] {
@@ -546,6 +569,14 @@ body[data-platform="ios"] {
   /* Ensure no overscroll rubberbanding */
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Android-specific: even lighter glass for WebView performance */
+body[data-platform="android"] {
+  --glass-blur:        blur(6px)  saturate(1.10);
+  --glass-blur-md:     blur(10px) saturate(1.18);
+  --glass-blur-heavy:  blur(14px) saturate(1.22);
+  --glass-blur-xs:     blur(3px)  saturate(1.08);
 }
 
 /* Capacitor keyboard avoidance */

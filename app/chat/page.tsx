@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Menu, PanelLeftOpen } from 'lucide-react';
 import MontaiLogo from '@/components/shared/MontaiLogo';
@@ -37,6 +37,42 @@ function ChatPageInner() {
   const [desktopSidebarVisible, setDesktopSidebarVisible] = useState(true);
   const [loading, setLoading] = useState(!isGuest);
   const [chatKey, setChatKey] = useState(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  // Visual Viewport API — keyboard-aware height adjustment
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handler = () => {
+      const diff = window.innerHeight - vv.height;
+      setKeyboardHeight(diff > 50 ? diff : 0);
+    };
+    vv.addEventListener('resize', handler);
+    return () => vv.removeEventListener('resize', handler);
+  }, []);
+
+  // Swipe from left edge to open sidebar on mobile
+  useEffect(() => {
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+      if (touchStartX.current < 24 && dx > 60 && dy < 80) {
+        setSidebarOpen(true);
+      }
+    };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
 
   useEffect(() => {
     if (isGuest) return; // Guest mode — skip auth check
@@ -96,11 +132,12 @@ function ChatPageInner() {
         className="flex overflow-hidden"
         style={{
           background: '#0D0D0D',
-          height: '100dvh',
+          height: keyboardHeight > 0 ? `calc(100dvh - ${keyboardHeight}px)` : '100dvh',
           paddingTop: 'env(safe-area-inset-top, 0px)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingBottom: keyboardHeight > 0 ? '0px' : 'env(safe-area-inset-bottom, 0px)',
           paddingLeft: 'env(safe-area-inset-left, 0px)',
           paddingRight: 'env(safe-area-inset-right, 0px)',
+          transition: 'height 0.22s ease, padding-bottom 0.22s ease',
         }}
       >
         <div className="flex flex-col flex-1 min-w-0 h-full relative">
@@ -127,11 +164,12 @@ function ChatPageInner() {
       className="flex overflow-hidden"
       style={{
         background: '#0D0D0D',
-        height: '100dvh',
+        height: keyboardHeight > 0 ? `calc(100dvh - ${keyboardHeight}px)` : '100dvh',
         paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingBottom: keyboardHeight > 0 ? '0px' : 'env(safe-area-inset-bottom, 0px)',
         paddingLeft: 'env(safe-area-inset-left, 0px)',
         paddingRight: 'env(safe-area-inset-right, 0px)',
+        transition: 'height 0.22s ease, padding-bottom 0.22s ease',
       }}
     >
       <div
