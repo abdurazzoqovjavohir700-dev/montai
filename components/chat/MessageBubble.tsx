@@ -708,12 +708,14 @@ function AIBubble({ message, onRegenerate, onQuickAction }: Props) {
           transition={{ type:'spring', stiffness:400, damping:22, delay:0.06 }}
           style={{
             width:30, height:30, borderRadius:'50%', flexShrink:0,
-            background:'rgba(255,255,255,0.06)',
+            background:'linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(167,139,250,0.13) 100%)',
             display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:11, fontWeight:700, color:'#EEEEF0',
+            fontSize:11, fontWeight:700, color:'#C8D5F0',
             fontFamily:'var(--font-display,Manrope,sans-serif)',
-            border:'1px solid rgba(255,255,255,0.1)',
-            boxShadow:'0 2px 8px rgba(0,0,0,0.3)',
+            border:'1px solid rgba(96,165,250,0.22)',
+            boxShadow:'0 2px 10px rgba(0,0,0,0.35), 0 0 12px rgba(96,165,250,0.08)',
+            backdropFilter:'blur(8px)',
+            WebkitBackdropFilter:'blur(8px)',
             marginTop:1,
           }}
         >
@@ -732,9 +734,12 @@ function AIBubble({ message, onRegenerate, onQuickAction }: Props) {
               {typeMeta && (
                 <span style={{
                   display:'inline-flex', alignItems:'center', gap:5,
-                  padding:'2px 8px', borderRadius:20,
+                  padding:'2px 9px', borderRadius:20,
                   background:typeMeta.bg, color:typeMeta.color,
-                  fontSize:10.5, fontWeight:500, fontFamily:'Inter,sans-serif',
+                  fontSize:10.5, fontWeight:600,
+                  fontFamily:'var(--font-display,Manrope,sans-serif)',
+                  border:`1px solid ${typeMeta.color}20`,
+                  letterSpacing:'-0.01em',
                 }}>
                   {typeMeta.icon} {typeMeta.label}
                 </span>
@@ -753,18 +758,25 @@ function AIBubble({ message, onRegenerate, onQuickAction }: Props) {
           <div style={{ position:'relative' }}>
             <div
               style={{
+                background: 'rgba(255,255,255,0.025)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 14,
+                padding: '14px 16px',
+                backdropFilter: 'blur(24px) saturate(1.4)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
+                boxShadow: '0 2px 16px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
                 maxHeight: isLong && collapsed ? 320 : 'none',
                 overflow: isLong && collapsed ? 'hidden' : 'visible',
                 transition: 'max-height 0.3s ease',
               }}
               className={isStreaming ? 'streaming-cursor' : ''}
             >
-              <div className="message-ai-text" style={{ color:'#E4E4E7', fontSize:'15.5px', lineHeight:'1.85', letterSpacing:'-0.01em', fontFamily:'Inter,sans-serif' }}>
+              <div className="message-ai-text" style={{ color:'#E8E8EC', fontSize:'15.5px', lineHeight:'1.85', letterSpacing:'-0.01em', fontFamily:'var(--font-body,Inter,sans-serif)' }}>
                 <MarkdownRenderer content={message.content}/>
               </div>
             </div>
             {isLong && collapsed && (
-              <div style={{ position:'absolute',bottom:0,left:0,right:0,height:80,background:'linear-gradient(transparent,var(--bg-primary,#0D0D0D))',pointerEvents:'none' }}/>
+              <div style={{ position:'absolute',bottom:0,left:0,right:0,height:80,background:'linear-gradient(transparent,var(--bg-primary,#07080D))',pointerEvents:'none',borderRadius:'0 0 14px 14px' }}/>
             )}
           </div>
 

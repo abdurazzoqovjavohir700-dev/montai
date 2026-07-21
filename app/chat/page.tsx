@@ -144,7 +144,7 @@ function ChatPageInner() {
       <div
         className="flex overflow-hidden"
         style={{
-          background: '#0D0D0D',
+          background: 'radial-gradient(ellipse at 15% 0%, rgba(56,97,210,0.09) 0%, transparent 55%), radial-gradient(ellipse at 85% 100%, rgba(120,60,200,0.07) 0%, transparent 50%), #07080D',
           height: keyboardHeight > 0 ? `calc(100dvh - ${keyboardHeight}px)` : '100dvh',
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: keyboardHeight > 0 ? '0px' : 'env(safe-area-inset-bottom, 0px)',
@@ -176,7 +176,7 @@ function ChatPageInner() {
     <div
       className="flex overflow-hidden"
       style={{
-        background: '#0D0D0D',
+        background: 'radial-gradient(ellipse at 15% 0%, rgba(56,97,210,0.09) 0%, transparent 55%), radial-gradient(ellipse at 85% 100%, rgba(120,60,200,0.07) 0%, transparent 50%), #07080D',
         height: keyboardHeight > 0 ? `calc(100dvh - ${keyboardHeight}px)` : '100dvh',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: keyboardHeight > 0 ? '0px' : 'env(safe-area-inset-bottom, 0px)',
@@ -232,14 +232,20 @@ function ChatPageInner() {
               else setDesktopSidebarVisible((v) => !v);
             }}
             style={{
-              width: 44, height: 44, borderRadius: 10,
+              width: 38, height: 38, borderRadius: 10,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              color: '#52525B', transition: 'background 0.15s, color 0.15s',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              backdropFilter: 'blur(20px) saturate(1.4)',
+              WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+              cursor: 'pointer',
+              color: '#71717A',
+              transition: 'background 0.15s, color 0.15s, border-color 0.15s',
               touchAction: 'manipulation',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.color = '#A1A1AA'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#52525B'; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.09)'; (e.currentTarget as HTMLElement).style.color = '#C4C4C8'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#71717A'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; }}
             aria-label="Toggle sidebar"
           >
             {desktopSidebarVisible

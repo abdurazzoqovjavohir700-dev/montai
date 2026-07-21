@@ -137,13 +137,13 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion, 
       {/* Ambient glow behind content */}
       <div style={{
         position: 'absolute',
-        top: '10%',
+        top: '5%',
         left: '50%',
         transform: 'translateX(-50%)',
-        width: 480,
-        height: 280,
-        background: 'radial-gradient(ellipse at center, rgba(96,165,250,0.06) 0%, transparent 70%)',
-        filter: 'blur(40px)',
+        width: 560,
+        height: 320,
+        background: 'radial-gradient(ellipse at center, rgba(96,165,250,0.10) 0%, rgba(120,80,220,0.05) 40%, transparent 70%)',
+        filter: 'blur(48px)',
         pointerEvents: 'none',
         zIndex: 0,
       }} />
@@ -256,28 +256,29 @@ export default function WelcomeScreen({ nickname, language, onSelectSuggestion, 
               style={{
                 padding: '14px 16px',
                 borderRadius: 14,
-                background: 'rgba(255,255,255,0.028)',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.09)',
                 cursor: 'pointer',
                 textAlign: 'left',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 6,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.055)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.09)',
+                backdropFilter: 'blur(24px) saturate(1.5)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                transition: 'background 0.18s, border-color 0.18s, box-shadow 0.18s',
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement;
-                el.style.background = 'rgba(255,255,255,0.045)';
-                el.style.borderColor = 'rgba(255,255,255,0.11)';
-                el.style.boxShadow = '0 4px 20px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.08)';
+                el.style.background = 'rgba(255,255,255,0.07)';
+                el.style.borderColor = 'rgba(255,255,255,0.14)';
+                el.style.boxShadow = '0 6px 32px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.12)';
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement;
-                el.style.background = 'rgba(255,255,255,0.028)';
-                el.style.borderColor = 'rgba(255,255,255,0.07)';
-                el.style.boxShadow = '0 2px 12px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.055)';
+                el.style.background = 'rgba(255,255,255,0.04)';
+                el.style.borderColor = 'rgba(255,255,255,0.09)';
+                el.style.boxShadow = '0 4px 24px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.09)';
               }}
             >
               <span style={{ fontSize: 18, lineHeight: 1 }}>{s.icon}</span>
