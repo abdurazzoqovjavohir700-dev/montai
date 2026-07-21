@@ -24,7 +24,7 @@
         "center": true,
         "url": "https://montai-plum.vercel.app",
         "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Montai/1.2.0",
-        "backgroundColor": "#07080D",
+        "backgroundColor": [7, 8, 13, 255],
         "titleBarStyle": "Visible",
         "hiddenTitle": false
       }
@@ -53,18 +53,17 @@
     "longDescription": "Montai is an AI-powered video editing mentor. Ask questions about color grading, cuts, audio mixing, storytelling, and more.",
     "publisher": "Montai",
     "copyright": "Copyright © 2026 Montai",
-    "nsis": {
-      "displayLanguageSelector": false,
-      "installMode": "currentUser",
-      "installerIcon": "icons/icon.ico",
-      "headerImage": null,
-      "sidebarImage": null,
-      "webviewInstallMode": {
-        "type": "embedBootstrapper"
-      },
-      "shortcutName": "Montai",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "installMode": "currentUser",
+        "webviewInstallMode": {
+          "type": "embedBootstrapper"
+        },
+        "shortcutName": "Montai",
+        "createDesktopShortcut": true,
+        "createStartMenuShortcut": true
+      }
     }
   },
   "plugins": {
