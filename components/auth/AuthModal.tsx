@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect, useRef } from 'react';
+import { signIn, getSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import MontaiLogo from '@/components/shared/MontaiLogo';
+import { isCapacitor } from '@/lib/native-bridge';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,11 +16,47 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [loading, setLoading] = useState<'google' | 'github' | null>(null);
+  const router = useRouter();
+  const stateListenerRef = useRef<{ remove: () => Promise<void> } | null>(null);
+
+  // Clean up app state listener when modal closes
+  useEffect(() => {
+    if (!isOpen && stateListenerRef.current) {
+      stateListenerRef.current.remove();
+      stateListenerRef.current = null;
+    }
+  }, [isOpen]);
 
   const handleSignIn = async (provider: 'google' | 'github') => {
     setLoading(provider);
     try {
-      await signIn(provider, { callbackUrl: '/chat' });
+      if (isCapacitor()) {
+        // Google/GitHub block OAuth inside Android WebViews since 2021.
+        // Use Chrome Custom Tab via @capacitor/browser instead.
+        const { Browser } = await import('@capacitor/browser');
+        const { App } = await import('@capacitor/app');
+
+        const signinUrl = `https://montai-plum.vercel.app/api/auth/signin/${provider}?callbackUrl=${encodeURIComponent('https://montai-plum.vercel.app/chat')}`;
+        await Browser.open({ url: signinUrl, presentationStyle: 'popover' });
+
+        // When user returns to the app after OAuth, check if session was created
+        stateListenerRef.current = await App.addListener('appStateChange', async ({ isActive }) => {
+          if (isActive) {
+            stateListenerRef.current?.remove();
+            stateListenerRef.current = null;
+            const session = await getSession();
+            if (session) {
+              router.push('/chat');
+              onClose();
+            } else {
+              toast.error(`${provider === 'google' ? 'Google' : 'GitHub'} sign-in failed.`);
+              setLoading(null);
+            }
+          }
+        });
+      } else {
+        await signIn(provider, { callbackUrl: '/chat' });
+      }
     } catch {
       toast.error(`${provider === 'google' ? 'Google' : 'GitHub'} sign-in failed.`);
       setLoading(null);

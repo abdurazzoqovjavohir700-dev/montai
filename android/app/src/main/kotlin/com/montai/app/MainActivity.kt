@@ -18,6 +18,7 @@ class MainActivity : BridgeActivity() {
         registerPlugin(com.capacitorjs.plugins.statusbar.StatusBarPlugin::class.java)
         registerPlugin(com.capacitorjs.plugins.splashscreen.SplashScreenPlugin::class.java)
         registerPlugin(com.capacitorjs.plugins.keyboard.KeyboardPlugin::class.java)
+        registerPlugin(com.capacitorjs.plugins.browser.BrowserPlugin::class.java)
 
         super.onCreate(savedInstanceState)
 

@@ -92,7 +92,17 @@ function ChatPageInner() {
   // Guest mode — render guest chat directly
   if (isGuest) {
     return (
-      <div className="h-screen flex overflow-hidden" style={{ background: '#0D0D0D' }}>
+      <div
+        className="flex overflow-hidden"
+        style={{
+          background: '#0D0D0D',
+          height: '100dvh',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+        }}
+      >
         <div className="flex flex-col flex-1 min-w-0 h-full relative">
           <GuestChatWindow key={chatKey} />
         </div>
@@ -113,7 +123,17 @@ function ChatPageInner() {
   if (!user) return null;
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: '#0D0D0D' }}>
+    <div
+      className="flex overflow-hidden"
+      style={{
+        background: '#0D0D0D',
+        height: '100dvh',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+      }}
+    >
       <div
         className="hidden md:block flex-shrink-0 h-full"
         style={{

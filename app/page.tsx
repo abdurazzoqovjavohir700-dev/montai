@@ -63,7 +63,7 @@ export default function HomePage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#05060A', position: 'relative', overflow: 'hidden' }}>
+    <main style={{ minHeight: '100dvh', background: '#05060A', position: 'relative', overflow: 'hidden', paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <AuroraBackground />
 
       {/* Content layer */}
