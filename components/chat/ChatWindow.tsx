@@ -241,8 +241,12 @@ export default function ChatWindow({
         setMessages((prev) => [...prev, aiMessage]);
         setStreamingContent('');
 
-        // Auto PDF generation if user requested it
-        if (detectPdfRequest(content)) {
+        // Auto PDF generation — only when AI actually produced document content.
+        // If AI asked a clarifying question, fullContent won't start with '#' so we skip.
+        // This prevents downloading a PDF whose content is "What should the PDF contain?"
+        const isPdfRequest = detectPdfRequest(content);
+        const aiProducedDoc = fullContent.trimStart().startsWith('#') && fullContent.length > 300;
+        if (isPdfRequest && aiProducedDoc) {
           const title = extractPdfTitle(content);
           const filename = `${title.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase() || 'montai_doc'}.pdf`;
           toast.info('PDF tayyorlanmoqda...', { duration: 3000 });

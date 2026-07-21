@@ -41,6 +41,19 @@ function ChatPageInner() {
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
+  // Restore sidebar collapse state from localStorage after mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('montai_sidebar_visible');
+      if (saved !== null) setDesktopSidebarVisible(saved === 'true');
+    } catch {}
+  }, []);
+
+  // Persist sidebar collapse state whenever it changes
+  useEffect(() => {
+    try { localStorage.setItem('montai_sidebar_visible', String(desktopSidebarVisible)); } catch {}
+  }, [desktopSidebarVisible]);
+
   // Visual Viewport API — keyboard-aware height adjustment
   useEffect(() => {
     const vv = window.visualViewport;

@@ -101,7 +101,8 @@ export default function GuestChatWindow() {
             };
 
             const blocks: unknown[] = urls.map(toBlock);
-            if (m.content.trim()) blocks.push({ type: 'text', text: m.content });
+            const userText = m.content.trim();
+            blocks.push({ type: 'text', text: userText || 'Analyze this image in detail.' });
             return { role: m.role, content: blocks };
           }),
           userContext: { nickname: 'Guest', language: 'uz' },
@@ -159,8 +160,10 @@ export default function GuestChatWindow() {
         }]);
         setStreamingContent('');
 
-        // Auto PDF generation for guest mode too
-        if (detectPdfRequest(content)) {
+        // Only generate PDF when AI produced actual document content (starts with # heading).
+        const isPdfRequest = detectPdfRequest(content);
+        const aiProducedDoc = fullContent.trimStart().startsWith('#') && fullContent.length > 300;
+        if (isPdfRequest && aiProducedDoc) {
           const title = extractPdfTitle(content);
           const filename = `${title.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase() || 'montai_doc'}.pdf`;
           toast.info('PDF tayyorlanmoqda...', { duration: 3000 });
