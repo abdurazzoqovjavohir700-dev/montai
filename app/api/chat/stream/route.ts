@@ -5,6 +5,21 @@ import { moderateText, logModerationEvent } from '@/lib/moderation';
 
 export const maxDuration = 60;
 
+// Per-user sliding-window rate limit (in-memory; resets on cold start)
+// Authenticated users: 120 requests per hour (generous, but prevents API exhaustion)
+const userWindows = new Map<string, number[]>();
+const USER_LIMIT = 120;
+const USER_WINDOW_MS = 60 * 60 * 1000;
+
+function checkUserLimit(userId: string): boolean {
+  const now = Date.now();
+  const reqs = (userWindows.get(userId) ?? []).filter(t => now - t < USER_WINDOW_MS);
+  if (reqs.length >= USER_LIMIT) { userWindows.set(userId, reqs); return false; }
+  reqs.push(now);
+  userWindows.set(userId, reqs);
+  return true;
+}
+
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
@@ -12,6 +27,13 @@ export async function POST(req: NextRequest) {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  if (!checkUserLimit(user.id)) {
+    return new Response(
+      JSON.stringify({ error: 'So\'rov limiti tugadi. Bir soatdan keyin qaytadan urinib ko\'ring.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   const body = await req.json() as {
