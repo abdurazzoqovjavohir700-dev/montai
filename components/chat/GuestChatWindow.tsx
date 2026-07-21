@@ -105,6 +105,8 @@ export default function GuestChatWindow() {
             blocks.push({ type: 'text', text: userText || 'Analyze this image in detail.' });
             return { role: m.role, content: blocks };
           }),
+          hasImage: !!(images && images.length > 0),
+          isPdfRequest: detectPdfRequest(content),
           userContext: { nickname: 'Guest', language: 'uz' },
         };
 

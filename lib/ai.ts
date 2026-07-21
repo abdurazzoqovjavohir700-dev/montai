@@ -39,9 +39,12 @@ const TEXT_CHAIN = [
   'llama-3.1-8b-instant',                         // Last resort: 6K TPM
 ] as const;
 
-const VISION_CHAIN = [
-  'meta-llama/llama-4-scout-17b-16e-instruct',    // 30K TPM, primary vision
-  'meta-llama/llama-4-maverick-17b-128e-instruct', // Fallback vision
+// Vision handled by Gemini (Groq has no vision models — all return "content must be a string")
+const GEMINI_VISION_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-001',
+  'gemini-2.0-flash-lite',
+  'gemini-flash-latest',
 ] as const;
 
 // ─── Error classification ────────────────────────────────────────────────────
@@ -111,6 +114,118 @@ function sanitizeForTextModel(content: ChatMessage['content'], imageFailedReason
   return text;
 }
 
+// ─── Gemini vision streaming ──────────────────────────────────────────────────
+
+async function streamGeminiVision(
+  msg: ChatMessage,
+  systemPrompt: string,
+): Promise<ReadableStream<Uint8Array>> {
+  const enc = new TextEncoder();
+  const apiKey = process.env.GEMINI_API_KEY ?? '';
+
+  if (!apiKey) {
+    const errMsg =
+      '⚠️ Rasm tahlili uchun Gemini API kaliti kerak.\n\n' +
+      'Bepul kalitni olish: https://aistudio.google.com/\n' +
+      'Keyin Vercel dashboard > Settings > Environment Variables ga\n' +
+      'GEMINI_API_KEY = [sizning kalitingiz] qo\'shing va qayta deploy qiling.';
+    return new ReadableStream({ start(c) { c.enqueue(enc.encode(errMsg)); c.close(); } });
+  }
+
+  const parts: unknown[] = [];
+  let userText = '';
+
+  if (typeof msg.content !== 'string') {
+    for (const block of msg.content) {
+      if (block.type === 'image') {
+        const src = block.source as { media_type: string; data: string };
+        if (src?.data && src.data.length > 100) {
+          parts.push({ inlineData: { mimeType: src.media_type || 'image/jpeg', data: src.data } });
+        }
+      } else if (block.type === 'image_url') {
+        const url = ((block as unknown) as { image_url: { url: string } }).image_url?.url ?? '';
+        if (url.startsWith('data:')) {
+          const comma = url.indexOf(',');
+          const mimeType = url.slice(5, comma).replace(';base64', '');
+          const data = url.slice(comma + 1);
+          parts.push({ inlineData: { mimeType, data } });
+        }
+      } else if (block.type === 'text') {
+        userText += (block as { text?: string }).text ?? '';
+      }
+    }
+  } else {
+    userText = msg.content;
+  }
+
+  if (parts.length === 0) {
+    const errMsg = '⚠️ Rasm yuklanmadi — qaytadan yuklang va urinib ko\'ring.';
+    return new ReadableStream({ start(c) { c.enqueue(enc.encode(errMsg)); c.close(); } });
+  }
+  parts.push({ text: userText.trim() || 'Bu rasmni batafsil tahlil qil.' });
+
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: 'user', parts }],
+    generationConfig: { maxOutputTokens: 2048, temperature: 0.65 },
+  });
+
+  for (const model of GEMINI_VISION_MODELS) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body },
+      );
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({})) as { error?: { message?: string } };
+        console.error(`[VISION/Gemini/${model}] HTTP ${res.status}:`, errJson.error?.message);
+        continue;
+      }
+      if (!res.body) continue;
+
+      console.log(`[VISION] Using Gemini model: ${model}`);
+
+      return new ReadableStream({
+        async start(controller) {
+          const reader = res.body!.getReader();
+          const dec = new TextDecoder();
+          let buf = '';
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buf += dec.decode(value, { stream: true });
+              const lines = buf.split('\n');
+              buf = lines.pop() ?? '';
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const json = line.slice(6).trim();
+                if (!json || json === '[DONE]') continue;
+                try {
+                  const chunk = JSON.parse(json) as {
+                    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+                  };
+                  const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+                  if (text) controller.enqueue(enc.encode(text));
+                } catch { /* skip malformed SSE line */ }
+              }
+            }
+            controller.close();
+          } catch (e) {
+            controller.error(e);
+          }
+        },
+      });
+    } catch (err) {
+      console.error(`[VISION/Gemini/${model}] Network error:`, err);
+    }
+  }
+
+  const fallbackMsg = '⚠️ Rasm tahlil qilinmadi — Gemini xatolik. Qaytadan urinib ko\'ring.';
+  return new ReadableStream({ start(c) { c.enqueue(enc.encode(fallbackMsg)); c.close(); } });
+}
+
 // ─── Core: try models in order ───────────────────────────────────────────────
 
 type GroqStream = Stream<ChatCompletionChunk>;
@@ -166,7 +281,8 @@ export async function streamChatResponse(
     experienceLevel?: string;
     primarySoftware?: string[];
     focusAreas?: string[];
-  }
+  },
+  opts?: { hasImage?: boolean; isPdfRequest?: boolean }
 ): Promise<ReadableStream<Uint8Array>> {
   const now = new Date();
   const dateStr = now.toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -182,8 +298,31 @@ User software: ${userContext?.primarySoftware?.join(', ') ?? 'not specified'}
 Use their nickname naturally (not every message). Respond in their language. Adapt to their experience level.`;
 
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
-  const hasImage = lastUserMsg ? hasImageContent(lastUserMsg.content) : false;
+  // opts.hasImage comes directly from the frontend which definitively knows
+  // whether an image was attached. Falls back to content inspection if not provided.
+  const hasImage = opts?.hasImage ?? (lastUserMsg ? hasImageContent(lastUserMsg.content) : false);
+  console.log('[AI] hasImage:', hasImage, '(flag:', opts?.hasImage, '| detected:', lastUserMsg ? hasImageContent(lastUserMsg.content) : false, ')');
   const hasPdf = !hasImage && typeof lastUserMsg?.content === 'string' && lastUserMsg.content.startsWith('[PDF_ATTACH]:');
+
+  const pdfStrictMode = opts?.isPdfRequest
+    ? `\n\n=== PDF GENERATION — ULTRA STRICT MODE ===
+RULE #1: Generate EXACTLY what the user requested. NOT MORE. NOT LESS.
+RULE #2: FORBIDDEN ADDITIONS — do NOT add any of these unless user explicitly requested:
+  - Introduction / Overview / Purpose / Background
+  - Summary / Conclusion / Closing remarks
+  - Timeline / Next steps / Resources / References
+  - Tips / Notes / Additional information
+  - Disclaimers / Recommendations
+RULE #3: Match content type to request:
+  - "shortcuts" → numbered shortcut list ONLY
+  - "invoice" → invoice fields ONLY
+  - "notes on X" → bullet-point notes ONLY
+  - "report" → report structure ONLY as specified
+  - "checklist" → checkboxes ONLY
+RULE #4: DO NOT pad or elaborate. If user gave you content, format it. If they gave a topic, generate that topic's content only.
+RULE #5: Start with # [Title] immediately. No preamble. No "Here is your PDF:" sentences.
+VIOLATING THESE RULES = FAILURE.`
+    : '';
 
   const imageContextAddition = hasImage
     ? `\n\n=== IMAGE ANALYSIS MODE — MANDATORY ===
@@ -207,7 +346,7 @@ NEVER describe previous chat topics — focus 100% on the image.`
   const pdfAddition = hasPdf
     ? '\n\n=== PDF TAHLIL ===\nFoydalanuvchi PDF hujjat yubordi. Chuqur tahlil qil: asosiy g\'oyalar, xulosalar, muhim faktlar, raqamlar va tuzilmani ajratib ko\'rsat. Markdown dan foydalanib tartibli yoz.'
     : '';
-  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + imageContextAddition + safetyAddition + pdfAddition;
+  const systemPrompt = MONTAI_SYSTEM_PROMPT + contextAddition + pdfStrictMode + imageContextAddition + safetyAddition + pdfAddition;
   // 65% of free-tier TPM budget used for response; PDF needs more tokens for detailed analysis
   const maxTokens = hasImage ? 2048 : hasPdf ? 2048 : 1536;
 
@@ -228,7 +367,13 @@ NEVER describe previous chat topics — focus 100% on the image.`
     ];
   };
 
-  const modelChain = hasImage ? VISION_CHAIN : TEXT_CHAIN;
+  // Vision → Gemini (Groq has no vision capability)
+  if (hasImage && lastUserMsg) {
+    logModerationEvent({ type: 'image', category: 'safe', confidence: 'high', timestamp: new Date().toISOString() });
+    return streamGeminiVision(lastUserMsg, systemPrompt);
+  }
+
+  const modelChain = TEXT_CHAIN;
 
   let activeStream: GroqStream;
   let activeModel: string;
@@ -236,26 +381,14 @@ NEVER describe previous chat topics — focus 100% on the image.`
   try {
     const result = await tryModelsInOrder(modelChain, (model) => ({
       model,
-      messages: buildGroqMessages(hasImage),
+      messages: buildGroqMessages(false),
       max_tokens: maxTokens,
       temperature: 0.65,
     }));
     activeStream = result.stream;
     activeModel = result.model;
-  } catch (visionErr) {
-    if (!hasImage) throw visionErr;
-    logModerationEvent({ type: 'image', category: 'safe', confidence: 'low', timestamp: new Date().toISOString() });
-
-    // Vision model unavailable — return explicit error instead of confusing text fallback.
-    // Text models cannot see images; sending them sanitized content causes "no image was uploaded" responses.
-    const lang = userContext?.language ?? 'uz';
-    const errMsg = lang === 'uz'
-      ? '⚠️ Rasm tahlil qilinmadi — vision model hozirda band.\n\nBir oz kutib qaytadan urinib ko\'ring. Muammo davom etsa, rasmni qayta yuklang.'
-      : lang === 'ru'
-      ? '⚠️ Изображение не удалось проанализировать — модель зрения временно недоступна.\n\nПопробуйте ещё раз через несколько секунд.'
-      : '⚠️ Image analysis failed — vision model is temporarily busy.\n\nPlease wait a moment and try again. If the issue persists, re-upload the image.';
-    const enc = new TextEncoder();
-    return new ReadableStream({ start(ctrl) { ctrl.enqueue(enc.encode(errMsg)); ctrl.close(); } });
+  } catch (err) {
+    throw err;
   }
   const encoder = new TextEncoder();
 
@@ -282,10 +415,7 @@ NEVER describe previous chat topics — focus 100% on the image.`
           return;
         }
 
-        const chain: string[] = hasImage
-          ? [...VISION_CHAIN, ...TEXT_CHAIN]
-          : [...TEXT_CHAIN];
-        const remaining = chain.filter(m => m !== activeModel);
+        const remaining = [...TEXT_CHAIN].filter(m => m !== activeModel);
 
         if (remaining.length === 0) {
           controller.error(streamErr);
@@ -296,10 +426,9 @@ NEVER describe previous chat topics — focus 100% on the image.`
         let recovered = false;
         for (const fallbackModel of remaining) {
           try {
-            const visionOk = (VISION_CHAIN as readonly string[]).includes(fallbackModel);
             const fallback = await groq.chat.completions.create({
               model: fallbackModel,
-              messages: buildGroqMessages(visionOk),
+              messages: buildGroqMessages(false),
               max_tokens: 1024,
               temperature: 0.7,
               stream: true,

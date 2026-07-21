@@ -16,6 +16,8 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json() as {
     messages: ChatMessage[];
+    hasImage?: boolean;
+    isPdfRequest?: boolean;
     userContext?: {
       nickname?: string;
       language?: string;
@@ -83,13 +85,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const stream = await streamChatResponse(messages, body.userContext ?? {
-      nickname: user.nickname,
-      language: user.language,
-      experienceLevel: user.experienceLevel,
-      primarySoftware: user.primarySoftware,
-      focusAreas: user.focusAreas,
-    });
+    const stream = await streamChatResponse(
+      messages,
+      body.userContext ?? {
+        nickname: user.nickname,
+        language: user.language,
+        experienceLevel: user.experienceLevel,
+        primarySoftware: user.primarySoftware,
+        focusAreas: user.focusAreas,
+      },
+      { hasImage: body.hasImage, isPdfRequest: body.isPdfRequest },
+    );
 
     return new Response(stream, {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
