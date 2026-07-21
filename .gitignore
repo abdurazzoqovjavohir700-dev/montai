@@ -17,6 +17,7 @@ android/build/
 android/captures/
 android/local.properties
 android/.idea/
+android/capacitor-cordova-android-plugins/build/
 
 # Tauri build
 src-tauri/target/
