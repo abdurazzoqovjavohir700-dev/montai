@@ -84,8 +84,11 @@ export function LiquidGlass({
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const gpuTier = getGPUTier();
 
-  // Adaptive blur based on GPU
-  const effectiveBlur = gpuTier === 'low' ? Math.min(blurStrength, 16) : blurStrength;
+  // Adaptive blur: reduce on low-GPU AND on touch/mobile devices
+  const isTouchDevice = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+  const effectiveBlur = (gpuTier === 'low' || isTouchDevice)
+    ? Math.min(blurStrength, 14)
+    : blurStrength;
 
   // Mouse position for reflection/tilt
   const mouseX = useMotionValue(0.5);

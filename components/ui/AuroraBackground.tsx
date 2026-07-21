@@ -47,8 +47,9 @@ interface Particle { id: number; x: number; y: number; size: number; dur: number
 ════════════════════════════════════════════════════════════ */
 export default function AuroraBackground({ children }: { children?: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
-  // Cursor spotlight
+  // Cursor spotlight — desktop only
   const mx = useMotionValue(typeof window !== 'undefined' ? window.innerWidth / 2 : 0);
   const my = useMotionValue(typeof window !== 'undefined' ? window.innerHeight / 2 : 0);
   const smx = useSpring(mx, { stiffness: 60, damping: 28 });
@@ -57,13 +58,15 @@ export default function AuroraBackground({ children }: { children?: React.ReactN
   const spotY = useTransform(smy, v => v - 350);
 
   useEffect(() => {
+    if (isTouch) return;
     const move = (e: MouseEvent) => { mx.set(e.clientX); my.set(e.clientY); };
     window.addEventListener('mousemove', move, { passive: true });
     return () => window.removeEventListener('mousemove', move);
-  }, [mx, my]);
+  }, [mx, my, isTouch]);
 
-  // Subtle particles
-  const particles: Particle[] = Array.from({ length: 18 }, (_, i) => ({
+  // Fewer particles on mobile
+  const particleCount = isTouch ? 6 : 18;
+  const particles: Particle[] = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
     x: (i * 37 + 5) % 97,
     y: (i * 53 + 12) % 92,
@@ -85,25 +88,27 @@ export default function AuroraBackground({ children }: { children?: React.ReactN
         background: 'radial-gradient(ellipse 140% 80% at 50% -10%, rgba(15,20,40,0.9) 0%, #05060A 55%)',
       }}/>
 
-      {/* Aurora orbs */}
-      <AuroraOrb color="rgba(30,60,160,0.45)"  x="-8%" y="-12%" size={800} duration={18} delay={0}   />
-      <AuroraOrb color="rgba(15,40,100,0.35)"  x="60%" y="-5%"  size={600} duration={22} delay={3}   />
-      <AuroraOrb color="rgba(50,30,130,0.30)"  x="30%" y="55%"  size={700} duration={20} delay={6}   />
-      <AuroraOrb color="rgba(10,50,120,0.25)"  x="-5%" y="45%"  size={500} duration={25} delay={2}   />
-      <AuroraOrb color="rgba(40,80,180,0.20)"  x="75%" y="70%"  size={450} duration={16} delay={9}   />
+      {/* Aurora orbs — fewer and smaller on touch devices for performance */}
+      <AuroraOrb color="rgba(30,60,160,0.45)"  x="-8%" y="-12%" size={isTouch?400:800} duration={18} delay={0}   />
+      <AuroraOrb color="rgba(15,40,100,0.35)"  x="60%" y="-5%"  size={isTouch?300:600} duration={22} delay={3}   />
+      {!isTouch && <AuroraOrb color="rgba(50,30,130,0.30)"  x="30%" y="55%"  size={700} duration={20} delay={6}   />}
+      {!isTouch && <AuroraOrb color="rgba(10,50,120,0.25)"  x="-5%" y="45%"  size={500} duration={25} delay={2}   />}
+      {!isTouch && <AuroraOrb color="rgba(40,80,180,0.20)"  x="75%" y="70%"  size={450} duration={16} delay={9}   />}
 
-      {/* Cursor spotlight */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          x: spotX, y: spotY,
-          width: 700, height: 700,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(96,165,250,0.06) 0%, transparent 65%)',
-          pointerEvents: 'none',
-          willChange: 'transform',
-        }}
-      />
+      {/* Cursor spotlight — desktop only */}
+      {!isTouch && (
+        <motion.div
+          style={{
+            position: 'absolute',
+            x: spotX, y: spotY,
+            width: 700, height: 700,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(96,165,250,0.06) 0%, transparent 65%)',
+            pointerEvents: 'none',
+            willChange: 'transform',
+          }}
+        />
+      )}
 
       {/* Grid overlay */}
       <div style={{
