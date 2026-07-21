@@ -4,7 +4,6 @@ version = "1.0.0"
 description = "Montai — AI-powered video editing mentor"
 authors = ["Montai Team"]
 license = "MIT"
-repository = ""
 edition = "2021"
 rust-version = "1.77"
 
@@ -21,8 +20,6 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "devtools"] }
-tauri-plugin-updater = "2"
-tauri-plugin-deep-link = "2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-dialog = "2"

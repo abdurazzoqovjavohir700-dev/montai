@@ -7,7 +7,7 @@
     "frontendDist": "../out",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "mkdir -p out && echo 'Using live URL' > out/.gitkeep"
+    "beforeBuildCommand": "node -e \"require('fs').mkdirSync('out',{recursive:true})\""
   },
   "app": {
     "windows": [
@@ -27,8 +27,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' https://montai-plum.vercel.app https://*.supabase.co https://api.groq.com wss://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com",
-      "dangerousDisableAssetCspModification": false
+      "csp": "default-src 'self' https://montai-plum.vercel.app https://*.supabase.co https://api.groq.com wss://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com"
     },
     "trayIcon": {
       "iconPath": "icons/icon.png",
@@ -39,7 +38,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis", "msi"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -47,30 +46,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "windows": {
-      "certificateThumbprint": null,
-      "digestAlgorithm": "sha256",
-      "timestampUrl": ""
-    },
     "category": "Productivity",
-    "copyright": "2025 Montai",
-    "shortDescription": "AI-powered video editing mentor",
-    "longDescription": "Montai is an AI-powered video editing mentor that helps you master color grading, cuts, audio mixing, and more."
+    "shortDescription": "AI-powered video editing mentor"
   },
   "plugins": {
-    "updater": {
-      "active": true,
-      "pubkey": "",
-      "endpoints": ["https://montai-plum.vercel.app/api/tauri/update"]
-    },
-    "deep-link": {
-      "protocols": [
-        {
-          "name": "Montai",
-          "schemes": ["montai"]
-        }
-      ]
-    },
     "clipboard-manager": {},
     "notification": {},
     "dialog": {},
