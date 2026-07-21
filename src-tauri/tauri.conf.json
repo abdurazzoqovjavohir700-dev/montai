@@ -55,14 +55,7 @@
     "copyright": "Copyright © 2026 Montai",
     "windows": {
       "nsis": {
-        "displayLanguageSelector": false,
-        "installMode": "currentUser",
-        "webviewInstallMode": {
-          "type": "embedBootstrapper"
-        },
-        "shortcutName": "Montai",
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true
+        "installMode": "currentUser"
       }
     }
   },
