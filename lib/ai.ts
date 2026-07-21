@@ -114,6 +114,94 @@ function sanitizeForTextModel(content: ChatMessage['content'], imageFailedReason
   return text;
 }
 
+// ─── OpenRouter vision (free, no credit card) ────────────────────────────────
+
+function buildOpenAIVisionContent(msg: ChatMessage, fallbackText: string): unknown[] {
+  const content: unknown[] = [];
+  if (typeof msg.content !== 'string') {
+    for (const block of msg.content) {
+      if (block.type === 'image') {
+        const src = block.source as { media_type: string; data: string };
+        if (src?.data && src.data.length > 100) {
+          content.push({ type: 'image_url', image_url: { url: `data:${src.media_type || 'image/jpeg'};base64,${src.data}` } });
+        }
+      } else if (block.type === 'image_url') {
+        content.push(block);
+      } else if (block.type === 'text') {
+        const t = (block as { text?: string }).text ?? '';
+        if (t) content.push({ type: 'text', text: t });
+      }
+    }
+  }
+  if (!content.some(b => (b as { type: string }).type === 'image_url')) return [];
+  if (!content.some(b => (b as { type: string }).type === 'text')) {
+    content.push({ type: 'text', text: fallbackText });
+  }
+  return content;
+}
+
+async function streamOpenRouterVision(
+  msg: ChatMessage,
+  systemPrompt: string,
+): Promise<ReadableStream<Uint8Array>> {
+  const enc = new TextEncoder();
+  const apiKey = process.env.OPENROUTER_API_KEY ?? '';
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
+
+  const content = buildOpenAIVisionContent(msg, 'Bu rasmni batafsil tahlil qil.');
+  if (content.length === 0) throw new Error('No image data');
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content },
+      ],
+      max_tokens: 2048,
+      temperature: 0.65,
+      stream: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(`OpenRouter ${res.status}: ${err.error?.message ?? 'Unknown'}`);
+  }
+  if (!res.body) throw new Error('No body from OpenRouter');
+
+  console.log('[VISION] Using OpenRouter llama-3.2-11b-vision:free');
+  return new ReadableStream({
+    async start(controller) {
+      const reader = res.body!.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const json = line.slice(6).trim();
+            if (!json || json === '[DONE]') continue;
+            try {
+              const chunk = JSON.parse(json) as { choices?: Array<{ delta?: { content?: string } }> };
+              const text = chunk.choices?.[0]?.delta?.content ?? '';
+              if (text) controller.enqueue(enc.encode(text));
+            } catch { /* skip malformed chunk */ }
+          }
+        }
+        controller.close();
+      } catch (e) { controller.error(e); }
+    },
+  });
+}
+
 // ─── Gemini vision streaming ──────────────────────────────────────────────────
 
 async function streamGeminiVision(
@@ -123,14 +211,7 @@ async function streamGeminiVision(
   const enc = new TextEncoder();
   const apiKey = process.env.GEMINI_API_KEY ?? '';
 
-  if (!apiKey) {
-    const errMsg =
-      '⚠️ Rasm tahlili uchun Gemini API kaliti kerak.\n\n' +
-      'Bepul kalitni olish: https://aistudio.google.com/\n' +
-      'Keyin Vercel dashboard > Settings > Environment Variables ga\n' +
-      'GEMINI_API_KEY = [sizning kalitingiz] qo\'shing va qayta deploy qiling.';
-    return new ReadableStream({ start(c) { c.enqueue(enc.encode(errMsg)); c.close(); } });
-  }
+  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 
   const parts: unknown[] = [];
   let userText = '';
@@ -367,10 +448,33 @@ NEVER describe previous chat topics — focus 100% on the image.`
     ];
   };
 
-  // Vision → Gemini (Groq has no vision capability)
+  // Vision → OpenRouter (free) → Gemini → error
   if (hasImage && lastUserMsg) {
     logModerationEvent({ type: 'image', category: 'safe', confidence: 'high', timestamp: new Date().toISOString() });
-    return streamGeminiVision(lastUserMsg, systemPrompt);
+
+    // 1. Try OpenRouter (free, no credit card needed)
+    try {
+      return await streamOpenRouterVision(lastUserMsg, systemPrompt);
+    } catch (orErr) {
+      console.warn('[VISION] OpenRouter failed:', (orErr as Error).message);
+    }
+
+    // 2. Try Gemini (requires billing to be enabled)
+    try {
+      return await streamGeminiVision(lastUserMsg, systemPrompt);
+    } catch (gemErr) {
+      console.warn('[VISION] Gemini failed:', (gemErr as Error).message);
+    }
+
+    // 3. Both failed → clear error
+    const lang = userContext?.language ?? 'uz';
+    const enc = new TextEncoder();
+    const msg = lang === 'uz'
+      ? '⚠️ Rasm tahlili ishlamayapti.\n\nYechim:\n1. openrouter.ai da bepul ro\'yxatdan o\'ting\n2. API key oling (karta kerak emas)\n3. Vercel > Settings > Environment Variables ga OPENROUTER_API_KEY qo\'shing'
+      : lang === 'ru'
+      ? '⚠️ Анализ изображений недоступен.\n\nРешение: получите бесплатный API ключ на openrouter.ai и добавьте OPENROUTER_API_KEY в переменные окружения Vercel.'
+      : '⚠️ Image analysis unavailable.\n\nFix: Get a free API key at openrouter.ai and add OPENROUTER_API_KEY to Vercel environment variables.';
+    return new ReadableStream({ start(c) { c.enqueue(enc.encode(msg)); c.close(); } });
   }
 
   const modelChain = TEXT_CHAIN;

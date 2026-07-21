@@ -247,7 +247,8 @@ export default function ChatWindow({
         // If AI asked a clarifying question, fullContent won't start with '#' so we skip.
         // This prevents downloading a PDF whose content is "What should the PDF contain?"
         const isPdfRequest = detectPdfRequest(content);
-        const aiProducedDoc = fullContent.trimStart().startsWith('#') && fullContent.length > 300;
+        const trimmed = fullContent.trimStart();
+        const aiProducedDoc = (trimmed.startsWith('#') || trimmed.startsWith('**')) && fullContent.length > 150;
         if (isPdfRequest && aiProducedDoc) {
           const title = extractPdfTitle(content);
           const filename = `${title.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'').toLowerCase() || 'montai_doc'}.pdf`;

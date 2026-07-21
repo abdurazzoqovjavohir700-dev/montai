@@ -300,44 +300,30 @@ export async function generatePdf(options: PdfOptions): Promise<void> {
 
 export function detectPdfRequest(message: string): boolean {
   const lower = message.toLowerCase();
-  // Uzbek
-  if (
-    lower.includes('pdf yarat') ||
-    lower.includes('pdf qilib ber') ||
-    lower.includes('pdf tayyorla') ||
-    lower.includes('hujjat tayyorla') ||
-    lower.includes('pdf chiqar') ||
-    lower.includes('pdf saqla') ||
-    lower.includes('pdf ko\'rinish') ||
-    lower.includes('pdf format') ||
-    lower.includes('fayl yarat')
-  ) return true;
+  // Uzbek — keng qamrovli
+  const uzPhrases = [
+    'pdf yarat', 'pdf yasash', 'pdf yasa', 'pdf qil', 'pdf qilib',
+    'pdf tayyorla', 'pdf chiqar', 'pdf saqla', 'pdf ber', 'pdf ko\'r',
+    'pdf format', 'pdf ko\'rinish', 'pdf hujjat', 'pdf qilib ber',
+    'hujjat tayyorla', 'hujjat yarat', 'fayl yarat', 'fayl qil',
+    'pdf yukla', 'pdf ol', 'pdfga', 'pdf ga', 'pdf shaklida',
+  ];
+  if (uzPhrases.some(p => lower.includes(p))) return true;
   // English
-  if (
-    lower.includes('create pdf') ||
-    lower.includes('make pdf') ||
-    lower.includes('generate pdf') ||
-    lower.includes('export pdf') ||
-    lower.includes('download pdf') ||
-    lower.includes('save as pdf') ||
-    lower.includes('write pdf') ||
-    lower.includes('build pdf') ||
-    lower.includes('produce pdf') ||
-    lower.includes('pdf file') ||
-    lower.includes('pdf document') ||
-    lower.includes('pdf saying') ||
-    lower.includes('pdf named') ||
-    lower.includes('pdf called') ||
-    lower.includes('pdf with') ||
-    lower.includes('pdf about')
-  ) return true;
+  const enPhrases = [
+    'create pdf', 'make pdf', 'generate pdf', 'export pdf', 'download pdf',
+    'save as pdf', 'write pdf', 'build pdf', 'produce pdf',
+    'pdf file', 'pdf document', 'pdf saying', 'pdf named',
+    'pdf called', 'pdf with', 'pdf about', 'as a pdf', 'into pdf',
+    'to pdf', 'in pdf',
+  ];
+  if (enPhrases.some(p => lower.includes(p))) return true;
   // Russian
-  if (
-    lower.includes('создай pdf') ||
-    lower.includes('сделай pdf') ||
-    lower.includes('pdf документ') ||
-    lower.includes('скачать pdf')
-  ) return true;
+  const ruPhrases = [
+    'создай pdf', 'сделай pdf', 'pdf документ', 'скачать pdf',
+    'генерируй pdf', 'в формате pdf', 'pdf файл',
+  ];
+  if (ruPhrases.some(p => lower.includes(p))) return true;
   return false;
 }
 
