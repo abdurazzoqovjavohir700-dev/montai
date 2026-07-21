@@ -25,6 +25,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['pdf-parse', 'pdfjs-dist'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '12mb',
+    },
+  },
   // Include pdfjs-dist worker files in Vercel serverless bundle
   outputFileTracingIncludes: {
     '/api/parse-pdf': ['./node_modules/pdfjs-dist/**/*'],

@@ -3,6 +3,8 @@ import { getSessionUser } from '@/lib/session';
 import { streamChatResponse, type ChatMessage } from '@/lib/ai';
 import { moderateText, logModerationEvent } from '@/lib/moderation';
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {

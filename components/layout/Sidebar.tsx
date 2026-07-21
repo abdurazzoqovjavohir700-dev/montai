@@ -724,7 +724,7 @@ export default function Sidebar({
                   onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(255,255,255,0.05)'); (e.currentTarget.style.color = '#FAFAFA'); }}
                   onMouseLeave={e => { (e.currentTarget.style.background = 'transparent'); (e.currentTarget.style.color = '#A1A1AA'); }}
                 >Bekor</button>
-                <button onClick={() => signOut({ callbackUrl: '/' })}
+                <button onClick={() => { try { localStorage.removeItem('montai_init_cache'); localStorage.removeItem('montai_prompt_hist'); } catch {} signOut({ callbackUrl: '/' }); }}
                   style={{ flex: 1, padding: '9px', borderRadius: 9, border: 'none', background: '#EF4444', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#DC2626')}
                   onMouseLeave={e => (e.currentTarget.style.background = '#EF4444')}

@@ -198,7 +198,6 @@ Use their nickname naturally (not every message). Respond in their language. Ada
 
   let activeStream: GroqStream;
   let activeModel: string;
-  let usingVision = hasImage;
 
   try {
     const result = await tryModelsInOrder(modelChain, (model) => ({
@@ -211,19 +210,18 @@ Use their nickname naturally (not every message). Respond in their language. Ada
     activeModel = result.model;
   } catch (visionErr) {
     if (!hasImage) throw visionErr;
-    const visionErrMsg = (visionErr instanceof Error ? visionErr.message : String(visionErr)).slice(0, 80);
     logModerationEvent({ type: 'image', category: 'safe', confidence: 'low', timestamp: new Date().toISOString() });
-    usingVision = false;
 
-    // Fall back to text but include a note that image was sent (so AI doesn't say "please send image")
-    const result = await tryModelsInOrder(TEXT_CHAIN, (model) => ({
-      model,
-      messages: buildGroqMessages(false, `vision model unavailable: ${visionErrMsg}`),
-      max_tokens: 1024,
-      temperature: 0.65,
-    }));
-    activeStream = result.stream;
-    activeModel = result.model;
+    // Vision model unavailable — return explicit error instead of confusing text fallback.
+    // Text models cannot see images; sending them sanitized content causes "no image was uploaded" responses.
+    const lang = userContext?.language ?? 'uz';
+    const errMsg = lang === 'uz'
+      ? '⚠️ Rasm tahlil qilinmadi — vision model hozirda band.\n\nBir oz kutib qaytadan urinib ko\'ring. Muammo davom etsa, rasmni qayta yuklang.'
+      : lang === 'ru'
+      ? '⚠️ Изображение не удалось проанализировать — модель зрения временно недоступна.\n\nПопробуйте ещё раз через несколько секунд.'
+      : '⚠️ Image analysis failed — vision model is temporarily busy.\n\nPlease wait a moment and try again. If the issue persists, re-upload the image.';
+    const enc = new TextEncoder();
+    return new ReadableStream({ start(ctrl) { ctrl.enqueue(enc.encode(errMsg)); ctrl.close(); } });
   }
   const encoder = new TextEncoder();
 
@@ -250,7 +248,7 @@ Use their nickname naturally (not every message). Respond in their language. Ada
           return;
         }
 
-        const chain: string[] = usingVision
+        const chain: string[] = hasImage
           ? [...VISION_CHAIN, ...TEXT_CHAIN]
           : [...TEXT_CHAIN];
         const remaining = chain.filter(m => m !== activeModel);

@@ -2,6 +2,8 @@ import { type NextRequest } from 'next/server';
 import { streamChatResponse, type ChatMessage } from '@/lib/ai';
 import { moderateText } from '@/lib/moderation';
 
+export const maxDuration = 60;
+
 // In-memory guest sliding-window rate limit (per IP, resets on server restart)
 // Allows burst, then throttles — never hard-blocks completely
 const guestWindows = new Map<string, { requests: number[]; }>();

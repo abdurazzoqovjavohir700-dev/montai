@@ -194,6 +194,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setDeleting(true);
     try {
       await fetch('/api/user/delete', { method: 'DELETE' });
+      try { localStorage.removeItem('montai_init_cache'); localStorage.removeItem('montai_prompt_hist'); } catch {}
       await signOut({ redirect: false });
       window.location.href = '/';
     } catch { toast.error("O'chirishda xatolik"); setDeleting(false); }
@@ -548,7 +549,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             Sozlamalarni import qilish (JSON)
             <input type="file" accept=".json" onChange={importSettings} style={{ display: 'none' }} />
           </label>
-          <button onClick={() => signOut({ callbackUrl: '/' })} style={actionBtnStyle}>
+          <button onClick={() => { try { localStorage.removeItem('montai_init_cache'); localStorage.removeItem('montai_prompt_hist'); } catch {} signOut({ callbackUrl: '/' }); }} style={actionBtnStyle}>
             <LogOut size={13} strokeWidth={1.5} />
             Chiqish
           </button>
