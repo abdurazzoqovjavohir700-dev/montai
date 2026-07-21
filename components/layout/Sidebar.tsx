@@ -394,11 +394,11 @@ export default function Sidebar({
   const sidebarContent = (
     <div style={{
       width: 240,
-      background: 'rgba(8,9,13,0.7)',
-      backdropFilter: 'blur(40px) saturate(1.6)',
-      WebkitBackdropFilter: 'blur(40px) saturate(1.6)',
-      borderRight: '1px solid rgba(255,255,255,0.06)',
-      boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.04)',
+      background: 'rgba(6,7,12,0.82)',
+      backdropFilter: 'blur(48px) saturate(1.7)',
+      WebkitBackdropFilter: 'blur(48px) saturate(1.7)',
+      borderRight: '1px solid rgba(255,255,255,0.065)',
+      boxShadow: '1px 0 0 rgba(255,255,255,0.035), inset -1px 0 0 rgba(0,0,0,0.3)',
       display: 'flex', flexDirection: 'column', height: '100%', padding: 8,
     }}>
       {/* Logo */}

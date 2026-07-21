@@ -22,23 +22,26 @@ function GoogleIcon() {
 }
 
 /* ─── Floating badge ────────────────────────────────────────── */
-function FloatingBadge({ value, label }: { value: string; label: string }) {
+function FloatingBadge({ value, label, icon }: { value: string; label: string; icon?: string }) {
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-      padding: '10px 16px',
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.07)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+      padding: '12px 10px',
+      background: 'rgba(255,255,255,0.038)',
+      border: '1px solid rgba(255,255,255,0.075)',
       borderRadius: 14,
-      backdropFilter: 'blur(12px)',
+      backdropFilter: 'blur(16px) saturate(1.3)',
+      WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.07)',
     }}>
+      {icon && <span style={{ fontSize: 16, lineHeight: 1 }}>{icon}</span>}
       <span style={{
-        fontFamily: 'var(--font-display,Manrope,sans-serif)',
-        fontSize: 20, fontWeight: 700, color: '#EEEEF0', letterSpacing: '-0.03em', lineHeight: 1,
+        fontFamily: 'var(--font-display)',
+        fontSize: 18, fontWeight: 700, color: '#F0F0F2', letterSpacing: '-0.03em', lineHeight: 1,
       }}>{value}</span>
       <span style={{
-        fontSize: 10.5, color: '#5A6272', fontFamily: 'Inter, sans-serif',
-        letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500,
+        fontSize: 9.5, color: 'var(--t-02)', fontFamily: 'var(--font-body)',
+        letterSpacing: '0.07em', textTransform: 'uppercase', fontWeight: 600,
       }}>{label}</span>
     </div>
   );
@@ -83,31 +86,42 @@ export default function HomePage() {
             alignItems: 'center', gap: 0,
           }}
         >
-          {/* Logo */}
+          {/* Logo + hero */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
+            initial={{ scale: 0.82, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 28, delay: 0.06 }}
+            style={{ marginBottom: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}
           >
-            <motion.div
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-              style={{ filter: 'drop-shadow(0 0 24px rgba(96,165,250,0.18))' }}
-            >
-              <MontaiLogo size={60} />
-            </motion.div>
+            {/* Logo with glow halo */}
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute', inset: -24, borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(96,165,250,0.14) 0%, transparent 70%)',
+                filter: 'blur(20px)', pointerEvents: 'none',
+              }} />
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ filter: 'drop-shadow(0 4px 20px rgba(96,165,250,0.28))', position: 'relative', zIndex: 1 }}
+              >
+                <MontaiLogo size={62} />
+              </motion.div>
+            </div>
+
             <div style={{ textAlign: 'center' }}>
               <div style={{
-                fontFamily: 'var(--font-display,Manrope,sans-serif)',
-                fontSize: 30, fontWeight: 800, color: '#EEEEF0',
-                letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 10,
+                fontFamily: 'var(--font-display)',
+                fontSize: 34, fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 1, marginBottom: 10,
+                background: 'linear-gradient(160deg, #F0F0F2 0%, #8D95A6 100%)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
               }}>
                 Montai
               </div>
               <div style={{
-                fontSize: 13.5, color: '#5A6272', fontFamily: 'Inter, sans-serif',
-                letterSpacing: '-0.005em', lineHeight: 1.5,
+                fontSize: 14, color: 'var(--t-02)', fontFamily: 'var(--font-body)',
+                letterSpacing: '-0.01em', lineHeight: 1.55,
               }}>
                 Your AI video editing mentor
               </div>
@@ -132,14 +146,14 @@ export default function HomePage() {
             >
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <h1 style={{
-                  fontFamily: 'var(--font-display,Manrope,sans-serif)',
-                  fontSize: 20, fontWeight: 700, color: '#EEEEF0',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 19, fontWeight: 700, color: 'var(--t-00)',
                   letterSpacing: '-0.03em', lineHeight: 1.25, marginBottom: 8,
                 }}>
                   Start learning today
                 </h1>
                 <p style={{
-                  fontSize: 13, color: '#5A6272', fontFamily: 'Inter, sans-serif', lineHeight: 1.55,
+                  fontSize: 13, color: 'var(--t-02)', fontFamily: 'var(--font-body)', lineHeight: 1.6,
                 }}>
                   Professional video editing knowledge,<br />available instantly.
                 </p>
@@ -167,9 +181,9 @@ export default function HomePage() {
 
               {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                <FloatingBadge value="50+" label="Topics" />
-                <FloatingBadge value="13" label="Languages" />
-                <FloatingBadge value="AI" label="Powered" />
+                <FloatingBadge value="50+" label="Topics" icon="🎬" />
+                <FloatingBadge value="13" label="Languages" icon="🌍" />
+                <FloatingBadge value="AI" label="Powered" icon="✨" />
               </div>
             </LiquidGlass>
           </motion.div>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono, Manrope } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
 import ThemeInit from '@/components/settings/ThemeInit';
 import PlatformProvider from '@/components/ui/PlatformProvider';
 import './globals.css';
@@ -71,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      className={`${manrope.variable} ${inter.variable} ${jetbrainsMono.variable} ${GeistSans.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen antialiased">

@@ -70,32 +70,35 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.18 }}
           style={{
             position: 'fixed', inset: 0, zIndex: 100,
-            background: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(0,0,0,0.72)',
+            backdropFilter: 'blur(20px) saturate(1.2)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '16px',
           }}
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            initial={{ opacity: 0, scale: 0.94, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
-            transition={{ duration: 0.22, type: 'spring', stiffness: 380, damping: 34 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 30 }}
             onClick={e => e.stopPropagation()}
             style={{
-              background: '#141416',
-              border: '1px solid #27272A',
-              borderRadius: '20px',
-              padding: '48px 40px',
+              background: 'rgba(8,9,14,0.90)',
+              backdropFilter: 'blur(48px) saturate(1.6)',
+              WebkitBackdropFilter: 'blur(48px) saturate(1.6)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              borderRadius: '24px',
+              padding: '44px 36px 40px',
               width: '100%',
               maxWidth: '420px',
               textAlign: 'center',
               position: 'relative',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              boxShadow: '0 32px 96px rgba(0,0,0,0.75), 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
             }}
           >
             {/* Close button */}
@@ -208,43 +211,50 @@ function SocialButton({
   style?: React.CSSProperties;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
       disabled={disabled}
+      whileHover={!disabled ? { scale: 1.015, y: -1 } : {}}
+      whileTap={!disabled ? { scale: 0.975, transition: { type: 'spring', stiffness: 600, damping: 30 } } : {}}
+      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
       style={{
-        width: '100%', padding: '14px',
-        background: '#1A1A1A',
-        border: '1px solid #27272A',
-        borderRadius: '12px',
+        width: '100%', padding: '13px',
+        background: 'rgba(255,255,255,0.055)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        borderRadius: '14px',
         color: '#D4D4D8',
-        fontSize: '15px', fontWeight: 500,
+        fontSize: '14.5px', fontWeight: 500,
         cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex', alignItems: 'center',
         justifyContent: 'center', gap: '10px',
         marginBottom: '10px',
-        transition: 'all 0.2s',
-        fontFamily: 'Inter, sans-serif',
-        opacity: disabled && !loading ? 0.5 : 1,
+        fontFamily: 'var(--font-body)',
+        opacity: disabled && !loading ? 0.45 : 1,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.09)',
         ...style,
       }}
       onMouseEnter={e => {
         if (!disabled) {
-          (e.currentTarget as HTMLElement).style.background = '#222';
-          (e.currentTarget as HTMLElement).style.borderColor = '#3F3F46';
+          (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.085)';
+          (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)';
+          (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12)';
         }
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.background = '#1A1A1A';
-        (e.currentTarget as HTMLElement).style.borderColor = '#27272A';
+        (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.055)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.10)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.09)';
       }}
     >
       {loading ? (
-        <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="#3F3F46" strokeWidth="3"/>
+        <svg style={{ animation: 'spin 0.7s linear infinite' }} width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.15)" strokeWidth="2.5"/>
           <path fill="#D4D4D8" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
         </svg>
       ) : icon}
       <span>{label}</span>
-    </button>
+    </motion.button>
   );
 }

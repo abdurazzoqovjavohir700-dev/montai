@@ -408,30 +408,30 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
         <input ref={fileInputRef} type="file" accept={ACCEPTED_IMAGE_TYPES.join(',')} multiple onChange={handleFileSelect} className="hidden" />
         <input ref={pdfInputRef} type="file" accept="application/pdf" onChange={e => { const f = e.target.files?.[0]; if (f) processPdf(f); e.target.value = ''; }} className="hidden" />
 
-        {/* Main container */}
+        {/* Main container — floating glass composer */}
         <motion.div
           animate={{
             boxShadow: dragOver
-              ? '0 0 0 2px rgba(96,165,250,0.3), 0 8px 32px rgba(0,0,0,0.5)'
+              ? 'var(--input-shadow-drag)'
               : focused
-              ? '0 0 0 1px rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.5)'
-              : '0 4px 20px rgba(0,0,0,0.4)',
+              ? 'var(--input-shadow-focus)'
+              : 'var(--input-shadow-idle)',
           }}
-          transition={{ duration: 0.2 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
           style={{
             background: dragOver
-              ? 'rgba(96,165,250,0.04)'
-              : 'rgba(14,15,22,0.92)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${dragOver ? 'rgba(96,165,250,0.3)' : focused ? 'rgba(255,255,255,0.11)' : 'rgba(255,255,255,0.07)'}`,
-            borderRadius: 18,
+              ? 'rgba(96,165,250,0.03)'
+              : 'rgba(10,11,18,0.88)',
+            backdropFilter: 'blur(28px) saturate(1.4)',
+            WebkitBackdropFilter: 'blur(28px) saturate(1.4)',
+            border: `1px solid ${dragOver ? 'rgba(96,165,250,0.28)' : focused ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.075)'}`,
+            borderRadius: 20,
             padding: '10px 10px',
             display: 'flex',
             alignItems: 'flex-end',
             gap: 8,
             position: 'relative',
-            transition: 'border-color 0.2s ease, background 0.2s ease',
+            transition: 'border-color 0.18s ease, background 0.18s ease',
           }}
         >
           {/* Drag overlay text */}
@@ -448,25 +448,41 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
           )}
 
           {/* Plus / attachment button */}
-          <button
+          <motion.button
             ref={plusBtnRef}
             onClick={() => setMenuOpen(v => !v)}
             disabled={disabled}
+            animate={{ rotate: menuOpen ? 45 : 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.92 }}
             style={{
-              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+              width: 32, height: 32, borderRadius: 10, flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: menuOpen ? 'rgba(255,255,255,0.08)' : 'transparent',
-              border: `1px solid ${menuOpen ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.07)'}`,
+              background: menuOpen ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${menuOpen ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'}`,
               cursor: 'pointer',
-              color: menuOpen ? '#EEEEF0' : '#5A6272',
-              transform: menuOpen ? 'rotate(45deg)' : 'none',
-              transition: 'all 0.18s ease',
+              color: menuOpen ? '#F0F0F2' : '#565E72',
+              boxShadow: menuOpen ? '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)' : '0 1px 3px rgba(0,0,0,0.3)',
+              transition: 'background 0.15s, border-color 0.15s, color 0.15s',
             }}
-            onMouseEnter={e => { if (!menuOpen) { e.currentTarget.style.color = '#8B93A4'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; } }}
-            onMouseLeave={e => { if (!menuOpen) { e.currentTarget.style.color = '#5A6272'; e.currentTarget.style.background = 'transparent'; } }}
+            onMouseEnter={e => {
+              if (!menuOpen) {
+                e.currentTarget.style.color = '#8D95A6';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
+              }
+            }}
+            onMouseLeave={e => {
+              if (!menuOpen) {
+                e.currentTarget.style.color = '#565E72';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+              }
+            }}
           >
-            <Plus size={15} strokeWidth={1.8} />
-          </button>
+            <Plus size={14} strokeWidth={2} />
+          </motion.button>
 
           {/* Textarea */}
           <textarea
@@ -502,14 +518,15 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
           {isLoading ? (
             <motion.button
               onClick={onStop}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.92 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.90, transition: { type: 'spring', stiffness: 600, damping: 28 } }}
               style={{
-                width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                width: 32, height: 32, borderRadius: 10, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                cursor: 'pointer', color: '#EEEEF0',
+                border: '1px solid rgba(255,255,255,0.12)',
+                cursor: 'pointer', color: '#F0F0F2',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)',
               }}
               aria-label="Stop"
             >
@@ -519,24 +536,29 @@ export default function MessageInput({ onSend, onStop, onNewChat, isLoading, dis
             <motion.button
               onClick={handleSend}
               disabled={!canSend}
-              whileHover={canSend ? { scale: 1.08 } : {}}
-              whileTap={canSend ? { scale: 0.9 } : {}}
+              animate={{
+                background: canSend ? '#FFFFFF' : 'rgba(255,255,255,0.06)',
+                scale: 1,
+              }}
+              whileHover={canSend ? { scale: 1.10 } : {}}
+              whileTap={canSend ? { scale: 0.88, transition: { type: 'spring', stiffness: 600, damping: 28 } } : {}}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               style={{
                 width: 32, height: 32,
                 borderRadius: '50%',
                 flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: canSend ? '#FFFFFF' : 'rgba(255,255,255,0.06)',
                 border: 'none',
                 cursor: canSend ? 'pointer' : 'not-allowed',
-                color: canSend ? '#08090D' : '#363C4D',
-                opacity: canSend ? 1 : 0.4,
-                transition: 'all 0.18s ease',
-                boxShadow: canSend ? '0 2px 8px rgba(0,0,0,0.3)' : 'none',
+                color: canSend ? '#07080D' : '#333847',
+                opacity: canSend ? 1 : 0.35,
+                boxShadow: canSend
+                  ? '0 2px 12px rgba(255,255,255,0.15), 0 1px 3px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(0,0,0,0.1)'
+                  : 'none',
               }}
               aria-label="Send"
             >
-              <ArrowUp size={14} strokeWidth={2.2} />
+              <ArrowUp size={14} strokeWidth={2.5} />
             </motion.button>
           )}
         </motion.div>
